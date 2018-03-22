@@ -1,0 +1,26 @@
+{
+	"name": "AdminFront",
+	"description": "Front mask for Admin module",
+	"version": "0.1.0",
+	"dependencies": {
+		"Admin": ">=1.0.0",
+		"Output": ">=0.2.1",
+		"ContextMenu": ">=1.1.0",
+		"FrontEnd": ">=1.1.0",
+		"ResizeTable": ">=1.2.0",
+		"Popup": ">=1.0.0",
+		"WebAppManifest": ">=0.1.0",
+		"CSRF": ">=0.1.0"
+	},
+	"js": [
+		"files/js.js",
+		"files/table.js",
+		"files/formlist.js"
+	],
+	"file-types": {
+		"DataVisualizer": {
+			"folder": "Visualizers",
+			"class": true
+		}
+	}
+}
