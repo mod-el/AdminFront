@@ -116,7 +116,11 @@ class AdminController extends Controller
 							$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
 
 							if ($this->model->element) {
-								$this->model->_Admin->form->reset();
+								if (isset($_GET['print'])) {
+									$this->model->_Admin->form->options['print'] = true;
+								} else {
+									$this->model->_Admin->form->reset();
+								}
 
 								$checkCustomTemplate = Autoloader::searchFile('template', $dir . $request[0]);
 								if ($checkCustomTemplate) {

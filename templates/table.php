@@ -193,7 +193,7 @@
 	?>
 </div>
 
-<div id="sublist-template-<?= entities($this->options['name']) ?>" class="sublist-template">
+<div id="sublist-template-<?= entities($this->options['name']) ?>" class="sublist-template" style="display: none">
     <div class="results-table-row" data-id="[n]">
         <div class="special-cell" onmousedown="event.stopPropagation()" onmouseup="event.stopPropagation()" onclick="event.stopPropagation(); var check = this.firstElementChild.firstElementChild; check.getValue().then((v) => {if(v) check.setValue(0); else check.setValue(1); });">
             <div>

@@ -2,6 +2,7 @@
 
 use Model\AdminFront\DataVisualizer;
 use Model\Core\Autoloader;
+use Model\Core\Core;
 use Model\Core\Exception;
 use Model\Form\Form;
 use Model\ORM\Element;
@@ -12,6 +13,13 @@ class FormList extends DataVisualizer
 	protected $defaultOptions = [
 		'fields' => [],
 	];
+
+	function __construct(Core $core, array $options = [])
+	{
+		parent::__construct($core, $options);
+		if (!isset($this->options['print']))
+			$this->options['print'] = false;
+	}
 
 	/**
 	 * @param array $options
@@ -33,12 +41,13 @@ class FormList extends DataVisualizer
 
 		if ($options['type'] === 'row') {
 			echo '<div class="rob-field-cont">';
-			echo '<div class="rob-field" style="width: 5%"></div>';
+			if (!$this->options['print'])
+				echo '<div class="rob-field" style="width: 5%"></div>';
 			echo '<div class="rob-field" style="width: 95%">';
 			echo '<div class="rob-field-cont sublist-row">';
 			$template = $dummyForm->getTemplate(['one-row' => true]);
 			foreach ($template as $f) {
-				echo '<div class="rob-field" style="width: ' . $f['w'] . '%">' . entities($dummyForm[$f['field']]->getLabel()) . '</div>';
+				echo '<div class="rob-field" style="width: ' . $f['w'] . '%'.($this->options['print'] ? ';font-weight: bold' : '').'">' . entities($dummyForm[$f['field']]->getLabel()) . '</div>';
 			}
 			echo '</div>';
 			echo '</div>';
@@ -58,7 +67,7 @@ class FormList extends DataVisualizer
 
 		echo '</div>';
 
-		if ($options['add-button']) {
+		if ($options['add-button'] and !$this->options['print']) {
 			if ($options['add-button'] === true) {
 				?>
                 <div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow('<?= entities($this->options['name']) ?>')">
@@ -74,12 +83,18 @@ class FormList extends DataVisualizer
 		}
 
 		?>
-        <div id="sublist-template-<?= entities($this->options['name']) ?>" class="sublist-template">
+        <div id="sublist-template-<?= entities($this->options['name']) ?>" class="sublist-template" style="display: none">
 			<?php
 			$this->renderRow($this->options['dummy'], $dummyForm, $options);
 			?>
         </div>
 		<?php
+	}
+
+	function print(array $options = [])
+	{
+		$this->options['print'] = true;
+		$this->render($options);
 	}
 
 	protected function renderRow(Element $el, Form $form, array $options)
@@ -97,22 +112,27 @@ class FormList extends DataVisualizer
 		if ($options['template'] and $options['type'] === 'outer-template') {
 			include($template_path);
 		} else {
-			?>
-            <div class="rob-field" style="width: 5%; text-align: center">
-                <a href="#" onclick="if(confirm('Sicuro di voler eliminare questa riga?')) sublistDeleteRow('<?= entities($this->options['name']) ?>', '<?= entities($el[$el->settings['primary']]) ?>'); return false"><i class="fas fa-trash" aria-label="Delete" style="color: #000"></i></a>
-                <input type="hidden" name="ch-<?= entities($this->options['name']) ?>-<?= entities($el[$el->settings['primary']]) ?>" value="1"/>
-            </div>
-            <div class="rob-field" style="width: 95%">
-				<?php
-				if ($options['template'] and $options['type'] === 'inner-template') {
-					include($template_path);
-				} else {
-					$form->render([
-						'one-row' => $options['type'] === 'row',
-						'show-labels' => $options['type'] === 'form',
-					]);
-				}
+			if (!$this->options['print']) {
 				?>
+                <div class="rob-field" style="width: 5%; text-align: center">
+                    <a href="#" onclick="if(confirm('Sicuro di voler eliminare questa riga?')) sublistDeleteRow('<?= entities($this->options['name']) ?>', '<?= entities($el[$el->settings['primary']]) ?>'); return false"><i class="fas fa-trash" aria-label="Delete" style="color: #000"></i></a>
+                    <input type="hidden" name="ch-<?= entities($this->options['name']) ?>-<?= entities($el[$el->settings['primary']]) ?>" value="1"/>
+                </div><div class="rob-field" style="width: 95%">
+				<?php
+			} else {
+				?>
+                <div class="rob-field" style="width: 100%">
+				<?php
+			}
+			if ($options['template'] and $options['type'] === 'inner-template') {
+				include($template_path);
+			} else {
+				$form->render([
+					'one-row' => $options['type'] === 'row',
+					'show-labels' => $options['type'] === 'form',
+				]);
+			}
+			?>
             </div>
 			<?php
 		}
@@ -122,6 +142,7 @@ class FormList extends DataVisualizer
 	{
 		$form = $this->model->_Admin->getSublistRowForm($el, $options);
 		$form->options['wrap-names'] = 'ch-[name]-' . $this->options['name'] . '-' . $el[$el->settings['primary']];
+		$form->options['print'] = $this->options['print'];
 		$strip = $this->options['strip'] ?? [];
 		foreach ($strip as $k)
 			$form->remove($k);
