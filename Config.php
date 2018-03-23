@@ -15,6 +15,62 @@ class Config extends Module_Config
 	}
 
 	/**
+	 * @return bool
+	 * @throws \Exception
+	 */
+	public function makeCache(): bool
+	{
+		$config = $this->retrieveConfig();
+
+		if ($this->model->moduleExists('WebAppManifest')) {
+			$adminRules = $this->getRules();
+			foreach ($adminRules['rules'] as $ruleIdx => $rule) {
+				if (substr($ruleIdx, 0, 2) === 'sw')
+					continue;
+
+				if ($rule)
+					$rule .= '/';
+
+				$manifestData = [
+					'name' => APP_NAME,
+					'theme_color' => '#383837',
+					'background_color' => '#f2f2f2',
+				];
+
+				$currentManifest = $this->model->_WebAppManifest->getManifest($rule . 'manifest.json');
+				if ($currentManifest)
+					$manifestData = array_merge($manifestData, $currentManifest);
+
+				$manifestData['start_url'] = PATH . $rule;
+
+				$this->model->_WebAppManifest->setManifest($rule . 'manifest.json', $manifestData);
+
+				$iconsFolder = str_replace(['/', '\\'], '-', $rule . 'manifest.json');
+				$iconFormats = ['32', '192', '512'];
+				foreach ($iconFormats as $format) {
+					$iconPath = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'WebAppManifest' . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . $iconsFolder . DIRECTORY_SEPARATOR . $format . '.png';
+					if (!file_exists($iconPath))
+						copy(__DIR__ . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . $format . '.png', $iconPath);
+				}
+			}
+		}
+
+		$assets = $this->model->getModule($config['template'])->getAssetsForServiceWorker();
+
+		$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'header.php';
+		$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'footer.php';
+
+		$md5 = [];
+		foreach ($assets as $asset) {
+			if (!file_exists(PATHBASE . $asset))
+				continue;
+			$md5[] = md5(file_get_contents(PATHBASE . $asset));
+		}
+
+		return (bool)file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'cache-key.php', "<?php\n\$cacheKey = '" . md5(implode('', $md5)) . "';");
+	}
+
+	/**
 	 * Saves configuration
 	 *
 	 * @param string $type
@@ -173,12 +229,15 @@ $config = ' . var_export($config, true) . ';
 			'controllers' => [
 				'AdminFront',
 				'AdminLogin',
+				'AdminServiceWorker',
 			],
 		];
 
 		if (isset($config['url'])) {
-			foreach ($config['url'] as $idx => $p)
+			foreach ($config['url'] as $idx => $p) {
 				$ret['rules'][$idx] = $p['path'] ?: null;
+				$ret['rules']['sw' . $idx] = ($p['path'] ? $p['path'] . '/' : '') . 'sw.js';
+			}
 		}
 
 		return $ret;

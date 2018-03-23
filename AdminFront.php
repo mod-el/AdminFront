@@ -81,6 +81,14 @@ class AdminFront extends Module
 	{
 		$config = $this->retrieveConfig();
 
+		if (substr($rule, 0, 2) === 'sw') {
+			$this->url = $config['url'][substr($rule, 2)]['path'];
+
+			return [
+				'controller' => 'AdminServiceWorker',
+			];
+		}
+
 		if (!isset($config['url'][$rule]) or (!empty($config['url'][$rule]['path']) and strpos(implode('/', $request), $config['url'][$rule]['path']) !== 0))
 			return false;
 

@@ -54,7 +54,7 @@ window.addEventListener('load', function () {
 	});
 });
 
-/*if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
 	window.addEventListener('load', function () {
 		navigator.serviceWorker.register(adminPrefix + 'sw.js').then(function (registration) {
 			// Registration was successful
@@ -64,7 +64,7 @@ window.addEventListener('load', function () {
 			console.log('ServiceWorker registration failed: ', err);
 		});
 	});
-}*/
+}
 
 window.onpopstate = function (event) {
 	var s = event.state;
