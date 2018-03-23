@@ -55,10 +55,14 @@ class Config extends Module_Config
 			}
 		}
 
-		$assets = $this->model->getModule($config['template'])->getAssetsForServiceWorker();
+		if ($config and isset($config['template']) and $config['template']) {
+			$assets = $this->model->getModule($config['template'])->getAssetsForServiceWorker();
 
-		$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'header.php';
-		$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'footer.php';
+			$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'header.php';
+			$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'footer.php';
+		} else {
+			$assets = [];
+		}
 
 		$md5 = [];
 		foreach ($assets as $asset) {
