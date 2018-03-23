@@ -247,7 +247,7 @@ $config = ' . var_export($config, true) . ';
 	{
 		foreach ($pages as $idx => $p) {
 			if (array_key_exists('controller', $pages[$idx])) {
-				$pages[$idx]['rule'] = $pages[$idx]['controller'];
+				$pages[$idx]['page'] = $pages[$idx]['controller'];
 				unset($pages[$idx]['controller']);
 			}
 			$pages[$idx]['visualizer'] = 'Table';
