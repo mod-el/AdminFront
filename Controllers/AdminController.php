@@ -28,6 +28,8 @@ class AdminController extends Controller
 	{
 		$request = $this->model->_AdminFront->request;
 
+		$this->viewOptions['cacheTemplate'] = false;
+
 		if (isset($request[0])) {
 			if (!isset($request[1]))
 				$request[1] = '';
@@ -94,8 +96,6 @@ class AdminController extends Controller
 							$this->viewOptions['visualizer'] = $this->model->_AdminFront->getVisualizer();
 							$this->viewOptions['list'] = $this->model->_Admin->getList($options);
 
-							$this->viewOptions['cacheTemplate'] = false;
-
 							if (isset($_GET['print'])) {
 								$this->viewOptions['template'] = 'print';
 								$this->viewOptions['template-module'] = 'AdminFront';
@@ -125,7 +125,6 @@ class AdminController extends Controller
 									$this->viewOptions['template'] = $dir . $request[0];
 									unset($this->viewOptions['template-module']);
 								} else {
-									$this->viewOptions['cacheTemplate'] = false;
 									$this->viewOptions['template'] = 'form-template';
 								}
 
