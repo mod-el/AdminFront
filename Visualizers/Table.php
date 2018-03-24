@@ -124,6 +124,7 @@ class Table extends DataVisualizer
 	 */
 	private function getColumns(): array
 	{
+		$tableModel = $this->options['table'] ? $this->model->_Db->getTable($this->options['table']) : false;
 		$columns = $this->options['columns'] ?: [];
 
 		if (empty($columns))
@@ -188,7 +189,7 @@ class Table extends DataVisualizer
 
 			if (is_string($column['display']) and !$column['field'] and $column['display'])
 				$column['field'] = $column['display'];
-			if ($column['field'] === false and array_key_exists($k, $tableModel->columns))
+			if ($column['field'] === false and $tableModel and array_key_exists($k, $tableModel->columns))
 				$column['field'] = $k;
 			if (is_string($column['field']) and $column['field'] and !$column['display'])
 				$column['display'] = $column['field'];
