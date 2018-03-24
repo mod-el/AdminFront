@@ -30,8 +30,12 @@ window.addEventListener('DOMContentLoaded', function () {
 		sId = document.location.search.replace(/.*sId=([0-9]+).*/, '$1');
 
 	if (currentAdminPage && _('main-content')) {
-		if (request.length >= 3 && request[1] === 'edit') {
-			loadElement(request[0], request[2], false);
+		if (request.length >= 2 && request[1] === 'edit') {
+			if (request.length >= 3) {
+				loadElement(request[0], request[2], false);
+			} else {
+				newElement();
+			}
 		} else {
 			loadAdminPage(request, sId ? 'sId=' + sId : '', '', false);
 		}
