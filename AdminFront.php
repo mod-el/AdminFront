@@ -301,7 +301,7 @@ class AdminFront extends Module
 	private function getDictionary(): array
 	{
 		if ($this->dictionary === null) {
-			$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin' . DIRECTORY_SEPARATOR . 'dictionary.php';
+			$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php';
 
 			$dictionary = [];
 			if (file_exists($adminDictionaryFile))
