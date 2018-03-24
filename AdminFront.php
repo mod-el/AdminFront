@@ -343,7 +343,7 @@ class AdminFront extends Module
 			if (!$this->visualizer and isset($this->request[0])) {
 				$pages = $this->getPages();
 				$rule = $this->seekForRule($pages, $this->request[0]);
-				if (!$rule or !$rule['visualizer'])
+				if (!$rule or !isset($rule['visualizer']) or !$rule['visualizer'])
 					return null;
 
 				$className = Autoloader::searchFile('DataVisualizer', $rule['visualizer']);
