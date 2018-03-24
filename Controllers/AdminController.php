@@ -105,8 +105,6 @@ class AdminController extends Controller
 						} else {
 							$this->viewOptions['template'] = strtolower(preg_replace('/(?<!^)([A-Z])/', '-\\1', $this->model->_Admin->options['page']));
 						}
-
-						$this->viewOptions = array_merge($this->viewOptions, $this->model->_Admin->page->viewOptions());
 						break;
 					case 'edit':
 						if (isset($_GET['getData'])) {
@@ -247,6 +245,13 @@ class AdminController extends Controller
 						$this->viewOptions['template'] = null;
 						break;
 				}
+			}
+
+			if ($this->model->_Admin->page) {
+				$customViewOptions = $this->model->_Admin->page->viewOptions();
+				if (isset($customViewOptions['template'], $this->viewOptions['template-module']))
+					unset($this->viewOptions['template-module']);
+				$this->viewOptions = array_merge($this->viewOptions, $customViewOptions);
 			}
 		} else {
 			if (isset($_GET['ajax']))
