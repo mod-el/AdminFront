@@ -215,16 +215,7 @@ class AdminController extends Controller
 						}
 						break;
 					default:
-						if (method_exists($this->model->_AdminFront, $request[1])) {
-							$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->model->_AdminFront, $request[1]]));
-						} elseif (method_exists($this->model->_AdminFront->getVisualizer(), $request[1])) {
-							$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->model->_AdminFront->getVisualizer(), $request[1]]));
-						} elseif (method_exists($this->templateModule, $request[1])) {
-							$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->templateModule, $request[1]]));
-						} else {
-							$this->viewOptions['errors'][] = 'Unknown action.';
-							$this->viewOptions['template'] = null;
-						}
+						$unknown = true;
 						break;
 				}
 			} else {
@@ -245,6 +236,23 @@ class AdminController extends Controller
 						$this->viewOptions['template'] = null;
 						break;
 				}
+			}
+
+			if (method_exists($this->model->_AdminFront, $request[1])) {
+				$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->model->_AdminFront, $request[1]]));
+			} elseif (method_exists($this->model->_AdminFront->getVisualizer(), $request[1])) {
+				$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->model->_AdminFront->getVisualizer(), $request[1]]));
+			} elseif (method_exists($this->templateModule, $request[1])) {
+				$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->templateModule, $request[1]]));
+			} elseif ($this->model->_Admin->page and method_exists($this->model->_Admin->page, $request[1])) {
+				$customViewOptions = call_user_func([$this->model->_Admin->page, $request[1]]);
+				if ($customViewOptions and is_array($customViewOptions))
+					$this->viewOptions = array_merge($this->viewOptions, $customViewOptions);
+				else
+					$this->viewOptions['template'] = null;
+			} elseif (isset($unknown)) {
+				$this->viewOptions['errors'][] = 'Unknown action.';
+				$this->viewOptions['template'] = null;
 			}
 
 			if ($this->model->_Admin->page) {
