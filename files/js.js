@@ -1481,7 +1481,7 @@ function setLoadingBar(percentage) {
 
 function duplicate() {
 	if (changeHistory.length > 0) {
-		alert('There are prending changes, can\'t duplicate.');
+		alert('There are pending changes, can\'t duplicate.');
 		return false;
 	}
 
