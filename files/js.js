@@ -1229,7 +1229,21 @@ function restoreSaveButton() {
 	}
 }
 
-function save() {
+async function save() {
+	let form = _('adminForm');
+
+	let mandatory = [];
+	if (typeof form['_mandatory_fields'] !== 'undefined') {
+		mandatory = await form['_mandatory_fields'].getValue();
+		if (mandatory)
+			mandatory = JSON.parse(mandatory);
+		else
+			mandatory = [];
+	}
+
+	if (!checkForm(form, mandatory))
+		return false;
+
 	if (saving) {
 		alert('Already saving');
 		return false;
@@ -1260,7 +1274,6 @@ function save() {
 			history_push = true;
 		}
 
-		let form = _('adminForm');
 		let savingValues = {};
 		for (let k in changedValues) {
 			if (form[k].getAttribute('data-multilang') && typeof savingValues[k] === 'undefined') {

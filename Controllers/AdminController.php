@@ -128,6 +128,7 @@ class AdminController extends Controller
 									$this->viewOptions['template'] = 'form-template';
 								}
 
+								$this->viewOptions['cache'] = false; // TODO: in the final version, only form-header and form-footer should not be cached
 								if (isset($_GET['ajax'])) {
 									$this->viewOptions['showLayout'] = true;
 									$this->viewOptions['header'] = ['form-header'];
