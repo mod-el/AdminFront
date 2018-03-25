@@ -91,6 +91,20 @@ window.onpopstate = function (event) {
 	}
 };
 
+window.addEventListener('beforeunload', function (event) {
+	if (!saving && changeHistory.length === 0)
+		return true;
+
+	var message = 'There are unsaved data, are you sure?';
+	if (typeof event == 'undefined') {
+		event = window.event;
+	}
+	if (event) {
+		event.returnValue = message;
+	}
+	return message;
+});
+
 window.addEventListener('keydown', function (event) {
 	switch (event.keyCode) {
 		case 90: // CTRL+Z
@@ -313,10 +327,8 @@ function startMenuResize() {
  Loads a page using fetch; fills the main div with the content when the response comes, and additionally returns a Promise
  */
 function loadPage(url, get, post, deleteContent) {
-	if (saving) {
-		alert('Cannot change page while saving. Wait until finished or reload the page.');
+	if (!checkBeforePageChange())
 		return false;
-	}
 
 	if (typeof get === 'undefined')
 		get = '';
@@ -357,10 +369,8 @@ function loadPage(url, get, post, deleteContent) {
  Moves between admin pages, moving the left menù and taking care of the browser history
  */
 function loadAdminPage(request, get, post, history_push) {
-	if (saving) {
-		alert('Cannot change page while saving. Wait until finished or reload the page.');
+	if (!checkBeforePageChange())
 		return false;
-	}
 
 	if (request.length === 0)
 		return false;
@@ -418,6 +428,17 @@ function loadAdminPage(request, get, post, history_push) {
 	historyWipe();
 
 	return promise;
+}
+
+function checkBeforePageChange() {
+	if (saving) {
+		alert('Cannot change page while saving. Wait until finished or reload the page.');
+		return false;
+	}
+	if (changeHistory.length > 0) {
+		return confirm('There are unsaved data. Do you really want to change page?');
+	}
+	return true;
 }
 
 /*
@@ -1317,6 +1338,7 @@ async function save() {
 
 			saving = false;
 			restoreSaveButton();
+			historyWipe();
 
 			if (typeof r !== 'object') {
 				alert(r);
