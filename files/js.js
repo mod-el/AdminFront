@@ -313,6 +313,11 @@ function startMenuResize() {
  Loads a page using fetch; fills the main div with the content when the response comes, and additionally returns a Promise
  */
 function loadPage(url, get, post, deleteContent) {
+	if (saving) {
+		alert('Cannot change page while saving. Wait until finished or reload the page.');
+		return false;
+	}
+
 	if (typeof get === 'undefined')
 		get = '';
 	if (typeof post === 'undefined')
@@ -352,6 +357,11 @@ function loadPage(url, get, post, deleteContent) {
  Moves between admin pages, moving the left menù and taking care of the browser history
  */
 function loadAdminPage(request, get, post, history_push) {
+	if (saving) {
+		alert('Cannot change page while saving. Wait until finished or reload the page.');
+		return false;
+	}
+
 	if (request.length === 0)
 		return false;
 	if (typeof get === 'undefined')
