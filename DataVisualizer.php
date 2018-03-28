@@ -3,7 +3,6 @@
 use Model\Core\Core;
 use Model\Form\Form;
 use Model\ORM\Element;
-use Model\ORM\ElementsIterator;
 
 abstract class DataVisualizer
 {
