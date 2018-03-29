@@ -21,7 +21,6 @@ class Table extends DataVisualizer
 
 	/**
 	 * @param array $options
-	 * @throws \Model\Core\Exception
 	 */
 	public function render(array $options = [])
 	{
@@ -63,7 +62,6 @@ class Table extends DataVisualizer
 	 * @param Element $el
 	 * @param array $columns
 	 * @return array
-	 * @throws \Model\Core\Exception
 	 */
 	private function elaborateRow(Element $el, array $columns): array
 	{
@@ -120,7 +118,6 @@ class Table extends DataVisualizer
 
 	/**
 	 * @return array
-	 * @throws \Model\Core\Exception
 	 */
 	private function getColumns(): array
 	{
@@ -252,7 +249,6 @@ class Table extends DataVisualizer
 	 * @param Element $el
 	 * @param array $cOpt
 	 * @return array
-	 * @throws \Model\Core\Exception
 	 */
 	private function getElementColumn(Element $el, array $cOpt): array
 	{
@@ -296,7 +292,6 @@ class Table extends DataVisualizer
 	 *
 	 * @param array $columns
 	 * @return bool
-	 * @throws \Model\Core\Exception
 	 */
 	private function loadResizeModule(array $columns = []): bool
 	{
@@ -330,7 +325,7 @@ class Table extends DataVisualizer
 	}
 
 	/**
-	 * @throws \Model\Core\Exception
+	 * Instant save feature
 	 */
 	public function saveInstant()
 	{

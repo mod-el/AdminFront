@@ -31,6 +31,7 @@ abstract class DataVisualizer
 		if (!isset($this->options['dummy'])) {
 			$dummy = $this->model->_ORM->create($this->options['element'] ?: 'Element', ['table' => $this->options['table']]);
 			$dummy->update([$dummy->settings['primary'] => '[n]']);
+			$this->model->_Admin->runFormThroughAdminCustomizations($dummy->getForm());
 			$this->options['dummy'] = $dummy;
 		}
 	}

@@ -23,7 +23,6 @@ class FormList extends DataVisualizer
 
 	/**
 	 * @param array $options
-	 * @throws \Model\Core\Exception
 	 */
 	public function render(array $options = [])
 	{
