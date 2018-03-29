@@ -470,10 +470,10 @@ function loadPageAids(request, get) {
 		sId = aids.sId;
 
 		if (history.replaceState) {
-			var url = document.location.href.replace(document.location.search, '');
+			let url = document.location.href.replace(document.location.search, '');
 			if (url.substr(-1) == '?')
 				url = url.substr(0, -1);
-			var queryString = changeGetParameter(document.location.search.substr(1), 'sId', sId);
+			let queryString = changeGetParameter(document.location.search.substr(1), 'sId', sId);
 			history.replaceState({
 				'request': currentAdminPage.split('/'),
 				'sId': sId,
@@ -481,9 +481,9 @@ function loadPageAids(request, get) {
 			}, '', url + '?' + queryString);
 		}
 
-		var toolbar = _('toolbar');
+		let toolbar = _('toolbar');
 
-		if (aids.actions.length == 0) {
+		if (aids.actions.length === 0) {
 			toolbar.style.display = 'none';
 		} else {
 			toolbar.style.display = 'block';
@@ -516,7 +516,7 @@ function loadPageAids(request, get) {
 			lightboxForm.innerHTML = '';
 
 		if (typeof aids.topForm !== 'undefined') {
-			var form = document.createElement('div');
+			let form = document.createElement('form');
 			form.id = 'topForm';
 			form.innerHTML = aids.topForm;
 			toolbar.appendChild(form);
