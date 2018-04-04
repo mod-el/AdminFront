@@ -10,7 +10,8 @@
 		"ResizeTable": ">=1.2.0",
 		"Popup": ">=1.0.0",
 		"WebAppManifest": ">=0.1.0",
-		"CSRF": ">=0.1.0"
+		"CSRF": ">=0.1.0",
+		"User": ">=1.2.0"
 	},
 	"js": [
 		"files/js.js",
