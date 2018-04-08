@@ -21,7 +21,6 @@
 <h2>Admin module install</h2>
 
 <form action="" method="post">
-	<?php $this->model->_CSRF->csrfInput(); ?>
     <hr/>
     <table>
         <tr>

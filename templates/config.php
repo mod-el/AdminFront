@@ -184,7 +184,6 @@
 <h2>Admin settings</h2>
 
 <form action="" method="post" name="configForm">
-	<?php $this->model->_CSRF->csrfInput(); ?>
     <hr/>
 	<?php
 	$template = $this->options['config']['template'];
