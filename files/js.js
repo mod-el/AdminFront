@@ -612,12 +612,12 @@ function changeSorting(event, column) {
 		});
 	} else if (event.ctrlKey) {
 		if (!sortedBy.some(function (s, idx) {
-				if (s[0] === column) {
-					sortedBy[idx][1] = sortedBy[idx][1] === 'ASC' ? 'DESC' : 'ASC';
-					return true;
-				}
-				return false;
-			})) {
+			if (s[0] === column) {
+				sortedBy[idx][1] = sortedBy[idx][1] === 'ASC' ? 'DESC' : 'ASC';
+				return true;
+			}
+			return false;
+		})) {
 			sortedBy.push([
 				column,
 				'ASC'
@@ -892,10 +892,13 @@ function loadElement(page, id, history_push) {
 		let formData = loadElementData(page, id);
 
 		promise = Promise.all([formTemplate, formData]).then(responses => {
-			hideLoadingMask();
-
 			return checkSubPages().then(() => {
-				return fillAdminForm(responses[1]);
+				return new Promise(resolve => {
+					setTimeout(() => {
+						hideLoadingMask();
+						resolve(fillAdminForm(responses[1]));
+					}, 500);
+				});
 			});
 		});
 	} else {
@@ -1582,7 +1585,11 @@ function loadSubPage(cont_name, p) {
 			request.push(0);
 
 		return cont.loading().ajax(adminPrefix + request.join('/') + '/' + p, '', '').then(function () {
-			return fillAdminForm();
+			return new Promise(resolve => {
+				setTimeout(() => {
+					resolve(fillAdminForm);
+				}, 500);
+			});
 		}).then(checkSubPages);
 	} else {
 		return new Promise(function (resolve) {
