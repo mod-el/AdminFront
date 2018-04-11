@@ -28,7 +28,7 @@ abstract class DataVisualizer
 
 		$this->options = array_merge($this->defaultOptions, $options);
 
-		if (!isset($this->options['dummy'])) {
+		if ($this->options['table'] and !isset($this->options['dummy'])) {
 			$dummy = $this->model->_ORM->create($this->options['element'] ?: 'Element', ['table' => $this->options['table']]);
 			$dummy->update([$dummy->settings['primary'] => '[n]']);
 			$this->model->_Admin->runFormThroughAdminCustomizations($dummy->getForm());
