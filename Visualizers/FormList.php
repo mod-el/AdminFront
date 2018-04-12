@@ -39,14 +39,19 @@ class FormList extends DataVisualizer
 		$dummyForm = $this->getRowForm($this->options['dummy'], $options);
 
 		if ($options['type'] === 'row') {
+			$mainDeletePrivilege = $this->model->_Admin->canUser('D');
+
 			echo '<div class="rob-field-cont">';
-			if (!$this->options['print'])
+			if ($mainDeletePrivilege and !$this->options['print']) {
 				echo '<div class="rob-field" style="width: 5%"></div>';
-			echo '<div class="rob-field" style="width: 95%">';
+				echo '<div class="rob-field" style="width: 95%">';
+			} else {
+				echo '<div class="rob-field" style="width: 100%">';
+			}
 			echo '<div class="rob-field-cont sublist-row">';
 			$template = $dummyForm->getTemplate(['one-row' => true]);
 			foreach ($template as $f) {
-				echo '<div class="rob-field" style="width: ' . $f['w'] . '%'.($this->options['print'] ? ';font-weight: bold' : '').'">' . entities($dummyForm[$f['field']]->getLabel()) . '</div>';
+				echo '<div class="rob-field" style="width: ' . $f['w'] . '%' . ($this->options['print'] ? ';font-weight: bold' : '') . '">' . entities($dummyForm[$f['field']]->getLabel()) . '</div>';
 			}
 			echo '</div>';
 			echo '</div>';
@@ -66,7 +71,9 @@ class FormList extends DataVisualizer
 
 		echo '</div>';
 
-		if ($options['add-button'] and !$this->options['print']) {
+		$mainAddPrivilege = $this->model->_Admin->canUser('D');
+
+		if ($mainAddPrivilege and $options['add-button'] and !$this->options['print']) {
 			if ($options['add-button'] === true) {
 				?>
                 <div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow('<?= entities($this->options['name']) ?>')">
@@ -98,6 +105,8 @@ class FormList extends DataVisualizer
 
 	protected function renderRow(Element $el, Form $form, array $options)
 	{
+		$mainDeletePrivilege = $this->model->_Admin->canUser('D');
+
 		if (($options['type'] === 'inner-template' or $options['type'] === 'outer-template') and $options['template'] === null)
 			$options['template'] = $this->options['name'];
 
@@ -111,18 +120,19 @@ class FormList extends DataVisualizer
 		if ($options['template'] and $options['type'] === 'outer-template') {
 			include($template_path);
 		} else {
-			if (!$this->options['print']) {
+			if ($mainDeletePrivilege and !$this->options['print']) {
 				?>
                 <div class="rob-field" style="width: 5%; text-align: center">
                     <a href="#" onclick="if(confirm('Sicuro di voler eliminare questa riga?')) sublistDeleteRow('<?= entities($this->options['name']) ?>', '<?= entities($el[$el->settings['primary']]) ?>'); return false"><i class="fas fa-trash" aria-label="Delete" style="color: #000"></i></a>
-                    <input type="hidden" name="ch-<?= entities($this->options['name']) ?>-<?= entities($el[$el->settings['primary']]) ?>" value="1"/>
-                </div><div class="rob-field" style="width: 95%">
+                </div>
+                <div class="rob-field" style="width: 95%">
 				<?php
 			} else {
 				?>
                 <div class="rob-field" style="width: 100%">
 				<?php
 			}
+			echo '<input type="hidden" name="ch-' . entities($this->options['name'] . '-' . $el[$el->settings['primary']]) . '" value="1"/>';
 			if ($options['template'] and $options['type'] === 'inner-template') {
 				include($template_path);
 			} else {
@@ -191,10 +201,13 @@ class FormList extends DataVisualizer
 					if (!is_numeric($id) and substr($id, 0, 3) === 'new') {
 						$el = $this->model->_ORM->create($this->options['element'] ?: 'Element', ['table' => $this->options['table']]);
 						$data = array_merge($this->model->_Admin->options['where'], $data);
-						$el->save($data);
+						$this->model->_Admin->saveElement($data, null, $el);
 					} else {
 						$el = $this->model->_ORM->one($this->options['element'] ?: 'Element', $id, ['table' => $this->options['table']]);
-						$el->save($data);
+						$savingData = $el->filterDataToSave($data);
+						if (!$savingData)
+							continue;
+						$this->model->_Admin->saveElement($savingData, null, $el);
 					}
 				}
 
@@ -202,8 +215,7 @@ class FormList extends DataVisualizer
 					if (!is_numeric($id))
 						continue;
 
-					$el = $this->model->_ORM->one($this->options['element'] ?: 'Element', $id, ['table' => $this->options['table']]);
-					$el->delete();
+					$this->model->_Admin->delete($id);
 				}
 
 				$this->model->_Db->commit();
