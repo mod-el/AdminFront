@@ -82,7 +82,7 @@
 		div.id = 'page-' + idx;
 		div.style.paddingLeft = (lvl * 25) + 'px';
 		div.innerHTML = `<div class="admin-page-form">
-            [<a href="#" onclick="if(confirm('Are you sure?')) deleteAdminPage(` + idx + `); return false"> x </a>]
+            [<a href="#" onclick="if(confirm('Are you sure?')) deleteAdminPage('` + idx + `'); return false"> x </a>]
             <input type="text" name="name" data-parent="` + parent_idx + `" data-idx="` + idx + `" />
             Rule: <input type="text" name="rule" data-parent="` + parent_idx + `" data-idx="` + idx + `" />
             Page: <select name="page" data-parent="` + parent_idx + `" data-idx="` + idx + `"></select>
