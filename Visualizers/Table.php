@@ -101,6 +101,10 @@ class Table extends DataVisualizer
 		} else {
 			$row['color'] = $colorRule;
 		}
+
+		if (!$row['color'] and $row['background'])
+			$row['color'] = $this->readableColour($row['background']);
+
 		foreach ($row['columns'] as $column_id => $c) {
 			if (isset($columns[$column_id]['color']) and $columns[$column_id]['color']) {
 				if (!is_string($columns[$column_id]['color']) and is_callable($columns[$column_id]['color'])) {
@@ -111,6 +115,9 @@ class Table extends DataVisualizer
 			} else {
 				$row['columns'][$column_id]['color'] = false;
 			}
+
+			if (!$row['columns'][$column_id]['color'] and $row['columns'][$column_id]['background'])
+				$row['columns'][$column_id]['color'] = $this->readableColour($row['columns'][$column_id]['background']);
 		}
 
 		return $row;
@@ -419,5 +426,57 @@ class Table extends DataVisualizer
 	public function print(array $options = [])
 	{
 		$this->render(array_merge($options, ['template' => 'print-table']));
+	}
+
+	protected function readableColour(string $bg)
+	{
+		if (!$bg)
+			return false;
+
+		if ($bg{0} !== '#' or (strlen($bg) !== 7 and strlen($bg) !== 4)) {
+			$colors = [
+				'black' => '#000000',
+				'white' => '#FFFFFF',
+				'red' => '#FF0000',
+				'green' => '#008000',
+				'blue' => '#0000FF',
+				'gray' => '#808080',
+				'brown' => '#a52a2a',
+				'maroon' => '#800000',
+			];
+
+			if (isset($colors[$bg])) {
+				$bg = $colors[$bg];
+			} else {
+				return false;
+			}
+		}
+
+		$bg = substr($bg, 1);
+
+		switch (strlen($bg)) {
+			case 6:
+				$r = hexdec(substr($bg, 0, 2));
+				$g = hexdec(substr($bg, 2, 2));
+				$b = hexdec(substr($bg, 4, 2));
+				break;
+			case 3:
+				$r = hexdec(substr($bg, 0, 1) . substr($bg, 0, 1));
+				$g = hexdec(substr($bg, 1, 1) . substr($bg, 1, 1));
+				$b = hexdec(substr($bg, 2, 1) . substr($bg, 2, 1));
+				break;
+		}
+
+		$squared_contrast = (
+			$r * $r * .299 +
+			$g * $g * .587 +
+			$b * $b * .114
+		);
+
+		if ($squared_contrast > pow(130, 2)) {
+			return '#000000';
+		} else {
+			return '#FFFFFF';
+		}
 	}
 }
