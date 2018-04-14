@@ -100,3 +100,94 @@ function saveFormList() {
 		});
 	});
 }
+
+function sublistAddRow(name, id, trigger) {
+	if (typeof trigger === 'undefined')
+		trigger = true;
+
+	let form = _('adminForm');
+
+	if (typeof id === 'undefined' || id === null) {
+		let next = 0;
+		while (typeof form['ch-' + name + '-new' + next] !== 'undefined')
+			next++;
+
+		id = 'new' + next;
+	}
+
+	let container = _('cont-ch-' + name);
+	if (!container) {
+		return new Promise(function (resolve) {
+			resolve(false);
+		});
+	}
+
+	let div = document.createElement('div');
+	div.className = container.getAttribute('data-rows-class');
+	div.id = 'cont-ch-' + name + '-' + id;
+	div.innerHTML = _('sublist-template-' + name).innerHTML.replace(/\[n\]/g, id);
+
+	let promise = afterMutation((div => {
+		return () => {
+			div.querySelectorAll('input, select, textarea').forEach(f => {
+				if (!f.name)
+					return;
+
+				f.setAttribute('data-filled', '1');
+			});
+			return monitorFields();
+		};
+	})(div));
+
+	if (addbutton = _('cont-ch-' + name + '-addbutton')) {
+		container.insertBefore(div, addbutton);
+	} else {
+		container.appendChild(div);
+	}
+
+	changedValues['ch-' + name + '-' + id] = 1;
+
+	if (trigger && _('links-history')) {
+		changeHistory.push({
+			'sublist': name,
+			'action': 'new',
+			'id': id
+		});
+
+		rebuildHistoryBox();
+	}
+
+	return promise.then(function () {
+		return id;
+	});
+}
+
+function sublistDeleteRow(name, id, trigger) {
+	if (typeof trigger === 'undefined')
+		trigger = true;
+
+	let form = _('adminForm');
+	if (typeof form['ch-' + name + '-' + id] !== 'undefined')
+		form['ch-' + name + '-' + id].setValue(0, false);
+	_('cont-ch-' + name + '-' + id).style.display = 'none';
+
+	changedValues['ch-' + name + '-' + id] = 0;
+
+	if (trigger && _('links-history')) {
+		changeHistory.push({
+			'sublist': name,
+			'action': 'delete',
+			'id': id
+		});
+
+		rebuildHistoryBox();
+	}
+}
+
+function sublistRestoreRow(name, id) {
+	let form = _('adminForm');
+	if (typeof form['ch-' + name + '-' + id] !== 'undefined')
+		form['ch-' + name + '-' + id].setValue(1, false);
+	_('cont-ch-' + name + '-' + id).style.display = 'block';
+	changedValues['ch-' + name + '-' + id] = 1;
+}
