@@ -166,7 +166,7 @@ class FormList extends DataVisualizer
 					unset($actions[$idx]);
 					break;
 				case 'new':
-					$act['action'] = 'sublistAddRow(\'list\', null, false); return false';
+					$act['action'] = 'sublistAddRow(\'list\'); return false';
 					break;
 			}
 		}

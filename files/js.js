@@ -1094,6 +1094,9 @@ function changedMonitoredField(f) {
 }
 
 function rebuildHistoryBox() {
+	if (!_('links-history'))
+		return false;
+
 	_('links-history').innerHTML = '<a href="#" onclick="historyGoToStep(\'reset\'); return false" class="link-history">Situazione iniziale</a>';
 
 	changeHistory.forEach(function (i, idx) {

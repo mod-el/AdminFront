@@ -83,6 +83,7 @@ function saveFormList() {
 		return ajax(adminPrefix + currentAdminPage.split('/')[0] + '/saveFormList', 'ajax', 'data=' + encodeURIComponent(JSON.stringify(list)) + '&deleted=' + encodeURIComponent(JSON.stringify(deleted)) + '&c_id=' + c_id).then(r => {
 			saving = false;
 			restoreSaveButton();
+			historyWipe();
 
 			if (typeof r !== 'object') {
 				alert(r);
@@ -147,7 +148,7 @@ function sublistAddRow(name, id, trigger) {
 
 	changedValues['ch-' + name + '-' + id] = 1;
 
-	if (trigger && _('links-history')) {
+	if (trigger) {
 		changeHistory.push({
 			'sublist': name,
 			'action': 'new',
@@ -181,7 +182,7 @@ function sublistDeleteRow(name, id, trigger) {
 
 	changedValues['ch-' + name + '-' + id] = 0;
 
-	if (trigger && _('links-history')) {
+	if (trigger) {
 		changeHistory.push({
 			'sublist': name,
 			'action': 'delete',
