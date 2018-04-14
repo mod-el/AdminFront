@@ -157,9 +157,17 @@ function sublistAddRow(name, id, trigger) {
 		rebuildHistoryBox();
 	}
 
-	return promise.then(function () {
-		return id;
-	});
+	return promise.then((div => {
+		return () => {
+			let firstInput = div.querySelector('input:not([type="hidden"])');
+			if (firstInput) {
+				firstInput.focus();
+				if (firstInput.select)
+					firstInput.select();
+			}
+			return id;
+		};
+	})(div));
 }
 
 function sublistDeleteRow(name, id, trigger) {
