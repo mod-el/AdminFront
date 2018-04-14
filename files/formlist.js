@@ -20,13 +20,29 @@ function getSublistArray(name) {
 		row.querySelectorAll('input[name^="ch-"], select[name^="ch-"], textarea[name^="ch-"]').forEach(input => {
 			if (input === mainInput)
 				return;
+
 			let fieldName = input.name.substr(3);
-			fieldName = fieldName.substr(0, fieldName.length - ('-' + name + '-' + id).length);
-			promises.push(input.getValue().then((fieldName => {
-				return v => {
-					list[id][fieldName] = v;
-				};
-			})(fieldName)));
+
+			if (input.getAttribute('data-multilang')) {
+				let lang = input.getAttribute('data-lang');
+				fieldName = fieldName.substr(0, fieldName.length - ('-' + name + '-' + id + '-' + lang).length);
+
+				if (typeof list[id][fieldName] === 'undefined')
+					list[id][fieldName] = {};
+
+				promises.push(input.getValue().then(((fieldName, lang) => {
+					return v => {
+						list[id][fieldName][lang] = v;
+					};
+				})(fieldName, lang)));
+			} else {
+				fieldName = fieldName.substr(0, fieldName.length - ('-' + name + '-' + id).length);
+				promises.push(input.getValue().then((fieldName => {
+					return v => {
+						list[id][fieldName] = v;
+					};
+				})(fieldName)));
+			}
 		});
 	});
 
