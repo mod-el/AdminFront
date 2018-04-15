@@ -78,7 +78,7 @@ function saveFormList() {
 	changeSaveButton();
 	resize();
 
-	getSublistArray('list').then(list => {
+	return getSublistArray('list').then(list => {
 		let deleted = getDeletedFromSublist('list');
 		return ajax(adminPrefix + currentAdminPage.split('/')[0] + '/saveFormList', 'ajax', 'data=' + encodeURIComponent(JSON.stringify(list)) + '&deleted=' + encodeURIComponent(JSON.stringify(deleted)) + '&c_id=' + c_id).then(r => {
 			saving = false;
