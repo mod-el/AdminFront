@@ -68,19 +68,19 @@ abstract class DataVisualizer
 		$fields = [];
 
 		$tableModel = $this->model->_Db->getTable($this->options['table']);
-		$stripColumns = array_merge([
+		$excludeColumns = array_merge([
 			$tableModel->primary,
 			'zk_deleted',
-		], ($this->options['strip'] ?? []));
+		], ($this->options['$exclude'] ?? []));
 
 		if ($this->options['element']) {
 			$elementData = $this->model->_ORM->getElementData($this->options['element']);
 			if ($elementData and $elementData['order_by'])
-				$stripColumns[] = $elementData['order_by']['field'];
+				$excludeColumns[] = $elementData['order_by']['field'];
 		}
 
 		foreach ($tableModel->columns as $k => $col) {
-			if (in_array($k, $stripColumns))
+			if (in_array($k, $excludeColumns))
 				continue;
 
 			$fields[] = $k;
@@ -91,7 +91,7 @@ abstract class DataVisualizer
 			$mlTable = $this->options['table'] . $mlTableOptions['suffix'];
 			$mlTableModel = $this->model->_Db->getTable($mlTable);
 			foreach ($mlTableModel->columns as $k => $col) {
-				if ($k === $mlTableModel->primary or isset($fields[$k]) or $k === $mlTableOptions['keyfield'] or $k === $mlTableOptions['lang'] or in_array($k, $stripColumns))
+				if ($k === $mlTableModel->primary or isset($fields[$k]) or $k === $mlTableOptions['keyfield'] or $k === $mlTableOptions['lang'] or in_array($k, $excludeColumns))
 					continue;
 
 				$fields[] = $k;

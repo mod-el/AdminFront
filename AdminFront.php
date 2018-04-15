@@ -752,7 +752,7 @@ class AdminFront extends Module
 			'table' => $childrenOptions['table'],
 			'element' => $childrenOptions['element'],
 			'fields' => $options['fields'] ?? [],
-			'strip' => (isset($childrenOptions['field'], $childrenOptions['type']) and $childrenOptions['type'] === 'multiple' and $childrenOptions['field']) ? [$childrenOptions['field']] : [],
+			'exclude' => (isset($childrenOptions['field'], $childrenOptions['type']) and $childrenOptions['type'] === 'multiple' and $childrenOptions['field']) ? [$childrenOptions['field']] : [],
 			'dummy' => $this->model->element->create($options['children'], '[n]'),
 		];
 
