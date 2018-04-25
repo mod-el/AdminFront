@@ -537,6 +537,7 @@ function loadPageAids(request, get) {
 						case 'checkbox':
 						case 'radio':
 						case 'hidden':
+						case 'date':
 							el.addEventListener('change', function () {
 								search();
 							});
