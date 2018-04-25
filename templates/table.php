@@ -69,7 +69,7 @@
 				$onclick = '';
 			}
 			?>
-            <div<?php
+            <div class="results-table-row-cont"<?php
 			if ($options['draggable'] and !$options['sortedBy']) {
 				echo ' data-draggable-id="' . entities($id) . '" data-draggable-index="' . entities($el['element'][$options['draggable']['field']]) . '"';
 				if ($options['draggable']['depending_on']) {
@@ -141,52 +141,59 @@
 
 	if (!empty($totals)) {
 		?>
-        <div class="results-table-row" style="top: 0px" id="totals-row">
-            <div class="special-cell">
-                <div></div>
-            </div>
-			<?php
-			if ($mainDeletePrivilege) {
-				?>
+        <div class="results-table-row-cont">
+            <div class="results-table-row" style="top: 0" id="totals-row">
                 <div class="special-cell">
                     <div></div>
                 </div>
 				<?php
-			}
-			$free_cells = 0;
-			foreach ($columns as $column_id => $f) {
-				if (isset($totals[$column_id]))
-					break;
-				$free_cells++;
-			}
-
-			$cc = 0;
-			$totals_width = 0;
-			foreach ($columns as $column_id => $f) {
-				$cc++;
-
-				if ($cc <= $free_cells) {
-					$totals_width += $this->model->_ResizeTable->widths[$column_id];
-					if ($cc == $free_cells) {
-						?>
-                    <div style="width: <?= $totals_width ?>px">
-                            <div style="text-align: right; font-weight: bold">Totali:</div></div><?php
-					}
-					continue;
+				if ($mainDeletePrivilege) {
+					?>
+                    <div class="special-cell">
+                        <div></div>
+                    </div>
+					<?php
+				}
+				$free_cells = 0;
+				foreach ($columns as $column_id => $f) {
+					if (isset($totals[$column_id]))
+						break;
+					$free_cells++;
 				}
 
-				?>
-            <div style="width: <?= $this->model->_ResizeTable->widths[$column_id] ?>px" data-column="<?= $column_id ?>">
-                <div><?php
-					if (isset($totals[$column_id])) {
-						if ($f['price'])
-							echo makePrice($totals[$column_id]);
-						else
-							echo $totals[$column_id];
+				$cc = 0;
+				$totals_width = 0;
+				foreach ($columns as $column_id => $f) {
+					$cc++;
+
+					if ($cc <= $free_cells) {
+						$totals_width += $this->model->_ResizeTable->widths[$column_id];
+						if ($cc == $free_cells) {
+							?>
+                            <div style="width: <?= $totals_width ?>px">
+                                <div style="text-align: right; font-weight: bold">Totali:</div>
+                            </div>
+							<?php
+						}
+						continue;
 					}
-					?></div></div><?php
-			}
-			?>
+					?>
+                    <div style="width: <?= $this->model->_ResizeTable->widths[$column_id] ?>px" data-column="<?= $column_id ?>">
+                        <div>
+							<?php
+							if (isset($totals[$column_id])) {
+								if ($f['price'])
+									echo makePrice($totals[$column_id]);
+								else
+									echo $totals[$column_id];
+							}
+							?>
+                        </div>
+                    </div>
+					<?php
+				}
+				?>
+            </div>
         </div>
 		<?php
 	}

@@ -49,6 +49,7 @@ class Table extends DataVisualizer
 		foreach ($columns as $k => $c) {
 			if ($c['total'] and $c['field']) {
 				$totals[$k] = $this->model->_Db->select($this->options['table'], $this->model->_Admin->usedWhere, [
+					'joins' => $this->model->_Admin->options['joins'],
 					'sum' => $c['field'],
 				]);
 			}
