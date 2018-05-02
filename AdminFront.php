@@ -240,7 +240,6 @@ class AdminFront extends Module
 				], $p);
 			}
 		}
-		$pages = array_merge($pages, Globals::$data['adminAdditionalPages']);
 
 		$usersAdminPage = 'AdminUsers';
 		if (isset($config['url']) and is_array($config['url'])) {
