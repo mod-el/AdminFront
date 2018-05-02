@@ -1378,19 +1378,6 @@ function allInOnePage() {
 	loadAdminPage([currentAdminPage.split('/')[0]], get);
 }
 
-function switchAllFieldsLang(lang) {
-	document.querySelectorAll('.lang-switch-cont [data-lang]').forEach(function (el) {
-		if (el.getAttribute('data-lang') === lang)
-			el.addClass('selected');
-		else
-			el.removeClass('selected');
-	});
-
-	document.querySelectorAll('.multilang-field-container[data-name]').forEach(function (f) {
-		switchFieldLang(f.getAttribute('data-name'), lang);
-	});
-}
-
 function setLoadingBar(percentage) {
 	_('main-loading-bar').style.width = percentage + '%';
 }
