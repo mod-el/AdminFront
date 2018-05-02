@@ -251,11 +251,17 @@
             <td>
                 Users Table
             </td>
+            <td>
+                Users Element
+            </td>
+            <td>
+                Users Admin Page
+            </td>
+            <td>
+            </td>
         </tr>
 		<?php
 		foreach ($this->options['config']['url'] as $idx => $url) {
-			if (!is_array($url))
-				$url = array('path' => $url, 'table' => 'utenti_admin');
 			?>
             <tr>
                 <td>
@@ -266,6 +272,12 @@
                 </td>
                 <td>
                     <input type="text" name="<?= $idx ?>-table" value="<?= entities($url['table']) ?>"/>
+                </td>
+                <td>
+                    <input type="text" name="<?= $idx ?>-element" value="<?= entities($url['element'] ?? '') ?>"/>
+                </td>
+                <td>
+                    <input type="text" name="<?= $idx ?>-admin-page" value="<?= entities($url['admin-page'] ?? '') ?>"/>
                 </td>
                 <td>
                     [<a href="#" onclick="configPages('<?= $idx ?>'); return false"> config pages </a>]
@@ -284,6 +296,12 @@
             </td>
             <td>
                 <input type="text" name="table"/>
+            </td>
+            <td>
+                <input type="text" name="element"/>
+            </td>
+            <td>
+                <input type="text" name="admin-page"/>
             </td>
         </tr>
     </table>

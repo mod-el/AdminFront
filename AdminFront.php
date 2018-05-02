@@ -228,8 +228,38 @@ class AdminFront extends Module
 			}
 		}
 
-		if (isset(Globals::$data['adminAdditionalPages']))
-			$pages = array_merge($pages, Globals::$data['adminAdditionalPages']);
+		if (isset(Globals::$data['adminAdditionalPages'])) {
+			foreach (Globals::$data['adminAdditionalPages'] as $p) {
+				$pages[] = array_merge([
+					'name' => '',
+					'rule' => '',
+					'page' => null,
+					'visualizer' => 'Table',
+					'mobile-visualizer' => 'Table',
+					'sub' => [],
+				], $p);
+			}
+		}
+		$pages = array_merge($pages, Globals::$data['adminAdditionalPages']);
+
+		$usersAdminPage = 'AdminUsers';
+		if (isset($config['url']) and is_array($config['url'])) {
+			foreach ($config['url'] as $u) {
+				if (is_array($u) and $u['path'] == $this->url and ($u['admin-page'] ?? '')) {
+					$usersAdminPage = $u['admin-page'];
+					break;
+				}
+			}
+		}
+
+		$pages[] = [
+			'name' => 'Users',
+			'page' => $usersAdminPage,
+			'rule' => 'admin-users',
+			'visualizer' => 'Table',
+			'mobile-visualizer' => 'Table',
+			'sub' => [],
+		];
 
 		return $pages;
 	}

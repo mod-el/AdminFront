@@ -91,6 +91,10 @@ class Config extends Module_Config
 					$url['path'] = $data[$idx . '-path'];
 				if (isset($data[$idx . '-table']))
 					$url['table'] = $data[$idx . '-table'];
+				if (isset($data[$idx . '-element']))
+					$url['element'] = $data[$idx . '-element'];
+				if (isset($data[$idx . '-admin-page']))
+					$url['admin-page'] = $data[$idx . '-admin-page'];
 				if (isset($data[$idx . '-pages']))
 					$url['pages'] = $this->parsePages(json_decode($data[$idx . '-pages'], true));
 				$config['url'][$idx] = $url;
@@ -108,6 +112,8 @@ class Config extends Module_Config
 			$config['url'][] = [
 				'path' => $data['path'],
 				'table' => $data['table'],
+				'element' => $data['element'],
+				'admin-page' => $data['admin-page'],
 				'pages' => [],
 			];
 		}
