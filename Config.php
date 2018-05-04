@@ -112,8 +112,8 @@ class Config extends Module_Config
 			$config['url'][] = [
 				'path' => $data['path'],
 				'table' => $data['table'],
-				'element' => $data['element'],
-				'admin-page' => $data['admin-page'],
+				'element' => '',
+				'admin-page' => '',
 				'pages' => [],
 			];
 		}
