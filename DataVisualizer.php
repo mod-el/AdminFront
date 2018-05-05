@@ -71,7 +71,7 @@ abstract class DataVisualizer
 		$excludeColumns = array_merge([
 			$tableModel->primary,
 			'zk_deleted',
-		], ($this->options['$exclude'] ?? []));
+		], ($this->options['exclude'] ?? []));
 
 		if ($this->options['element']) {
 			$elementData = $this->model->_ORM->getElementData($this->options['element']);
