@@ -1013,7 +1013,7 @@ function initializeEmptyForm() {
 			}
 		})(f.name)).then((function (f) {
 			return function (fieldValue) {
-				if (fieldValue)
+				if (fieldValue && f.name)
 					changedValues[f.name] = fieldValue;
 				return f.setValue(fieldValue).then(() => {
 					f.setAttribute('data-filled', '1');
