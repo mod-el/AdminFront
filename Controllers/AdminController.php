@@ -117,7 +117,8 @@ class AdminController extends Controller
 								if (isset($_GET['print'])) {
 									$this->model->_Admin->form->options['print'] = true;
 								} else {
-									$this->model->_Admin->form->reset();
+									if($this->model->element->exists())
+										$this->model->_Admin->form->reset();
 								}
 
 								$checkCustomTemplate = Autoloader::searchFile('template', $dir . $request[0]);
