@@ -278,10 +278,13 @@ class Table extends DataVisualizer
 
 			if (isset($form[$cOpt['display']])) {
 				$d = $form[$cOpt['display']];
-				$c['text'] = $d->getText($config);
+				$c['text'] = $d->getText(array_merge($config, ['preview' => true]));
 			} else {
 				$c['text'] = $el[$cOpt['display']];
 			}
+
+			if (strlen($c['text']) > 150)
+				$c['text'] = textCutOff($c['text'], 150);
 
 			if ($this->options['columns-callback'] and is_callable($this->options['columns-callback']))
 				$c['text'] = call_user_func($this->options['columns-callback'], $c['text']);
