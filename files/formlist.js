@@ -128,18 +128,6 @@ function sublistAddRow(name, id, trigger) {
 	div.id = 'cont-ch-' + name + '-' + id;
 	div.innerHTML = _('sublist-template-' + name).innerHTML.replace(/\[n\]/g, id);
 
-	let promise = afterMutation((div => {
-		return () => {
-			div.querySelectorAll('input, select, textarea').forEach(f => {
-				if (!f.name)
-					return;
-
-				f.setAttribute('data-filled', '1');
-			});
-			return monitorFields();
-		};
-	})(div));
-
 	if (addbutton = _('cont-ch-' + name + '-addbutton')) {
 		container.insertBefore(div, addbutton);
 	} else {
@@ -158,15 +146,24 @@ function sublistAddRow(name, id, trigger) {
 		rebuildHistoryBox();
 	}
 
-	return promise.then((div => {
+	return changedHtml().then((div => {
 		return () => {
-			let firstInput = div.querySelector('input:not([type="hidden"])');
-			if (firstInput) {
-				firstInput.focus();
-				if (firstInput.select)
-					firstInput.select();
-			}
-			return id;
+			div.querySelectorAll('input, select, textarea').forEach(f => {
+				if (!f.name)
+					return;
+
+				f.setAttribute('data-filled', '1');
+			});
+
+			return monitorFields().then(() => {
+				let firstInput = div.querySelector('input:not([type="hidden"])');
+				if (firstInput) {
+					firstInput.focus();
+					if (firstInput.select)
+						firstInput.select();
+				}
+				return id;
+			});
 		};
 	})(div));
 }
@@ -191,6 +188,8 @@ function sublistDeleteRow(name, id, trigger) {
 
 		rebuildHistoryBox();
 	}
+
+	return changedHtml();
 }
 
 function sublistRestoreRow(name, id) {
@@ -199,4 +198,6 @@ function sublistRestoreRow(name, id) {
 		form['ch-' + name + '-' + id].setValue(1, false);
 	_('cont-ch-' + name + '-' + id).style.display = 'block';
 	changedValues['ch-' + name + '-' + id] = 1;
+
+	return changedHtml();
 }

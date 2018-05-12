@@ -360,7 +360,9 @@ function loadPage(url, get, post, deleteContent) {
 			resize();
 			if (_('results-table'))
 				tableEvents();
-			return response;
+			return changedHtml().then(() => {
+				return response;
+			});
 		}
 	})(pageLoadingHash));
 }
@@ -894,12 +896,8 @@ function loadElement(page, id, history_push) {
 
 		promise = Promise.all([formTemplate, formData]).then(responses => {
 			return checkSubPages().then(() => {
-				return new Promise(resolve => {
-					setTimeout(() => {
-						hideLoadingMask();
-						resolve(fillAdminForm(responses[1]));
-					}, 500);
-				});
+				hideLoadingMask();
+				return fillAdminForm(responses[1]);
 			});
 		});
 	} else {
@@ -1484,7 +1482,7 @@ function loadSubPage(cont_name, p) {
 		if (request.length === 2)
 			request.push(0);
 
-		return cont.loading().ajax(adminPrefix + request.join('/') + '/' + p, '', '').then(function () {
+		return cont.loading().ajax(adminPrefix + request.join('/') + '/' + p, '', '').then(() => {
 			return new Promise(resolve => {
 				setTimeout(() => {
 					resolve(fillAdminForm);
@@ -1492,7 +1490,7 @@ function loadSubPage(cont_name, p) {
 			});
 		}).then(checkSubPages);
 	} else {
-		return new Promise(function (resolve) {
+		return new Promise(resolve => {
 			resolve();
 		});
 	}
