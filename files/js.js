@@ -1343,13 +1343,14 @@ async function save() {
 
 			saving = false;
 			restoreSaveButton();
-			historyWipe();
 
 			if (typeof r !== 'object') {
 				alert(r);
 				return false;
 			}
 			if (r.status === 'ok') {
+				historyWipe();
+
 				return loadElement(request[0], r.id, history_push).then(function () {
 					inPageMessage('Salvataggio correttamente effettuato.', 'green-message');
 				});
