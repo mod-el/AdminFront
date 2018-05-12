@@ -154,18 +154,18 @@ function sublistAddRow(name, id, trigger) {
 
 				f.setAttribute('data-filled', '1');
 			});
-
-			return monitorFields().then(() => {
-				let firstInput = div.querySelector('input:not([type="hidden"])');
-				if (firstInput) {
-					firstInput.focus();
-					if (firstInput.select)
-						firstInput.select();
-				}
-				return id;
-			});
 		};
-	})(div));
+	})(div)).then(monitorFields).then(div => {
+		return () => {
+			let firstInput = div.querySelector('input:not([type="hidden"])');
+			if (firstInput) {
+				firstInput.focus();
+				if (firstInput.select)
+					firstInput.select();
+			}
+			return id;
+		};
+	});
 }
 
 function sublistDeleteRow(name, id, trigger) {
