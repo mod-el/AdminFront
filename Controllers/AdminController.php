@@ -56,7 +56,7 @@ class AdminController extends Controller
 								$options['p'] = 1;
 								$options['perPage'] = $_GET['limit'] ?? 0;
 							} else {
-								$options['perPage'] = isset($this->options['perPage']) ? $this->options['perPage'] : 20;
+								$options['perPage'] = $this->model->_Admin->options['perPage'] ?? 20;
 							}
 
 							if ($this->model->getInput('filters')) {
