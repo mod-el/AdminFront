@@ -543,14 +543,15 @@ class AdminFront extends Module
 			[
 				'name' => 'Home',
 				'url' => '',
+				'get' => '',
 			],
 		];
-		$this->getBreadcrumbs($breadcrumbs);
+		$this->getBreadcrumbs($breadcrumbs, $request);
 
 		$breadcrumbsHtml = [];
 		$prefix = $this->getUrlPrefix();
 		foreach ($breadcrumbs as $b) {
-			$breadcrumbsHtml[] = $b['url'] !== null ? '<a href="' . $prefix . $b['url'] . '" onclick="loadAdminPage([\'' . $b['url'] . '\']); return false">' . entities($b['name']) . '</a>' : '<a>' . entities($b['name']) . '</a>';
+			$breadcrumbsHtml[] = $b['url'] !== null ? '<a href="' . $prefix . $b['url'] . '" onclick="loadAdminPage([\'' . $b['url'] . '\'], \'' . $b['get'] . '\'); return false">' . entities($b['name']) . '</a>' : '<a>' . entities($b['name']) . '</a>';
 		}
 		$breadcrumbsHtml = implode(' -&gt; ', $breadcrumbsHtml);
 
@@ -580,20 +581,38 @@ class AdminFront extends Module
 	 * Reconstructs page hierarchy in an array, for breadcrumbs building
 	 *
 	 * @param array $breadcrumbs
-	 * * @param array $pages
+	 * @param array $request
+	 * @param array $pages
 	 * @return bool
 	 */
-	public function getBreadcrumbs(array &$breadcrumbs, array $pages = null): bool
+	public function getBreadcrumbs(array &$breadcrumbs, array $request, array $pages = null): bool
 	{
 		if ($pages === null)
 			$pages = $this->getPages();
 
 		foreach ($pages as $p) {
-			if (isset($p['rule']) and $p['rule'] == $this->request[0]) {
+			if (isset($p['rule']) and $p['rule'] === $request[0]) {
 				$breadcrumbs[] = [
 					'name' => $p['name'],
 					'url' => $p['rule'],
+					'get' => '',
 				];
+				if (isset($request[1]) and $request[1] === 'edit') {
+					if (isset($request[2])) {
+						$breadcrumbs[count($breadcrumbs) - 1]['get'] = 'goTo=' . urlencode($request[2]);
+						$breadcrumbs[] = [
+							'name' => 'Edit',
+							'url' => null,
+							'get' => '',
+						];
+					} else {
+						$breadcrumbs[] = [
+							'name' => 'New',
+							'url' => null,
+							'get' => '',
+						];
+					}
+				}
 				return true;
 			}
 			if (isset($p['sub'])) {
@@ -601,8 +620,9 @@ class AdminFront extends Module
 				$temp[] = [
 					'name' => $p['name'],
 					'url' => isset($p['rule']) ? $p['rule'] : null,
+					'get' => '',
 				];
-				if ($this->getBreadcrumbs($temp, $p['sub'])) {
+				if ($this->getBreadcrumbs($temp, $request, $p['sub'])) {
 					$breadcrumbs = $temp;
 					return true;
 				}
