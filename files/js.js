@@ -37,7 +37,12 @@ window.addEventListener('DOMContentLoaded', function () {
 				newElement();
 			}
 		} else {
-			loadAdminPage(request, sId ? 'sId=' + sId : '', '', false);
+			let get = '';
+			if (sId)
+				get += 'sId=' + sId;
+			if (document.location.search.match(/goTo=[0-9]+/))
+				get += '&goTo=' + document.location.search.replace(/.*goTo=([0-9]+).*/, '$1');
+			loadAdminPage(request, get, '', false);
 		}
 		loadPageAids(request);
 	} else {
@@ -651,30 +656,35 @@ function reloadResultsTable(get, post) {
 }
 
 function changeGetParameter(queryString, k, v) {
-	if (queryString === '') {
+	if (queryString === '' && v !== null) {
 		queryString = k + '=' + encodeURIComponent(v);
 	} else {
 		if (queryString.indexOf(k + '=') === -1) {
-			queryString += '&' + k + '=' + encodeURIComponent(v);
+			if (v !== null)
+				queryString += '&' + k + '=' + encodeURIComponent(v);
 		} else {
-			var regexp = new RegExp(k + '=[^&]*(&|$)');
-			queryString = queryString.replace(regexp, k + '=' + encodeURIComponent(v) + '$1');
+			let regexp = new RegExp(k + '=[^&]*(&|$)');
+			if (v === null)
+				queryString = queryString.replace(regexp, '');
+			else
+				queryString = queryString.replace(regexp, k + '=' + encodeURIComponent(v) + '$1');
 		}
 	}
 	return queryString;
 }
 
 function goToPage(p, history_push) {
-	if (typeof history_push == 'undefined')
+	if (typeof history_push === 'undefined')
 		history_push = true;
 
-	var mainContentDiv = _('main-content');
+	let mainContentDiv = _('main-content');
 
-	var moveBy = mainContentDiv.offsetWidth + 50;
+	let moveBy = mainContentDiv.offsetWidth + 50;
 	if (p > currentPage)
 		moveBy *= -1;
 
 	get = changeGetParameter(document.location.search.substr(1), 'sId', sId);
+	get = changeGetParameter(get, 'goTo', null);
 	get = changeGetParameter(get, 'p', p);
 
 	if (history_push && history.pushState)
@@ -684,7 +694,7 @@ function goToPage(p, history_push) {
 			'p': p
 		}, '', adminPrefix + currentAdminPage + '?' + get);
 
-	var pageMove = new Promise(function (resolve) {
+	let pageMove = new Promise(resolve => {
 		if (p !== currentPage) {
 			mainContentDiv.style.left = moveBy + 'px';
 
@@ -692,14 +702,14 @@ function goToPage(p, history_push) {
 		} else {
 			resolve();
 		}
-	}).then(function () {
+	}).then(() => {
 		_('main-content').style.display = 'none';
 		_('main-loading').style.display = 'block';
 		return true;
 	});
-	var pageLoad = loadPage(adminPrefix + currentAdminPage, get, false, false);
+	let pageLoad = loadPage(adminPrefix + currentAdminPage, get, false, false);
 
-	return Promise.all([pageMove, pageLoad]).then(function () {
+	return Promise.all([pageMove, pageLoad]).then(() => {
 		_('main-content').style.display = 'block';
 		_('main-loading').style.display = 'none';
 
@@ -709,7 +719,7 @@ function goToPage(p, history_push) {
 		mainContentDiv.className = '';
 		mainContentDiv.style.left = '0px';
 
-		return new Promise(function (resolve, reject) {
+		return new Promise(resolve => {
 			setTimeout(resolve, 300);
 		});
 	});

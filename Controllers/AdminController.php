@@ -93,6 +93,9 @@ class AdminController extends Controller
 								}
 							}
 
+							if ($this->model->getInput('goTo') and is_numeric($this->model->getInput('goTo')))
+								$options['goTo'] = (int)$this->model->getInput('goTo');
+
 							$this->viewOptions['visualizer'] = $this->model->_AdminFront->getVisualizer();
 							$this->viewOptions['list'] = $this->model->_Admin->getList($options);
 
@@ -117,7 +120,7 @@ class AdminController extends Controller
 								if (isset($_GET['print'])) {
 									$this->model->_Admin->form->options['print'] = true;
 								} else {
-									if($this->model->element->exists())
+									if ($this->model->element->exists())
 										$this->model->_Admin->form->reset();
 								}
 
