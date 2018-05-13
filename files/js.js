@@ -389,7 +389,7 @@ function loadAdminPage(request, get, post, history_push) {
 	if (get.match(/sId=[0-9]+/)) {
 		sId = get.replace(/.*sId=([0-9]+).*/, '$1');
 		state['sId'] = sId;
-	} else if (currentAdminPage !== full_url) {
+	} else if (currentAdminPage.split('/')[0] !== request[0]) {
 		sId = null;
 	}
 
