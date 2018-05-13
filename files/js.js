@@ -1437,7 +1437,7 @@ function checkSubPages() {
 		}
 
 		if (def) {
-			promises.push(new Promise(function (resolve) {
+			promises.push(new Promise(resolve => {
 				loadSubPage(cont.getAttribute('data-subpages'), def).then(resolve);
 			}));
 		}
@@ -1449,14 +1449,14 @@ function checkSubPages() {
 function loadSubPage(cont_name, p) {
 	var tabsCont = document.querySelector('[data-tabs][data-name="' + cont_name + '"]');
 
-	tabsCont.querySelectorAll('[data-tab]').forEach(function (el) {
+	tabsCont.querySelectorAll('[data-tab]').forEach(el => {
 		var cont = document.querySelector('[data-subpages="' + cont_name + '"] [data-subpage="' + el.getAttribute('data-tab') + '"]');
 
 		if (el.getAttribute('data-tab') === p) {
 			el.addClass('selected');
 
 			if (el.getAttribute('data-onchange')) {
-				(function () {
+				(() => {
 					eval(this.getAttribute('data-onchange'));
 				}).call(el);
 			}
@@ -1467,7 +1467,7 @@ function loadSubPage(cont_name, p) {
 				el.removeClass('selected');
 
 				if (el.getAttribute('data-onchange')) {
-					(function () {
+					(() => {
 						eval(this.getAttribute('data-onchange'));
 					}).call(el);
 				}
@@ -1483,7 +1483,7 @@ function loadSubPage(cont_name, p) {
 		if (request.length === 2)
 			request.push(0);
 
-		return cont.loading().ajax(adminPrefix + request.join('/') + '/' + p, '', '').then(() => {
+		return cont.loading().ajax(adminPrefix + request.join('/') + '/' + p, 'ajax', '').then(() => {
 			return new Promise(resolve => {
 				setTimeout(() => {
 					resolve(fillAdminForm);
