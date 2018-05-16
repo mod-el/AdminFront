@@ -1085,6 +1085,8 @@ function changedMonitoredField(f) {
 
 	f.getValue().then(((old, f) => {
 		return v => {
+			if (v == old)
+				return;
 			changedValues[f.name] = v;
 
 			if (f.type !== 'file') { // Files fields are complex structure, thus are not supported in the changes history
