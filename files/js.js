@@ -976,7 +976,7 @@ function fillAdminForm(data) {
 							if (column_cont)
 								column_cont.innerHTML = el[k];
 
-							if (el[k] !== null && typeof el[k] === 'object') {
+							if (el[k] !== null && typeof el[k] === 'object' && typeof el[k]['text'] === 'undefined') { // If it is an object, and has not "text" (hence, it's not an instant search) then it's a multilang field
 								for (let lang in el[k]) {
 									if (typeof form[form_k + '-' + lang] !== 'undefined') {
 										promises.push(form[form_k + '-' + lang].setValue(el[k][lang], false).then((field => {
