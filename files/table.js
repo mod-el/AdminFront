@@ -14,16 +14,18 @@ function tableEvents() {
 	});
 
 	table.querySelectorAll('.results-table-row').forEach(function (row) {
-		row.addEventListener('click', function (event) {
-			if (event.button === 0) {
-				adminRowClicked(row);
-			}
-		});
+		if (!row.parentNode.parentNode.hasAttribute('data-draggable-cont')) {
+			row.addEventListener('click', function (event) {
+				if (event.button === 0) {
+					adminRowClicked(row);
+				}
+			});
+		}
 	});
 
-	if(_('sortedBy'))
+	if (_('sortedBy'))
 		sortedBy = JSON.parse(_('sortedBy').getValue(true));
-	if(_('currentPage'))
+	if (_('currentPage'))
 		currentPage = _('currentPage').getValue(true);
 }
 
@@ -122,7 +124,7 @@ document.addEventListener('mousemove', event => {
 	}
 });
 
-document.addEventListener('mouseup',event => {
+document.addEventListener('mouseup', event => {
 	if (columnResizing !== false) {
 		if (columnResizing.endW !== false)
 			saveColumnWidth(columnResizing.k, columnResizing.endW);
