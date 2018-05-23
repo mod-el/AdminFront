@@ -42,6 +42,8 @@ class AdminController extends Controller
 					$this->viewOptions['showLayout'] = false;
 				}
 
+				$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
+
 				switch ($request[1]) {
 					case '':
 						if ($this->model->_Admin->options['table']) {
@@ -106,7 +108,15 @@ class AdminController extends Controller
 								$this->viewOptions['template'] = 'list';
 							}
 						} else {
-							$this->viewOptions['template'] = strtolower(preg_replace('/(?<!^)([A-Z])/', '-\\1', $this->model->_Admin->options['page']));
+							$customTemplate = strtolower(preg_replace('/(?<!^)([A-Z])/', '-\\1', $this->model->_Admin->options['page']));
+
+							$checkCustomTemplate = Autoloader::searchFile('template', $dir . $customTemplate);
+							if ($checkCustomTemplate) {
+								$this->viewOptions['template'] = $dir . $customTemplate;
+								unset($this->viewOptions['template-module']);
+							} else {
+								$this->viewOptions['template'] = 'form-template';
+							}
 						}
 						break;
 					case 'edit':
@@ -114,8 +124,6 @@ class AdminController extends Controller
 							$arr = $this->model->_Admin->getEditArray();
 							$this->model->sendJSON($arr);
 						} else {
-							$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
-
 							if ($this->model->element) {
 								if (isset($_GET['print'])) {
 									$this->model->_Admin->form->options['print'] = true;
