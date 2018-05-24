@@ -15,6 +15,7 @@ class FormList extends DataVisualizer
 		'class' => 'rob-field-cont sublist-row',
 		'template' => null,
 		'add-button' => true,
+		'add-button-position' => 'after',
 		'fields' => [],
 	];
 
@@ -34,6 +35,25 @@ class FormList extends DataVisualizer
 			'list' => [],
 		], $options);
 		$options = array_merge($this->options, $options);
+
+		$mainAddPrivilege = $this->model->_Admin->canUser('D');
+
+		$addButton = '';
+		if ($mainAddPrivilege and $options['add-button'] and !$options['print']) {
+			if ($options['add-button'] === true) {
+				$addButton = '<div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\')">
+                    <div class="rob-field" style="width: 5%"></div>
+                    <div class="rob-field" style="width: 95%">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Aggiungi
+                    </div>
+                </div>';
+			} else {
+				$addButton = $options['add-button'];
+			}
+		}
+
+		if ($options['add-button-position'] === 'before')
+			echo $addButton;
 
 		echo '<div id="cont-ch-' . entities($options['name']) . '" data-rows-class="' . $options['class'] . '">';
 
@@ -70,24 +90,13 @@ class FormList extends DataVisualizer
 			<?php
 		}
 
+		if ($options['add-button-position'] === 'inside')
+			echo $addButton;
+
 		echo '</div>';
 
-		$mainAddPrivilege = $this->model->_Admin->canUser('D');
-
-		if ($mainAddPrivilege and $options['add-button'] and !$options['print']) {
-			if ($options['add-button'] === true) {
-				?>
-                <div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow('<?= entities($options['name']) ?>')">
-                    <div class="rob-field" style="width: 5%"></div>
-                    <div class="rob-field" style="width: 95%">
-                        <i class="fas fa-plus" aria-hidden="true"></i> Aggiungi
-                    </div>
-                </div>
-				<?php
-			} else {
-				echo $options['add-button'];
-			}
-		}
+		if ($options['add-button-position'] === 'after')
+			echo $addButton;
 
 		?>
         <div id="sublist-template-<?= entities($options['name']) ?>" class="sublist-template" style="display: none">
