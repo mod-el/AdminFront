@@ -14,6 +14,7 @@ class FormList extends DataVisualizer
 		'type' => 'row',
 		'class' => 'rob-field-cont sublist-row',
 		'template' => null,
+        'clear-form' => true,
 		'add-button' => true,
 		'add-button-position' => 'after',
 		'fields' => [],
