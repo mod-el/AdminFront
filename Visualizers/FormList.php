@@ -127,6 +127,7 @@ class FormList extends DataVisualizer
 				$options['template'] = null;
 		}
 
+		echo '<input type="hidden" name="ch-' . entities($options['name'] . '-' . $el[$el->settings['primary']]) . '" value="1"/>';
 		if ($options['template'] and $options['type'] === 'outer-template') {
 			include($template_path);
 		} else {
@@ -142,7 +143,6 @@ class FormList extends DataVisualizer
                 <div class="rob-field" style="width: 100%">
 				<?php
 			}
-			echo '<input type="hidden" name="ch-' . entities($options['name'] . '-' . $el[$el->settings['primary']]) . '" value="1"/>';
 			if ($options['template'] and $options['type'] === 'inner-template') {
 				include($template_path);
 			} else {
