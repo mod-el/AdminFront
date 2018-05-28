@@ -1404,40 +1404,41 @@ function duplicate() {
 }
 
 function checkSubPages() {
-	var promises = [];
+	let promises = [];
 
-	var containers = document.querySelectorAll('[data-subpages]');
-	containers.forEach(function (cont) {
-		var tabsCont = document.querySelector('[data-tabs][data-name="' + cont.getAttribute('data-subpages') + '"]');
-		var tabs = tabsCont.querySelectorAll('[data-tab]');
-		tabs.forEach(function (tab) {
-			var page = cont.querySelector('[data-subpage="' + tab.getAttribute('data-tab') + '"]');
-			if (!page) {
-				var subPageCont = document.createElement('div');
-				subPageCont.setAttribute('data-subpage', tab.getAttribute('data-tab'));
-				subPageCont.innerHTML = '[to-be-loaded]';
-				cont.appendChild(subPageCont);
+	let containers = document.querySelectorAll('[data-tabs]');
+	containers.forEach(tabsCont => {
+		let cont = document.querySelector('[data-subpages="' + tabsCont.getAttribute('data-name') + '"]');
+		let tabs = tabsCont.querySelectorAll('[data-tab]');
+		tabs.forEach(tab => {
+			if (cont) {
+				let page = cont.querySelector('[data-subpage="' + tab.getAttribute('data-tab') + '"]');
+				if (!page) {
+					let subPageCont = document.createElement('div');
+					subPageCont.setAttribute('data-subpage', tab.getAttribute('data-tab'));
+					subPageCont.innerHTML = '[to-be-loaded]';
+					cont.appendChild(subPageCont);
+				}
 			}
 
 			if (tab.getAttribute('data-oninit')) {
-				(function () {
+				(() => {
 					eval(this.getAttribute('data-oninit'));
 				}).call(tab);
 			}
 
-			tab.addEventListener('click', function (event) {
-				sessionStorage.setItem(tabsCont.getAttribute('data-tabs'), this.getAttribute('data-tab'));
-				loadSubPage(cont.getAttribute('data-subpages'), this.getAttribute('data-tab'));
+			tab.addEventListener('click', event => {
+				loadSubPage(tab.parentNode.getAttribute('data-name'), tab.getAttribute('data-tab'));
 
-				if (this.getAttribute('data-onclick')) {
-					eval(this.getAttribute('data-onclick'));
+				if (tab.getAttribute('data-onclick')) {
+					eval(tab.getAttribute('data-onclick'));
 				}
 
 				return false;
 			});
 		});
 
-		var def = null;
+		let def = null;
 		if (sessionStorage.getItem(tabsCont.getAttribute('data-tabs'))) {
 			def = sessionStorage.getItem(tabsCont.getAttribute('data-tabs'));
 		} else if (tabsCont.getAttribute('data-default')) {
@@ -1450,7 +1451,7 @@ function checkSubPages() {
 
 		if (def) {
 			promises.push(new Promise(resolve => {
-				loadSubPage(cont.getAttribute('data-subpages'), def).then(resolve);
+				loadSubPage(tabsCont.getAttribute('data-name'), def).then(resolve);
 			}));
 		}
 	});
@@ -1458,12 +1459,11 @@ function checkSubPages() {
 	return Promise.all(promises);
 }
 
-function loadSubPage(cont_name, p) {
-	var tabsCont = document.querySelector('[data-tabs][data-name="' + cont_name + '"]');
+function switchAdminTab(cont_name, p) {
+	let tabsCont = document.querySelector('[data-tabs][data-name="' + cont_name + '"]');
+	sessionStorage.setItem(tabsCont.getAttribute('data-tabs'), p);
 
 	tabsCont.querySelectorAll('[data-tab]').forEach(el => {
-		var cont = document.querySelector('[data-subpages="' + cont_name + '"] [data-subpage="' + el.getAttribute('data-tab') + '"]');
-
 		if (el.getAttribute('data-tab') === p) {
 			el.addClass('selected');
 
@@ -1472,8 +1472,6 @@ function loadSubPage(cont_name, p) {
 					eval(this.getAttribute('data-onchange'));
 				}).call(el);
 			}
-
-			cont.style.display = 'block';
 		} else {
 			if (el.hasClass('selected')) {
 				el.removeClass('selected');
@@ -1484,14 +1482,24 @@ function loadSubPage(cont_name, p) {
 					}).call(el);
 				}
 			}
+		}
+	});
+}
 
+function loadSubPage(cont_name, p) {
+	switchAdminTab(cont_name, p);
+
+	document.querySelectorAll('[data-subpages="' + cont_name + '"] [data-subpage]').forEach(cont => {
+		if (cont.getAttribute('data-subpage') === p) {
+			cont.style.display = 'block';
+		} else {
 			cont.style.display = 'none';
 		}
 	});
 
-	var cont = document.querySelector('[data-subpages="' + cont_name + '"] [data-subpage="' + p + '"]');
-	if (cont.innerHTML === '[to-be-loaded]') {
-		var request = currentAdminPage.split('/');
+	let cont = document.querySelector('[data-subpages="' + cont_name + '"] [data-subpage="' + p + '"]');
+	if (cont && cont.innerHTML === '[to-be-loaded]') {
+		let request = currentAdminPage.split('/');
 		if (request.length === 2)
 			request.push(0);
 
