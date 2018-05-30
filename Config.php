@@ -197,27 +197,6 @@ $config = ' . var_export($config, true) . ';
 	 */
 	public function install(array $data = []): bool
 	{
-		if (is_dir(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin')) {
-			if (!is_dir(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront'))
-				mkdir(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront');
-
-			copy(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin' . DIRECTORY_SEPARATOR . 'dictionary.php', INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php');
-			unlink(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin' . DIRECTORY_SEPARATOR . 'dictionary.php');
-
-			require(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin' . DIRECTORY_SEPARATOR . 'config.php');
-			foreach ($config['url'] as &$oldAdminUrl) {
-				$oldAdminUrl['pages'] = $this->convertFromOldAdmin($oldAdminUrl['pages']);
-			}
-			unset($oldAdminUrl);
-			file_put_contents(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'config.php', '<?php
-$config = ' . var_export($config, true) . ';
-');
-			unlink(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin' . DIRECTORY_SEPARATOR . 'config.php');
-			rmdir(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin');
-
-			return true;
-		}
-
 		if (empty($data))
 			return true;
 
@@ -246,28 +225,6 @@ $config = ' . var_export($config, true) . ';
 		}
 
 		return false;
-	}
-
-	/**
-	 * Convert pages array from old admin config
-	 *
-	 * @param array $pages
-	 * @return array
-	 */
-	private function convertFromOldAdmin(array $pages): array
-	{
-		foreach ($pages as $idx => $p) {
-			if (array_key_exists('controller', $pages[$idx])) {
-				$pages[$idx]['page'] = $pages[$idx]['controller'];
-				unset($pages[$idx]['controller']);
-			}
-			$pages[$idx]['visualizer'] = 'Table';
-			$pages[$idx]['mobile-visualizer'] = 'Table';
-			if (isset($pages[$idx]['sub']) and is_array($pages[$idx]['sub']) and $pages[$idx]['sub'])
-				$pages[$idx]['sub'] = $this->convertFromOldAdmin($pages[$idx]['sub']);
-		}
-
-		return $pages;
 	}
 
 	/**
@@ -321,6 +278,10 @@ $config = ' . var_export($config, true) . ';
 		return $templates;
 	}
 
+	/**
+	 * @param array $words
+	 * @return bool
+	 */
 	public function checkAndInsertWords(array $words): bool
 	{
 		$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php';
