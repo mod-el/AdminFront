@@ -1085,7 +1085,7 @@ function changedMonitoredField(f) {
 
 	f.getValue().then(((old, f) => {
 		return v => {
-			if (v == old)
+			if (f.type !== 'file' && v == old)
 				return;
 			changedValues[f.name] = v;
 
