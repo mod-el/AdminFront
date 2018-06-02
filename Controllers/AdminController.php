@@ -274,11 +274,18 @@ class AdminController extends Controller
 				$this->viewOptions = array_merge($this->viewOptions, $customViewOptions);
 			}
 		} else {
-			if (isset($_GET['ajax']))
-				$this->viewOptions['showLayout'] = false;
+			if (isset($_GET['ajax'])) {
+				if ($this->model->moduleExists('Dashboard'))
+					$this->viewOptions['template-module'] = 'Dashboard';
+				else
+					$this->viewOptions['template-module'] = 'AdminFront';
 
-			$this->viewOptions['template'] = 'dashboard';
-			$this->viewOptions['cacheTemplate'] = false;
+				$this->viewOptions['showLayout'] = false;
+				$this->viewOptions['template'] = 'dashboard';
+				$this->viewOptions['cacheTemplate'] = false;
+			} else {
+				$this->viewOptions['template'] = null;
+			}
 		}
 	}
 }

@@ -29,7 +29,7 @@ window.addEventListener('DOMContentLoaded', function () {
 	if (document.location.search.match(/sId=[0-9]+/))
 		sId = document.location.search.replace(/.*sId=([0-9]+).*/, '$1');
 
-	if (currentAdminPage && _('main-content')) {
+	if (_('main-content')) {
 		if (request.length >= 2 && request[1] === 'edit') {
 			if (request.length >= 3) {
 				loadElement(request[0], request[2], false);
