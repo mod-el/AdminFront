@@ -810,4 +810,33 @@ class AdminFront extends Module
 		$visualizer = $this->getVisualizer($options['visualizer'], $visualizerOptions);
 		$visualizer->render($options);
 	}
+
+	/**
+	 * @param string $page
+	 * @return string|null
+	 */
+	public function getRuleForPage(string $page)
+	{
+		$pages = $this->getPages();
+		return $this->searchRuleForPage($pages, $page);
+	}
+
+	/**
+	 * @param array $pages
+	 * @return string|null
+	 */
+	private function searchRuleForPage(array $pages, string $page)
+	{
+		foreach ($pages as $p) {
+			if ($p['page'] === $page)
+				return $p['rule'];
+			if ($p['sub']) {
+				$check = $this->searchRuleForPage($p['sub'], $page);
+				if ($check)
+					return $check;
+			}
+		}
+
+		return null;
+	}
 }
