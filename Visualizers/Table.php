@@ -35,14 +35,11 @@ class Table extends DataVisualizer
 
 		$this->loadResizeModule($columns);
 
-		$tableModel = $this->model->_Db->getTable($this->options['table']);
-
 		// I run through the elements to get the data I need
 
 		$list = [];
 		foreach ($options['list'] as $el) {
-			$elId = $el[$tableModel->primary];
-			$list[$elId] = $this->elaborateRow($el, $columns);
+			$list[] = $this->elaborateRow($el, $columns);
 		}
 
 		$totals = [];
