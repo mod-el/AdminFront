@@ -483,4 +483,15 @@ class Table extends DataVisualizer
 			return '#FFFFFF';
 		}
 	}
+
+	public function getStandardColumns(): array
+	{
+		$columns = $this->getColumns();
+
+		$arr = [];
+		foreach ($columns as $c)
+			$arr[$c['label']] = $c['display'] ?: $c['field'];
+
+		return $arr;
+	}
 }

@@ -34,7 +34,7 @@ class AdminController extends Controller
 			if (!isset($request[1]))
 				$request[1] = '';
 
-			if (isset($_GET['ajax']) or isset($_GET['print'])) {
+			if (isset($_GET['ajax']) or isset($_GET['print']) or isset($_GET['csv'])) {
 				if (isset($_GET['print'])) {
 					$this->viewOptions['header'] = ['print-header'];
 					$this->viewOptions['footer'] = ['print-footer'];
@@ -99,6 +99,23 @@ class AdminController extends Controller
 								$options['goTo'] = (int)$this->model->getInput('goTo');
 
 							$this->viewOptions['visualizer'] = $this->model->_AdminFront->getVisualizer();
+
+							if (isset($_GET['csv'])) {
+								$options['perPage'] = 0;
+								$options['p'] = 1;
+								$list = $this->model->_Admin->getList($options);
+								$csvBridge = new \Model\Csv\AdminBridge($this->model);
+
+								header('Content-Type: application/csv');
+								header('Content-Disposition: attachment; filename=list.csv');
+
+								$csvBridge->export($list, $this->viewOptions['visualizer'], [
+									'delimiter' => ';',
+									'charset' => 'ISO-8859-1',
+								]);
+								die();
+							}
+
 							$this->viewOptions['list'] = $this->model->_Admin->getList($options);
 
 							if (isset($_GET['print'])) {

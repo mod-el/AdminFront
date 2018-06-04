@@ -496,6 +496,16 @@ class AdminFront extends Module
 			];
 		}
 
+		if ($this->model->moduleExists('Csv')) {
+			$parsedActions[] = [
+				'id' => 'csv',
+				'text' => 'Esporta CSV',
+				'fa-icon' => 'fab fa-wpforms',
+				'url' => '#',
+				'action' => 'window.open(\'' . $this->getUrlPrefix() . implode('/', $request) . '?sId=\'+sId+\'&csv\'); return false',
+			];
+		}
+
 		if ($requestType === 'list') {
 			$visualizer = $this->getVisualizer();
 			$parsedActions = array_values($visualizer->parseActions($parsedActions));

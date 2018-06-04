@@ -111,4 +111,12 @@ abstract class DataVisualizer
 	{
 		return $actions;
 	}
+
+	/**
+	 * @return array
+	 */
+	public function getStandardColumns(): array
+	{
+		return [];
+	}
 }
