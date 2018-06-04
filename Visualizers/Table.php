@@ -37,10 +37,10 @@ class Table extends DataVisualizer
 
 		// I run through the elements to get the data I need
 
-		$list = [];
-		foreach ($options['list'] as $el) {
-			$list[] = $this->elaborateRow($el, $columns);
-		}
+		$list = (function () use ($options, $columns) {
+			foreach ($options['list'] as $el)
+				yield $this->elaborateRow($el, $columns);
+		})();
 
 		$totals = [];
 		foreach ($columns as $k => $c) {
