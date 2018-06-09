@@ -3,8 +3,8 @@ function tableEvents() {
 
 	table.addEventListener('scroll', function () {
 		let intest = _('table-headings');
-		if (this.scrollLeft > intest.scrollLeftMax)
-			this.scrollLeft = intest.scrollLeftMax;
+		if (this.scrollLeft > (intest.scrollWidth - intest.clientWidth))
+			this.scrollLeft = intest.scrollWidth - intest.clientWidth;
 		intest.scrollLeft = this.scrollLeft;
 	});
 
