@@ -483,6 +483,16 @@ class AdminFront extends Module
 				'url' => '#',
 				'action' => 'switchFiltersForm(this); return false',
 			];
+
+			if ($this->model->moduleExists('Csv')) {
+				$parsedActions[] = [
+					'id' => 'csv',
+					'text' => 'Esporta CSV',
+					'fa-icon' => 'fab fa-wpforms',
+					'url' => '#',
+					'action' => 'window.open(\'' . $this->getUrlPrefix() . implode('/', $request) . '?sId=\'+sId+\'&csv\'); return false',
+				];
+			}
 		}
 
 		$print = isset($this->model->_Admin->options['print']) ? $this->model->_Admin->options['print'] : false;
@@ -493,16 +503,6 @@ class AdminFront extends Module
 				'fa-icon' => 'fas fa-print',
 				'url' => '#',
 				'action' => 'window.open(\'' . $this->getUrlPrefix() . implode('/', $request) . '?sId=\'+sId+\'&print\'); return false',
-			];
-		}
-
-		if ($this->model->moduleExists('Csv')) {
-			$parsedActions[] = [
-				'id' => 'csv',
-				'text' => 'Esporta CSV',
-				'fa-icon' => 'fab fa-wpforms',
-				'url' => '#',
-				'action' => 'window.open(\'' . $this->getUrlPrefix() . implode('/', $request) . '?sId=\'+sId+\'&csv\'); return false',
 			];
 		}
 
