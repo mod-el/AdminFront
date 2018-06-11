@@ -995,7 +995,7 @@ function fillAdminForm(data) {
 
 						return Promise.all(promises);
 					};
-				})(list[idx], id, name)));
+				})(list[idx], id, name)).then(monitorFields));
 			}
 		}
 
