@@ -14,7 +14,7 @@ class FormList extends DataVisualizer
 		'type' => 'row',
 		'class' => 'rob-field-cont sublist-row',
 		'template' => null,
-        'clear-form' => true,
+		'clear-form' => true,
 		'add-button' => true,
 		'add-button-position' => 'after',
 		'fields' => [],
@@ -37,10 +37,10 @@ class FormList extends DataVisualizer
 		], $options);
 		$options = array_merge($this->options, $options);
 
-		$mainAddPrivilege = $this->model->_Admin->canUser('D');
+		$addPrivilege = $this->canUser('C');
 
 		$addButton = '';
-		if ($mainAddPrivilege and $options['add-button'] and !$options['print']) {
+		if ($addPrivilege and $options['add-button'] and !$options['print']) {
 			if ($options['add-button'] === true) {
 				$addButton = '<div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\')">
                     <div class="rob-field" style="width: 5%"></div>
@@ -61,10 +61,10 @@ class FormList extends DataVisualizer
 		$dummyForm = $this->getRowForm($options['dummy'], $options);
 
 		if ($options['type'] === 'row') {
-			$mainDeletePrivilege = $this->model->_Admin->canUser('D');
+			$deletePrivilege = $this->canUser('D');
 
 			echo '<div class="rob-field-cont">';
-			if ($mainDeletePrivilege and !$options['print']) {
+			if ($deletePrivilege and !$options['print']) {
 				echo '<div class="rob-field" style="width: 5%"></div>';
 				echo '<div class="rob-field" style="width: 95%">';
 			} else {
@@ -82,12 +82,12 @@ class FormList extends DataVisualizer
 
 		foreach ($options['list'] as $el) {
 			?>
-            <div class="rob-field-cont sublist-row" id="cont-ch-<?= entities($options['name']) ?>-<?= entities($el[$el->settings['primary']]) ?>">
+			<div class="rob-field-cont sublist-row" id="cont-ch-<?= entities($options['name']) ?>-<?= entities($el[$el->settings['primary']]) ?>">
 				<?php
 				$form = $this->getRowForm($el, $options);
 				$this->renderRow($el, $form, $options);
 				?>
-            </div>
+			</div>
 			<?php
 		}
 
@@ -100,11 +100,11 @@ class FormList extends DataVisualizer
 			echo $addButton;
 
 		?>
-        <div id="sublist-template-<?= entities($options['name']) ?>" class="sublist-template" style="display: none">
+		<div id="sublist-template-<?= entities($options['name']) ?>" class="sublist-template" style="display: none">
 			<?php
 			$this->renderRow($options['dummy'], $dummyForm, $options);
 			?>
-        </div>
+		</div>
 		<?php
 	}
 
@@ -116,7 +116,7 @@ class FormList extends DataVisualizer
 
 	protected function renderRow(Element $el, Form $form, array $options)
 	{
-		$mainDeletePrivilege = $this->model->_Admin->canUser('D');
+		$deletePrivilege = $this->canUser('D', $el);
 
 		if (($options['type'] === 'inner-template' or $options['type'] === 'outer-template') and $options['template'] === null)
 			$options['template'] = $options['name'];
@@ -132,16 +132,16 @@ class FormList extends DataVisualizer
 		if ($options['template'] and $options['type'] === 'outer-template') {
 			include($template_path);
 		} else {
-			if ($mainDeletePrivilege and !$options['print']) {
+			if ($deletePrivilege and !$options['print']) {
 				?>
-                <div class="rob-field" style="width: 5%; text-align: center">
-                    <a href="#" onclick="if(confirm('Sicuro di voler eliminare questa riga?')) sublistDeleteRow('<?= entities($options['name']) ?>', '<?= entities($el[$el->settings['primary']]) ?>'); return false"><i class="fas fa-trash" aria-label="Delete" style="color: #000"></i></a>
-                </div>
-                <div class="rob-field" style="width: 95%">
+				<div class="rob-field" style="width: 5%; text-align: center">
+					<a href="#" onclick="if(confirm('Sicuro di voler eliminare questa riga?')) sublistDeleteRow('<?= entities($options['name']) ?>', '<?= entities($el[$el->settings['primary']]) ?>'); return false"><i class="fas fa-trash" aria-label="Delete" style="color: #000"></i></a>
+				</div>
+				<div class="rob-field" style="width: 95%">
 				<?php
 			} else {
 				?>
-                <div class="rob-field" style="width: 100%">
+				<div class="rob-field" style="width: 100%">
 				<?php
 			}
 			if ($options['template'] and $options['type'] === 'inner-template') {
@@ -153,7 +153,7 @@ class FormList extends DataVisualizer
 				]);
 			}
 			?>
-            </div>
+			</div>
 			<?php
 		}
 	}

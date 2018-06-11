@@ -24,6 +24,7 @@ abstract class DataVisualizer
 
 		$this->defaultOptions = array_merge([
 			'name' => 'list',
+			'privileges' => true,
 		], $this->defaultOptions);
 
 		$this->options = array_merge($this->defaultOptions, $options);
@@ -118,5 +119,25 @@ abstract class DataVisualizer
 	public function getStandardColumns(): array
 	{
 		return [];
+	}
+
+	/**
+	 * @param string $what
+	 * @param Element|null $el
+	 * @return bool
+	 */
+	protected function canUser(string $what, Element $el = null): bool
+	{
+		if (is_array($this->options['privileges']) and isset($this->options['privileges'][$what])) {
+			if (!is_string($this->options['privileges'][$what]) and is_callable($this->options['privileges'][$what])) {
+				return (bool)call_user_func($this->options['privileges'][$what], $el);
+			} else {
+				return (bool)$this->options['privileges'][$what];
+			}
+		} elseif ($this->options['privileges'] === true) {
+			return $this->model->_Admin->canUser($what, null, $el);
+		} else {
+			return true;
+		}
 	}
 }

@@ -4,8 +4,8 @@
 			<input type="checkbox" onchange="if(this.checked) selectAllRows(1); else selectAllRows(0)"/>
 		</div>
 		<?php
-		$mainDeletePrivilege = $this->model->_Admin->canUser('D');
-		if ($mainDeletePrivilege) {
+		$deletePrivilege = $this->canUser('D');
+		if ($deletePrivilege) {
 			?>
 			<div class="special-cell"></div>
 			<?php
@@ -62,7 +62,7 @@
 			$id = $el['element'][$el['element']->settings['primary']];
 
 			$form = false;
-			$clickable = ($id and $this->model->_Admin->canUser('R', null, $el['element']));
+			$clickable = ($id and $this->canUser('R', null, $el['element']));
 			if (isset($this->model->_Admin->options['onclick'])) {
 				if (strpos($this->model->_Admin->options['onclick'], '"'))
 					die('No double quotes allowed in the "onclick" custom code.');
@@ -95,7 +95,7 @@
 						</div>
 					</div>
 					<?php
-					$canDelete = $this->model->_Admin->canUser('D', null, $el['element']);
+					$canDelete = $this->canUser('D', null, $el['element']);
 					if ($canDelete) {
 						?>
 						<div class="special-cell" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
@@ -153,7 +153,7 @@
 					<div></div>
 				</div>
 				<?php
-				if ($mainDeletePrivilege) {
+				if ($deletePrivilege) {
 					?>
 					<div class="special-cell">
 						<div></div>
@@ -214,9 +214,7 @@
 			</div>
 		</div>
 		<?php
-		//			$canDelete = $this->model->_Admin->canUser('D', null, $el['element']);
-		$canDelete = true;
-		if ($canDelete) {
+		if ($deletePrivilege) {
 			?>
 			<div class="special-cell" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
 				<div>
