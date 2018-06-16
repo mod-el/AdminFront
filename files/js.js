@@ -324,7 +324,7 @@ function closeMenu() {
 }
 
 function startMenuResize() {
-	var coords = getMouseCoords(event);
+	let coords = getMouseCoords(event);
 	menuResizing = {'startX': coords.x, 'startW': maxMenuWidth, 'endW': false};
 }
 
@@ -597,15 +597,15 @@ document.addEventListener('mousemove', event => {
 });
 
 document.addEventListener('mouseup', event => {
-	if (menuResizing !== false) {
-		if (menuResizing.endW < 10)
-			menuResizing.endW = 10;
-
-		maxMenuWidth = menuResizing.endW;
-		openMenu();
+	if (menuResizing !== false && menuResizing.endW !== false) {
+		if (menuResizing.endW < 25) {
+			closeMenu();
+		} else {
+			maxMenuWidth = menuResizing.endW;
+			openMenu();
+			setCookie('menu-width', maxMenuWidth, 365 * 10);
+		}
 		menuResizing = false;
-
-		setCookie('menu-width', maxMenuWidth, 365 * 10);
 	}
 });
 
