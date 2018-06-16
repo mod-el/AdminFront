@@ -610,13 +610,15 @@ document.addEventListener('mousemove', event => {
 });
 
 document.addEventListener('mouseup', event => {
-	if (menuResizing !== false && menuResizing.endW !== false) {
-		if (menuResizing.endW < 25) {
-			closeMenu();
-		} else {
-			maxMenuWidth = menuResizing.endW;
-			openMenu();
-			setCookie('menu-width', maxMenuWidth, 365 * 10);
+	if (menuResizing !== false) {
+		if (menuResizing.endW !== false) {
+			if (menuResizing.endW < 25) {
+				closeMenu();
+			} else {
+				maxMenuWidth = menuResizing.endW;
+				openMenu();
+				setCookie('menu-width', maxMenuWidth, 365 * 10);
+			}
 		}
 		menuResizing = false;
 	}
