@@ -68,6 +68,19 @@ if ('serviceWorker' in navigator) {
 		navigator.serviceWorker.register(adminPrefix + 'sw.js').then(function (registration) {
 			// Registration was successful
 			console.log('ServiceWorker registration successful with scope: ', registration.scope);
+
+			navigator.serviceWorker.addEventListener('message', event => {
+				switch (event.data.type) {
+					case 'reload':
+						if (confirm('Sono stati scaricati nuovi aggiornamenti per l\'admin, si consiglia di aggiornare la pagina. Vuoi aggiornare ora?'))
+							document.location.reload();
+						break;
+					default:
+						console.log('Messaggio ricevuto dal Service Worker:');
+						console.log(event.data);
+						break;
+				}
+			});
 		}, function (err) {
 			// registration failed :(
 			console.log('ServiceWorker registration failed: ', err);
