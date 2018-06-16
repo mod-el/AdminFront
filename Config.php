@@ -56,7 +56,7 @@ class Config extends Module_Config
 		}
 
 		if ($config and isset($config['template']) and $config['template']) {
-			$assets = $this->model->getModule($config['template'])->getAssetsForServiceWorker();
+			$assets = $this->model->getModule($config['template'])->getAssetsForServiceWorker(false);
 
 			$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'header.php';
 			$assets[] = PATH . 'model' . DIRECTORY_SEPARATOR . $config['template'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'footer.php';
@@ -66,9 +66,13 @@ class Config extends Module_Config
 
 		$md5 = [];
 		foreach ($assets as $asset) {
-			if (!file_exists(PATHBASE . $asset))
-				continue;
-			$md5[] = md5(file_get_contents(PATHBASE . $asset));
+			if (substr($asset, 0, 4) === 'http') {
+				$md5[] = md5($asset);
+			} else {
+				if (!file_exists(PATHBASE . $asset))
+					continue;
+				$md5[] = md5(file_get_contents(PATHBASE . $asset));
+			}
 		}
 
 		return (bool)file_put_contents(__DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'cache-key.php', "<?php\n\$cacheKey = '" . md5(implode('', $md5)) . "';");
