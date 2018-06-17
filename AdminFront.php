@@ -66,6 +66,8 @@ class AdminFront extends Module
 				'mandatory' => true,
 				'login-controller' => 'AdminLogin',
 			], 'Admin');
+			if ($this->model->_User_Admin->options['algorithm-version'] === 'old')
+				$this->model->_User_Admin->options['password'] = 'old_password';
 		}
 
 		return $this->model->_User_Admin;
