@@ -212,8 +212,8 @@ $config = ' . var_export($config, true) . ';
 					if (isset($data['make-users-table'])) {
 						$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `' . $data['table'] . '` (
 						  `id` int(11) NOT NULL AUTO_INCREMENT,
-						  `username` varchar(100) NOT NULL,
-						  `password` char(40) NOT NULL,
+						  `username` varchar(250) NOT NULL,
+						  `password` varchar(250) NOT NULL,
 						  PRIMARY KEY (`id`)
 						) ENGINE=InnoDB DEFAULT CHARSET=utf8;');
 					}
