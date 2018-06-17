@@ -218,7 +218,7 @@ $config = ' . var_export($config, true) . ';
 						) ENGINE=InnoDB DEFAULT CHARSET=utf8;');
 					}
 					if (isset($data['make-account'])) {
-						$this->model->_Db->query('INSERT INTO `' . $data['table'] . '`(username,password) VALUES(' . $this->model->_Db->quote($data['username']) . ',' . $this->model->_Db->quote(sha1(md5($data['password']))) . ')');
+						$this->model->_Db->query('INSERT INTO `' . $data['table'] . '`(username,password) VALUES(' . $this->model->_Db->quote($data['username']) . ',' . $this->model->_Db->quote(password_hash($data['password'], PASSWORD_DEFAULT)) . ')');
 					}
 
 					return true;
