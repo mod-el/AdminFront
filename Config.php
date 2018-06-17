@@ -312,7 +312,7 @@ $config = ' . var_export($config, true) . ';
 	/**
 	 * @return bool
 	 */
-	public function postUpdate_1_0_5()
+	public function postUpdate_0_1_5()
 	{
 		$config = $this->retrieveConfig();
 		$seen = [];
