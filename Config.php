@@ -308,4 +308,24 @@ $config = ' . var_export($config, true) . ';
 		else
 			return $w;
 	}
+
+	/**
+	 * @return bool
+	 */
+	public function postUpdate_1_0_5()
+	{
+		$config = $this->retrieveConfig();
+		$seen = [];
+		if (isset($config['url']) and is_array($config['url'])) {
+			foreach ($config['url'] as $u) {
+				if ($u['table'] and !in_array($u['table'], $seen)) {
+					$this->model->_Db->query('ALTER TABLE `' . $u['table'] . '` 
+CHANGE COLUMN `password` `old_password` VARCHAR(250) CHARACTER SET \'utf8\' COLLATE \'utf8_unicode_ci\' NOT NULL,
+ADD COLUMN `password` VARCHAR(250) NOT NULL AFTER `old_password`;');
+					$seen[] = $u['table'];
+				}
+			}
+		}
+		return true;
+	}
 }

@@ -60,11 +60,12 @@ class AdminFront extends Module
 				}
 			}
 
-			$this->model->load('User', array(
+			$this->model->load('User', [
 				'table' => $user_table,
+				'old_password' => 'old_password',
 				'mandatory' => true,
 				'login-controller' => 'AdminLogin',
-			), 'Admin');
+			], 'Admin');
 		}
 
 		return $this->model->_User_Admin;
