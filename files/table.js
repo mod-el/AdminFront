@@ -172,8 +172,8 @@ function saveColumnWidth(k, w) {
 function adminRowClicked(row) {
 	if (row.dataset.clickable === '1') {
 		if (row.dataset.onclick) {
-			eval('var custom_function = function(){ ' + this.dataset.onclick + ' }');
-			custom_function.call(this);
+			eval('var custom_function = function(){ ' + row.dataset.onclick + ' }');
+			custom_function.call(row);
 		} else {
 			loadElement(currentAdminPage.split('/')[0], row.dataset.id);
 		}
