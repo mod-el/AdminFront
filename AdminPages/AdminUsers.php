@@ -30,4 +30,19 @@ class AdminUsers extends AdminPage
 			$options['table'] = $usersTable;
 		return $options;
 	}
+
+	public function visualizerOptions(): array
+	{
+		return [
+			'columns' => [
+				'username',
+			],
+		];
+	}
+
+	public function customize()
+	{
+		$this->model->_Admin->field('old_password', 'password');
+		$this->model->_Admin->field('password', 'password');
+	}
 }
