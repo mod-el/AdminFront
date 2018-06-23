@@ -9,6 +9,7 @@ class AdminLoginController extends Controller
 		$user = $this->model->_AdminFront->getUser();
 
 		$templateModule = $this->model->_AdminFront->getTemplateModule();
+		$this->model->load($templateModule);
 		$this->viewOptions['template-module'] = $templateModule;
 
 		switch ($this->model->_AdminFront->request[0]) {
