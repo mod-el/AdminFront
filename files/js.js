@@ -483,6 +483,11 @@ function loadPageAids(request, get) {
 	if (form = _('filtersFormCont'))
 		form.innerHTML = '';
 
+	if (typeof request[0] === 'undefined' || !request[0]) {
+		_('toolbar').style.display = 'none';
+		return;
+	}
+
 	return ajax(adminPrefix + request[0] + '/pageAids', get + '&ajax').then(function (aids) {
 		if (typeof aids !== 'object')
 			return false;
