@@ -29,19 +29,20 @@ window.addEventListener('DOMContentLoaded', function () {
 	if (document.location.search.match(/sId=[0-9]+/))
 		sId = document.location.search.replace(/.*sId=([0-9]+).*/, '$1');
 
+	let get = document.location.search;
+	if (get.charAt(0) === '?')
+		get = get.substr(1);
+	if (sId)
+		get = changeGetParameter(get, 'sId', sId);
+
 	if (_('main-content')) {
 		if (request.length >= 2 && request[1] === 'edit') {
 			if (request.length >= 3) {
-				loadElement(request[0], request[2], false);
+				loadElement(request[0], request[2], get, false);
 			} else {
-				newElement();
+				newElement(get);
 			}
 		} else {
-			let get = '';
-			if (sId)
-				get += 'sId=' + sId;
-			if (document.location.search.match(/goTo=[0-9]+/))
-				get += '&goTo=' + document.location.search.replace(/.*goTo=([0-9]+).*/, '$1');
 			loadAdminPage(request, get, '', false);
 		}
 		loadPageAids(request);
@@ -99,7 +100,7 @@ window.onpopstate = function (event) {
 				get = changeGetParameter(get, 'sId', s['sId']);
 
 			if (s['request'][1] === 'edit') {
-				loadElement(s['request'][0], s['request'][2], false);
+				loadElement(s['request'][0], s['request'][2], get, false);
 			} else {
 				if (typeof s['p'] !== 'undefined')
 					get = changeGetParameter(get, 'p', s['p']);
@@ -911,7 +912,9 @@ function saveSearchFields() {
 	});
 }
 
-function loadElement(page, id, history_push) {
+function loadElement(page, id, get, history_push) {
+	if (typeof get === 'undefined')
+		get = '';
 	if (typeof history_push === 'undefined')
 		history_push = true;
 
@@ -921,7 +924,7 @@ function loadElement(page, id, history_push) {
 	let promise;
 
 	if (id) {
-		let formTemplate = loadAdminPage([page, 'edit', id], '', false, history_push).then(showLoadingMask);
+		let formTemplate = loadAdminPage([page, 'edit', id], get, false, history_push).then(showLoadingMask);
 		let formData = loadElementData(page, id);
 
 		promise = Promise.all([formTemplate, formData]).then(responses => {
@@ -931,7 +934,7 @@ function loadElement(page, id, history_push) {
 			});
 		});
 	} else {
-		promise = loadAdminPage([page, 'edit'], '', false, history_push).then(checkSubPages);
+		promise = loadAdminPage([page, 'edit'], get, false, history_push).then(checkSubPages);
 	}
 
 	return promise.then(callElementCallback).then(monitorFields).then(() => {
@@ -1271,8 +1274,8 @@ function historyWipe() {
 	rebuildHistoryBox();
 }
 
-function newElement() {
-	return loadElement(currentAdminPage.split('/')[0]).then(initializeEmptyForm).then(monitorFields);
+function newElement(get) {
+	return loadElement(currentAdminPage.split('/')[0], 0, get).then(initializeEmptyForm).then(monitorFields);
 }
 
 function changeSaveButton() {
@@ -1383,7 +1386,7 @@ async function save() {
 			if (r.status === 'ok') {
 				historyWipe();
 
-				return loadElement(request[0], r.id, history_push).then(function () {
+				return loadElement(request[0], r.id, '', history_push).then(function () {
 					inPageMessage('Salvataggio correttamente effettuato.', 'green-message');
 				});
 			} else if (typeof r.err !== 'undefined') {
