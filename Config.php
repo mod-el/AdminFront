@@ -21,9 +21,9 @@ class Config extends Module_Config
 	public function makeCache(): bool
 	{
 		$config = $this->retrieveConfig();
+		$adminRules = $this->getRules();
 
 		if ($this->model->moduleExists('WebAppManifest')) {
-			$adminRules = $this->getRules();
 			foreach ($adminRules['rules'] as $ruleIdx => $rule) {
 				if (substr($ruleIdx, 0, 2) === 'sw')
 					continue;
@@ -64,7 +64,9 @@ class Config extends Module_Config
 			$assets = [];
 		}
 
-		$md5 = [];
+		$md5 = [
+			json_encode($adminRules),
+		];
 		foreach ($assets as $asset) {
 			if (substr($asset, 0, 4) === 'http') {
 				$md5[] = md5($asset);
