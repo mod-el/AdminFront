@@ -40,7 +40,7 @@ window.addEventListener('DOMContentLoaded', function () {
 			if (request.length >= 3) {
 				loadElement(request[0], request[2], get, false);
 			} else {
-				newElement(get);
+				newElement(request[0], get);
 			}
 		} else {
 			loadAdminPage(request, get, '', false);
@@ -1274,8 +1274,12 @@ function historyWipe() {
 	rebuildHistoryBox();
 }
 
-function newElement(get) {
-	return loadElement(currentAdminPage.split('/')[0], 0, get).then(initializeEmptyForm).then(monitorFields);
+function newElement(page, get) {
+	if (typeof page === 'undefined')
+		page = currentAdminPage.split('/')[0];
+	if (typeof get === 'undefined')
+		get = '';
+	return loadElement(page, 0, get).then(initializeEmptyForm).then(monitorFields);
 }
 
 function changeSaveButton() {
