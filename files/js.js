@@ -974,7 +974,7 @@ function fillAdminForm(data) {
 	}
 
 	if (!(form = _('adminForm'))) {
-		throw 'Error in loading element';
+		throw 'Can\'t find main form';
 	}
 
 	return form.fill(data.data, false, 'filled').then(() => {

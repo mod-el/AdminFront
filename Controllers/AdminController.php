@@ -21,7 +21,6 @@ class AdminController extends Controller
 		$templateModule = $this->model->_AdminFront->getTemplateModule();
 		$this->templateModule = $this->model->load($templateModule);
 		$this->viewOptions['template-module'] = $templateModule;
-		$this->viewOptions['template-module-layout'] = $templateModule;
 	}
 
 	public function index()
@@ -29,19 +28,19 @@ class AdminController extends Controller
 		$request = $this->model->_AdminFront->request;
 
 		$this->viewOptions['cacheTemplate'] = false;
+		$this->viewOptions['showLayout'] = false;
 
 		if (isset($request[0])) {
 			if (!isset($request[1]))
 				$request[1] = '';
 
-			if (isset($_GET['ajax']) or isset($_GET['print']) or isset($_GET['csv'])) {
-				if (isset($_GET['print'])) {
-					$this->viewOptions['header'] = ['print-header'];
-					$this->viewOptions['footer'] = ['print-footer'];
-				} else {
-					$this->viewOptions['showLayout'] = false;
-				}
+			if (isset($_GET['print'])) {
+				$this->viewOptions['header'] = ['print-header'];
+				$this->viewOptions['footer'] = ['print-footer'];
+				$this->viewOptions['showLayout'] = true;
+			}
 
+			if (isset($_GET['ajax']) or isset($_GET['print']) or isset($_GET['csv'])) {
 				$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
 
 				switch ($request[1]) {
@@ -158,21 +157,22 @@ class AdminController extends Controller
 								}
 
 								$this->viewOptions['cache'] = false; // TODO: in the final version, only form-header and form-footer should not be cached
-								if (isset($_GET['ajax'])) {
-									$this->viewOptions['showLayout'] = true;
-									$this->viewOptions['header'] = ['form-header'];
-									$this->viewOptions['footer'] = ['form-footer'];
-								} else {
-									$this->viewOptions['header'][] = 'form-header';
-									array_unshift($this->viewOptions['footer'], 'form-footer');
-								}
+
+								$this->viewOptions['showLayout'] = true;
+								$this->viewOptions['template-module-layout'] = 'AdminFront';
+								$this->viewOptions['header'] = ['form-header'];
+								$this->viewOptions['footer'] = ['form-footer'];
+
+								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
+									$this->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
+									array_unshift($this->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
 
 								if (isset($_GET['duplicated']))
 									$this->viewOptions['messages'] = ['Succesfully duplicated!'];
 							}
 
 							if (isset($request[3])) {
-								$this->viewOptions['showLayout'] = false;
 								$this->viewOptions['template'] = $dir . $request[0] . DIRECTORY_SEPARATOR . $request[3];
 							}
 						}
@@ -262,7 +262,7 @@ class AdminController extends Controller
 						}
 						break;
 					default:
-						$this->viewOptions['template'] = null;
+						$this->viewOptions['template'] = 'shell';
 						break;
 				}
 			}
@@ -297,11 +297,10 @@ class AdminController extends Controller
 				else
 					$this->viewOptions['template-module'] = 'AdminFront';
 
-				$this->viewOptions['showLayout'] = false;
 				$this->viewOptions['template'] = 'dashboard';
 				$this->viewOptions['cacheTemplate'] = false;
 			} else {
-				$this->viewOptions['template'] = null;
+				$this->viewOptions['template'] = 'shell';
 			}
 		}
 	}
