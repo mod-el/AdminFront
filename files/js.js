@@ -115,7 +115,7 @@ window.addEventListener('beforeunload', function (event) {
 		return true;
 
 	var message = 'There are unsaved data, are you sure?';
-	if (typeof event == 'undefined') {
+	if (typeof event === 'undefined') {
 		event = window.event;
 	}
 	if (event) {
@@ -193,7 +193,7 @@ function closeMenuGroup(tasto, cont) {
  Closes all menu groups except for the ones provided in the first argument
  */
 function closeAllMenuGroups(except) {
-	if (typeof except == 'undefined')
+	if (typeof except === 'undefined')
 		except = [];
 	document.querySelectorAll('.main-menu-sub, .main-menu-tasto').forEach(function (tasto) {
 		if (!in_array(tasto.getAttribute('data-menu-id'), except)) {
@@ -823,7 +823,7 @@ function switchFiltersForm(origin) {
 }
 
 function search(forcePage) {
-	if (typeof forcePage == 'undefined')
+	if (typeof forcePage === 'undefined')
 		forcePage = 1;
 
 	var filters = [];
