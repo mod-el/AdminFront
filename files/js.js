@@ -358,10 +358,8 @@ function loadPage(url, get, post, deleteContent) {
 
 	get = changeGetParameter(get, 'ajax', '');
 
-	if (deleteContent) {
-		_('main-loading').style.display = 'block';
-		_('main-content').innerHTML = '';
-	}
+	if (deleteContent)
+		clearMainPage();
 
 	pageLoadingHash = url + get + post;
 
@@ -386,6 +384,11 @@ function loadPage(url, get, post, deleteContent) {
 	})(pageLoadingHash));
 }
 
+function clearMainPage() {
+	_('main-loading').style.display = 'block';
+	_('main-content').innerHTML = '';
+}
+
 /*
  Moves between admin pages, moving the left menù and taking care of the browser history
  */
@@ -399,8 +402,6 @@ function loadAdminPage(request, get, post, history_push) {
 		get = '';
 	if (typeof history_push === 'undefined')
 		history_push = true;
-
-	openMenuToRequest(request);
 
 	let full_url = request.join('/');
 
@@ -425,6 +426,8 @@ function loadAdminPage(request, get, post, history_push) {
 		history.pushState(state, '', adminPrefix + full_url + '?' + get);
 	}
 
+	clearMainPage();
+
 	let promise;
 	if (currentAdminPage !== full_url) {
 		if (typeof request[1] === 'undefined' || request[1] === '') { // Table page
@@ -434,11 +437,16 @@ function loadAdminPage(request, get, post, history_push) {
 				};
 			})(forcePage));
 		} else {
-			promise = Promise.all([loadPage(adminPrefix + full_url, get, post), loadPageAids(request, get)]);
+			promise = Promise.all([
+				loadPage(adminPrefix + full_url, get, post),
+				loadPageAids(request, get)
+			]);
 		}
 	} else {
 		promise = loadPage(adminPrefix + full_url, get, post);
 	}
+
+	openMenuToRequest(request);
 
 	if (window.innerWidth < 800)
 		closeMenu();
