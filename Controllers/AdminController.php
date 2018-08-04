@@ -8,6 +8,8 @@ class AdminController extends Controller
 {
 	/** @var Module */
 	private $templateModule;
+	/** @var string */
+	private $templateModuleName;
 
 	public function init()
 	{
@@ -18,9 +20,9 @@ class AdminController extends Controller
 
 		$this->model->_AdminFront->initialize();
 
-		$templateModule = $this->model->_AdminFront->getTemplateModule();
-		$this->templateModule = $this->model->load($templateModule);
-		$this->viewOptions['template-module'] = $templateModule;
+		$this->templateModuleName = $this->model->_AdminFront->getTemplateModule();
+		$this->templateModule = $this->model->load($this->templateModuleName);
+		$this->viewOptions['template-module'] = $this->templateModuleName;
 	}
 
 	public function index()
@@ -163,10 +165,10 @@ class AdminController extends Controller
 								$this->viewOptions['header'] = ['form-header'];
 								$this->viewOptions['footer'] = ['form-footer'];
 
-								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
-									$this->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
-								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
-									array_unshift($this->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->viewOptions['template-module'] . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
+								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
+									$this->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
+									array_unshift($this->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
 
 								if (isset($_GET['duplicated']))
 									$this->viewOptions['messages'] = ['Succesfully duplicated!'];
