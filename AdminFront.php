@@ -45,6 +45,17 @@ class AdminFront extends Module
 		}
 	}
 
+	public function headings()
+	{
+		?>
+		<link rel="manifest" href="<?= $this->getUrlPrefix() ?>manifest.json">
+		<script>
+			var adminPrefix = <?=json_encode($this->getUrlPrefix())?>;
+			var elementCallback = null;
+		</script>
+		<?php
+	}
+
 	public function getUser(): User
 	{
 		if (!$this->model->isLoaded('User', 'Admin')) {
