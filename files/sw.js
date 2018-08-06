@@ -1,10 +1,6 @@
 var CACHE_NAME = 'admin-<?=$cacheKey?>';
 var adminPrefix = '<?=$this->model->_AdminFront->getUrlPrefix()?>';
-var urlsToCache =
-<
-	? = json_encode($assets) ?
->
-;
+var urlsToCache = <?= json_encode($assets) ?>;
 
 self.addEventListener('install', function (event) {
 	self.skipWaiting();
@@ -61,12 +57,10 @@ self.addEventListener('fetch', function (event) {
 	event.respondWith(
 		caches.match(event.request).then(function (response) {
 			// Cache hit - return response
-			if (response)
+			if (response && response.redirected)
 				return response;
 
-			return fetch(event.request, {
-				"redirect": 'follow'
-			});
+			return fetch(event.request);
 		})
 	);
 });
