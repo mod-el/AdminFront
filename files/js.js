@@ -946,16 +946,25 @@ function fillAdminForm(data) {
 	});
 }
 
-function initializeEmptyForm() {
+async function initializeEmptyForm() {
 	let form = _('adminForm');
 	if (!form)
 		return false;
 
+	let promises = [];
+
 	for (let i = 0, f; f = form.elements[i++];) {
-		f.setAttribute('data-filled', '1');
+		let v = await f.getValue();
+
+		if (v && f.name)
+			changedValues[f.name] = v;
+
+		promises.push(f.setValue(v).then(() => {
+			f.setAttribute('data-filled', '1');
+		}));
 	}
 
-	return Promise.all([]);
+	return Promise.all(promises);
 }
 
 function monitorFields() {
