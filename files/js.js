@@ -951,27 +951,11 @@ function initializeEmptyForm() {
 	if (!form)
 		return false;
 
-	let promises = [];
-
 	for (let i = 0, f; f = form.elements[i++];) {
-		promises.push(f.getValue().then((function (name) {
-			return function (fieldValue) {
-				if (!fieldValue && _('[data-filter="' + name + '"]'))
-					return _('[data-filter="' + name + '"]').getValue();
-				return fieldValue;
-			}
-		})(f.name)).then((function (f) {
-			return function (fieldValue) {
-				if (fieldValue && f.name)
-					changedValues[f.name] = fieldValue;
-				return f.setValue(fieldValue).then(() => {
-					f.setAttribute('data-filled', '1');
-				});
-			};
-		})(f)));
+		f.setAttribute('data-filled', '1');
 	}
 
-	return Promise.all(promises);
+	return Promise.all([]);
 }
 
 function monitorFields() {
