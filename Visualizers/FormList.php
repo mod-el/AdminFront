@@ -17,6 +17,8 @@ class FormList extends DataVisualizer
 		'clear-form' => true,
 		'add-button' => true,
 		'add-button-position' => 'after',
+		'on-add' => null,
+		'on-delete' => null,
 		'fields' => [],
 	];
 
@@ -42,7 +44,7 @@ class FormList extends DataVisualizer
 		$addButton = '';
 		if ($addPrivilege and $options['add-button'] and !$options['print']) {
 			if ($options['add-button'] === true) {
-				$addButton = '<div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\')">
+				$addButton = '<div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\').then(() => { ' . entities($options['on-delete']) . ' })">
                     <div class="rob-field" style="width: 5%"></div>
                     <div class="rob-field" style="width: 95%">
                         <i class="fas fa-plus" aria-hidden="true"></i> Aggiungi
@@ -135,7 +137,7 @@ class FormList extends DataVisualizer
 			if ($deletePrivilege and !$options['print']) {
 				?>
 				<div class="rob-field" style="width: 5%; text-align: center">
-					<a href="#" onclick="if(confirm('Sicuro di voler eliminare questa riga?')) sublistDeleteRow('<?= entities($options['name']) ?>', '<?= entities($el[$el->settings['primary']]) ?>'); return false"><i class="fas fa-trash" aria-label="Delete" style="color: #000"></i></a>
+					<a href="#" onclick="if(confirm('Sicuro di voler eliminare questa riga?')) sublistDeleteRow('<?= entities($options['name']) ?>', '<?= entities($el[$el->settings['primary']]) ?>').then(() => { <?= entities($options['on-delete']) ?> }); return false"><i class="fas fa-trash" aria-label="Delete" style="color: #000"></i></a>
 				</div>
 				<div class="rob-field" style="width: 95%">
 				<?php
