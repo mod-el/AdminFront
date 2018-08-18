@@ -214,7 +214,6 @@ class FormList extends DataVisualizer
 
 					if (!is_numeric($id) and substr($id, 0, 3) === 'new') {
 						$el = $this->model->_ORM->create($this->options['element'] ?: 'Element', ['table' => $this->options['table']]);
-						$data = array_merge($this->model->_Admin->options['where'], $data);
 						$this->model->_Admin->saveElement($data, null, $el);
 					} else {
 						$el = $this->model->_ORM->one($this->options['element'] ?: 'Element', $id, ['table' => $this->options['table']]);
