@@ -62,7 +62,7 @@
 			$id = $el['element'][$el['element']->settings['primary']];
 
 			$form = false;
-			$clickable = ($id and $this->canUser('R', null, $el['element']));
+			$clickable = ($id and $this->canUser('R', $el['element']));
 			if (isset($this->model->_Admin->options['onclick'])) {
 				if (strpos($this->model->_Admin->options['onclick'], '"'))
 					die('No double quotes allowed in the "onclick" custom code.');
@@ -95,7 +95,7 @@
 						</div>
 					</div>
 					<?php
-					$canDelete = $this->canUser('D', null, $el['element']);
+					$canDelete = $this->canUser('D', $el['element']);
 					if ($canDelete) {
 						?>
 						<div class="special-cell" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
