@@ -4,8 +4,8 @@
 			<input type="checkbox" onchange="if(this.checked) selectAllRows(1); else selectAllRows(0)"/>
 		</div>
 		<?php
-		$deletePrivilege = $this->canUser('D');
-		if ($deletePrivilege) {
+		$mainDeletePrivilege = $this->canUser('D');
+		if ($mainDeletePrivilege) {
 			?>
 			<div class="special-cell"></div>
 			<?php
@@ -95,12 +95,17 @@
 						</div>
 					</div>
 					<?php
-					$canDelete = $this->canUser('D', $el['element']);
-					if ($canDelete) {
+					if ($mainDeletePrivilege) {
 						?>
 						<div class="special-cell" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
 							<div>
-								<a href="#" onclick="event.stopPropagation(); deleteRows(['<?= $id ?>']); return false"><img src="<?= PATH ?>model/AdminTemplateEditt/files/img/delete.png" alt="" style="vertical-align: middle"/></a>
+								<?php
+								if ($this->canUser('D', $el['element'])) {
+									?>
+									<a href="#" onclick="event.stopPropagation(); deleteRows(['<?= $id ?>']); return false"><img src="<?= PATH ?>model/AdminTemplateEditt/files/img/delete.png" alt="" style="vertical-align: middle"/></a>
+									<?php
+								}
+								?>
 							</div>
 						</div>
 						<?php
@@ -153,7 +158,7 @@
 					<div></div>
 				</div>
 				<?php
-				if ($deletePrivilege) {
+				if ($mainDeletePrivilege) {
 					?>
 					<div class="special-cell">
 						<div></div>
@@ -214,7 +219,7 @@
 			</div>
 		</div>
 		<?php
-		if ($deletePrivilege) {
+		if ($mainDeletePrivilege) {
 			?>
 			<div class="special-cell" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
 				<div>
