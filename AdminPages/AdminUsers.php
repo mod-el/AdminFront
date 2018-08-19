@@ -23,7 +23,13 @@ class AdminUsers extends AdminPage
 			}
 		}
 
-		$options = [];
+		$options = [
+			'privileges' => [
+				'D' => function ($el) {
+					return (bool)($el['id'] != $this->model->_User_Admin->logged());
+				},
+			],
+		];
 		if ($usersElement)
 			$options['element'] = $usersElement;
 		if ($usersTable)
@@ -42,7 +48,8 @@ class AdminUsers extends AdminPage
 
 	public function customize()
 	{
-		$this->model->_Admin->field('old_password', 'password');
+		$this->model->_Admin->clearForm();
+		$this->model->_Admin->field('username');
 		$this->model->_Admin->field('password', 'password');
 	}
 }
