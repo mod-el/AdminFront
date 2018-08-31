@@ -128,7 +128,8 @@ function sublistAddRow(name, id, trigger) {
 	div.id = 'cont-ch-' + name + '-' + id;
 	div.innerHTML = _('sublist-template-' + name).innerHTML.replace(/\[n\]/g, id);
 
-	if (addbutton = _('cont-ch-' + name + '-addbutton')) {
+	let addbutton = _('cont-ch-' + name + '-addbutton');
+	if (addbutton && addbutton.parentNode === container) {
 		container.insertBefore(div, addbutton);
 	} else {
 		container.appendChild(div);

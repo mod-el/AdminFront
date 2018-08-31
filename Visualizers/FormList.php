@@ -43,7 +43,7 @@ class FormList extends DataVisualizer
 
 		$addButton = '';
 		if ($addPrivilege and $options['add-button'] and !$options['print']) {
-			$addButton = '<div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\').then(() => { ' . entities($options['on-add']) . ' })">
+			$addButton = '<div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\').then(() => { ' . entities($options['on-add']) . ' })" id="cont-ch-' . entities($options['name']) . '-addbutton">
                     <div class="rob-field" style="width: 5%"></div>
                     <div class="rob-field" style="width: 95%">';
 			if ($options['add-button'] === true) {
