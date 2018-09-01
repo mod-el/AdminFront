@@ -71,9 +71,10 @@ class Config extends Module_Config
 			if (substr($asset, 0, 4) === 'http') {
 				$md5[] = md5($asset);
 			} else {
-				if (!file_exists(PATHBASE . $asset))
+				$parsed = parse_url(PATHBASE . $asset);
+				if (!$parsed or !isset($parsed['path']) or !file_exists($parsed['path']))
 					continue;
-				$md5[] = md5(file_get_contents(PATHBASE . $asset));
+				$md5[] = md5(file_get_contents($parsed['path']));
 			}
 		}
 
