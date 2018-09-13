@@ -468,6 +468,7 @@ class AdminFront extends Module
 
 			switch ($act['action']) {
 				case 'new':
+					$action['url'] = $request[0] . '/edit';
 					$action['action'] = 'newElement(); return false';
 					break;
 				case 'delete':
