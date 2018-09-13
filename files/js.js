@@ -223,7 +223,7 @@ function openMenu() {
 	_('main-page-cont').style.width = 'calc(100% - ' + maxMenuWidth + 'px)';
 
 	var hideMenu = _('main-menu').getAttribute('data-hide');
-	if (window.innerWidth >= 800 && hideMenu != 'always') {
+	if (window.innerWidth >= 800 && hideMenu !== 'always') {
 		_('img-open-menu').style.opacity = 0;
 		_('header').style.paddingLeft = '0';
 	}
@@ -793,7 +793,7 @@ function saveFilters() {
 
 	_('popup-real').loading();
 	return ajax(adminPrefix + request[0] + '/pickFilters', 'ajax', 'c_id=' + c_id + '&filters=' + encodeURIComponent(JSON.stringify(filters))).then(function (r) {
-		if (r != 'ok') {
+		if (r !== 'ok') {
 			alert(r);
 			return false;
 		} else {
@@ -823,7 +823,7 @@ function saveSearchFields() {
 	_('popup-real').loading();
 	return ajax(adminPrefix + request[0] + '/pickSearchFields', 'ajax', post).then(function (r) {
 		zkPopupClose();
-		if (r != 'ok') {
+		if (r !== 'ok') {
 			alert(r);
 		} else {
 			return search();
