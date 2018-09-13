@@ -415,7 +415,7 @@ function loadPageAids(request, get) {
 
 		if (history.replaceState) {
 			let url = document.location.href.replace(document.location.search, '');
-			if (url.substr(-1) == '?')
+			if (url.substr(-1) === '?')
 				url = url.substr(0, -1);
 			let queryString = changeGetParameter(document.location.search.substr(1), 'sId', sId);
 			history.replaceState({
@@ -1088,7 +1088,7 @@ function rebuildHistoryBox() {
 
 function switchHistoryBox() {
 	var div = _('history-box');
-	if (div.style.right == '0px') {
+	if (div.style.right === '0px') {
 		div.style.right = '-15%';
 	} else {
 		div.style.right = '0px';
