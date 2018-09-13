@@ -462,6 +462,7 @@ function loadPageAids(request, get) {
 		if (typeof aids.topForm !== 'undefined') {
 			let form = document.createElement('form');
 			form.id = 'topForm';
+			form.setAttribute('onsubmit', 'return false');
 			form.innerHTML = aids.topForm;
 			toolbar.appendChild(form);
 		}
