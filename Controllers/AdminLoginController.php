@@ -10,12 +10,12 @@ class AdminLoginController extends Controller
 
 		$templateModule = $this->model->_AdminFront->getTemplateModule();
 		$this->model->load($templateModule);
-		$this->viewOptions['template-module'] = $templateModule;
+		$this->model->viewOptions['template-module'] = $templateModule;
 
 		switch ($this->model->_AdminFront->request[0]) {
 			case 'login':
-				$this->viewOptions['showLayout'] = false;
-				$this->viewOptions['template'] = 'login';
+				$this->model->viewOptions['showLayout'] = false;
+				$this->model->viewOptions['template'] = 'login';
 
 				if ($user->logged()) {
 					$this->model->redirect($this->model->_AdminFront->getUrlPrefix());
@@ -26,7 +26,7 @@ class AdminLoginController extends Controller
 					if ($user->login($_POST['username'], $_POST['password'])) {
 						$this->model->redirect($this->model->_AdminFront->getUrlPrefix());
 					} else {
-						$this->viewOptions['errors'][] = 'Wrong data';
+						$this->model->viewOptions['errors'][] = 'Wrong data';
 					}
 				}
 				break;

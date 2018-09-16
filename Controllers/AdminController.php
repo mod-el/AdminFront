@@ -22,24 +22,24 @@ class AdminController extends Controller
 
 		$this->templateModuleName = $this->model->_AdminFront->getTemplateModule();
 		$this->templateModule = $this->model->load($this->templateModuleName);
-		$this->viewOptions['template-module'] = $this->templateModuleName;
+		$this->model->viewOptions['template-module'] = $this->templateModuleName;
 	}
 
 	public function index()
 	{
 		$request = $this->model->_AdminFront->request;
 
-		$this->viewOptions['cacheTemplate'] = false;
-		$this->viewOptions['showLayout'] = false;
+		$this->model->viewOptions['cacheTemplate'] = false;
+		$this->model->viewOptions['showLayout'] = false;
 
 		if (isset($request[0])) {
 			if (!isset($request[1]))
 				$request[1] = '';
 
 			if (isset($_GET['print'])) {
-				$this->viewOptions['header'] = ['print-header'];
-				$this->viewOptions['footer'] = ['print-footer'];
-				$this->viewOptions['showLayout'] = true;
+				$this->model->viewOptions['header'] = ['print-header'];
+				$this->model->viewOptions['footer'] = ['print-footer'];
+				$this->model->viewOptions['showLayout'] = true;
 			}
 
 			if (isset($_GET['ajax']) or isset($_GET['print']) or isset($_GET['csv'])) {
@@ -120,20 +120,20 @@ class AdminController extends Controller
 							$this->viewOptions['list'] = $this->model->_Admin->getList($options);
 
 							if (isset($_GET['print'])) {
-								$this->viewOptions['template'] = 'print';
-								$this->viewOptions['template-module'] = 'AdminFront';
+								$this->model->viewOptions['template'] = 'print';
+								$this->model->viewOptions['template-module'] = 'AdminFront';
 							} else {
-								$this->viewOptions['template'] = 'list';
+								$this->model->viewOptions['template'] = 'list';
 							}
 						} else {
 							$customTemplate = strtolower(preg_replace('/(?<!^)([A-Z])/', '-\\1', $this->model->_Admin->options['page']));
 
 							$checkCustomTemplate = Autoloader::searchFile('template', $dir . $customTemplate);
 							if ($checkCustomTemplate) {
-								$this->viewOptions['template'] = $dir . $customTemplate;
-								unset($this->viewOptions['template-module']);
+								$this->model->viewOptions['template'] = $dir . $customTemplate;
+								unset($this->model->viewOptions['template-module']);
 							} else {
-								$this->viewOptions['template'] = 'form-template';
+								$this->model->viewOptions['template'] = 'form-template';
 							}
 						}
 						break;
@@ -152,30 +152,30 @@ class AdminController extends Controller
 
 								$checkCustomTemplate = Autoloader::searchFile('template', $dir . $request[0]);
 								if ($checkCustomTemplate) {
-									$this->viewOptions['template'] = $dir . $request[0];
-									unset($this->viewOptions['template-module']);
+									$this->model->viewOptions['template'] = $dir . $request[0];
+									unset($this->model->viewOptions['template-module']);
 								} else {
-									$this->viewOptions['template'] = 'form-template';
+									$this->model->viewOptions['template'] = 'form-template';
 								}
 
-								$this->viewOptions['cache'] = false; // TODO: in the final version, only form-header and form-footer should not be cached
+								$this->model->viewOptions['cache'] = false; // TODO: in the final version, only form-header and form-footer should not be cached
 
-								$this->viewOptions['showLayout'] = true;
-								$this->viewOptions['template-module-layout'] = 'AdminFront';
-								$this->viewOptions['header'] = ['form-header'];
-								$this->viewOptions['footer'] = ['form-footer'];
+								$this->model->viewOptions['showLayout'] = true;
+								$this->model->viewOptions['template-module-layout'] = 'AdminFront';
+								$this->model->viewOptions['header'] = ['form-header'];
+								$this->model->viewOptions['footer'] = ['form-footer'];
 
 								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
-									$this->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+									$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
 								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
-									array_unshift($this->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
+									array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
 
 								if (isset($_GET['duplicated']))
-									$this->viewOptions['messages'] = ['Succesfully duplicated!'];
+									$this->model->viewOptions['messages'] = ['Succesfully duplicated!'];
 							}
 
 							if (isset($request[3])) {
-								$this->viewOptions['template'] = $dir . $request[0] . DIRECTORY_SEPARATOR . $request[3];
+								$this->model->viewOptions['template'] = $dir . $request[0] . DIRECTORY_SEPARATOR . $request[3];
 							}
 						}
 						break;
@@ -264,45 +264,45 @@ class AdminController extends Controller
 						}
 						break;
 					default:
-						$this->viewOptions['template'] = 'shell';
+						$this->model->viewOptions['template'] = 'shell';
 						break;
 				}
 			}
 
 			if (method_exists($this->model->_AdminFront, $request[1])) {
-				$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->model->_AdminFront, $request[1]]));
+				$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->model->_AdminFront, $request[1]]));
 			} elseif (method_exists($this->model->_AdminFront->getVisualizer(), $request[1])) {
-				$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->model->_AdminFront->getVisualizer(), $request[1]]));
+				$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->model->_AdminFront->getVisualizer(), $request[1]]));
 			} elseif (method_exists($this->templateModule, $request[1])) {
-				$this->viewOptions = array_merge($this->viewOptions, call_user_func([$this->templateModule, $request[1]]));
+				$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->templateModule, $request[1]]));
 			} elseif ($this->model->_Admin->page and method_exists($this->model->_Admin->page, $request[1])) {
 				$customViewOptions = call_user_func([$this->model->_Admin->page, $request[1]]);
 				if ($customViewOptions and is_array($customViewOptions))
-					$this->viewOptions = array_merge($this->viewOptions, $customViewOptions);
+					$this->model->viewOptions = array_merge($this->model->viewOptions, $customViewOptions);
 				else
-					$this->viewOptions['template'] = null;
+					$this->model->viewOptions['template'] = null;
 			} elseif (isset($unknown)) {
-				$this->viewOptions['errors'][] = 'Unknown action.';
-				$this->viewOptions['template'] = null;
+				$this->model->viewOptions['errors'][] = 'Unknown action.';
+				$this->model->viewOptions['template'] = null;
 			}
 
 			if ($this->model->_Admin->page) {
 				$customViewOptions = $this->model->_Admin->page->viewOptions();
-				if (isset($customViewOptions['template'], $this->viewOptions['template-module']))
-					unset($this->viewOptions['template-module']);
-				$this->viewOptions = array_merge($this->viewOptions, $customViewOptions);
+				if (isset($customViewOptions['template'], $this->model->viewOptions['template-module']))
+					unset($this->model->viewOptions['template-module']);
+				$this->model->viewOptions = array_merge($this->model->viewOptions, $customViewOptions);
 			}
 		} else {
 			if (isset($_GET['ajax'])) {
 				if ($this->model->moduleExists('Dashboard'))
-					$this->viewOptions['template-module'] = 'Dashboard';
+					$this->model->viewOptions['template-module'] = 'Dashboard';
 				else
-					$this->viewOptions['template-module'] = 'AdminFront';
+					$this->model->viewOptions['template-module'] = 'AdminFront';
 
-				$this->viewOptions['template'] = 'dashboard';
-				$this->viewOptions['cacheTemplate'] = false;
+				$this->model->viewOptions['template'] = 'dashboard';
+				$this->model->viewOptions['cacheTemplate'] = false;
 			} else {
-				$this->viewOptions['template'] = 'shell';
+				$this->model->viewOptions['template'] = 'shell';
 			}
 		}
 	}
