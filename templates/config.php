@@ -1,31 +1,31 @@
 <style>
-    .label {
-        width: 50%;
-        text-align: right;
-        padding-right: 10px;
-        padding-bottom: 5px;
-        padding-top: 5px;
-    }
+	.label {
+		width: 50%;
+		text-align: right;
+		padding-right: 10px;
+		padding-bottom: 5px;
+		padding-top: 5px;
+	}
 
-    .field {
-        text-align: left;
-        padding-bottom: 5px;
-        padding-top: 5px;
-    }
+	.field {
+		text-align: left;
+		padding-bottom: 5px;
+		padding-top: 5px;
+	}
 
-    td {
-        padding: 5px;
-    }
+	td {
+		padding: 5px;
+	}
 
-    .admin-page {
-        border-left: solid #F3F3FF 1px;
-        padding: 5px;
-        margin-bottom: 5px;
-    }
+	.admin-page {
+		border-left: solid #F3F3FF 1px;
+		padding: 5px;
+		margin-bottom: 5px;
+	}
 
-    .admin-page-form {
-        white-space: nowrap;
-    }
+	.admin-page-form {
+		white-space: nowrap;
+	}
 </style>
 
 <script>
@@ -191,136 +191,136 @@
 <h2>Admin settings</h2>
 
 <form action="" method="post" name="configForm">
-    <hr/>
+	<hr/>
 	<?php
-	$template = $this->options['config']['template'];
-	$hideMenu = $this->options['config']['hide-menu'];
-	$dateFormat = $this->options['config']['dateFormat'];
-	$priceFormat = $this->options['config']['priceFormat'];
-	$stringaLogin1 = $this->options['config']['stringaLogin1'];
-	$stringaLogin2 = $this->options['config']['stringaLogin2'];
+	$template = $config['template'];
+	$hideMenu = $config['hide-menu'];
+	$dateFormat = $config['dateFormat'];
+	$priceFormat = $config['priceFormat'];
+	$stringaLogin1 = $config['stringaLogin1'];
+	$stringaLogin2 = $config['stringaLogin2'];
 	?>
-    <table>
-        <tr>
-            <td>Template module:</td>
-            <td>
-                <select name="template">
-                    <option value=""></option>
+	<table>
+		<tr>
+			<td>Template module:</td>
+			<td>
+				<select name="template">
+					<option value=""></option>
 					<?php
-					$templates = $this->options['config-class']->searchTemplates();
+					$templates = $config_class->searchTemplates();
 					foreach ($templates as $t => $t_name) {
 						?>
-                        <option value="<?= entities($t) ?>"<?= $t == $template ? ' selected' : '' ?>><?= entities($t_name) ?></option><?php
+						<option value="<?= entities($t) ?>"<?= $t == $template ? ' selected' : '' ?>><?= entities($t_name) ?></option><?php
 					}
 					?>
-                </select>
-            </td>
-            <td>Left menu:</td>
-            <td>
-                <select name="hide-menu">
-                    <option value="always"<?= $hideMenu == 'always' ? ' selected' : '' ?>>Always</option>
-                    <option value="mobile"<?= $hideMenu == 'mobile' ? ' selected' : '' ?>>Only mobile</option>
-                    <option value="never"<?= $hideMenu == 'never' ? ' selected' : '' ?>>Never</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <td>Dates format:</td>
-            <td><input name="dateFormat" value="<?= entities($dateFormat) ?>"/></td>
-            <td>Login phrase 1:</td>
-            <td><input name="stringaLogin1" value="<?= entities($stringaLogin1) ?>"/></td>
-        </tr>
-        <tr>
-            <td>Currencies format:</td>
-            <td>
-                <select name="priceFormat">
-                    <option value="vd"<?= $template == 'vd' ? ' selected' : '' ?>>1.234,00&euro;</option>
-                    <option value="vp"<?= $template == 'vp' ? ' selected' : '' ?>>&euro; 1.234,00</option>
-                    <option value="pd"<?= $template == 'pd' ? ' selected' : '' ?>>1234.00&euro;</option>
-                    <option value="pp"<?= $template == 'pp' ? ' selected' : '' ?>>&euro; 1234.00</option>
-                </select>
-            </td>
-            <td>Login phrase 2:</td>
-            <td><input name="stringaLogin2" value="<?= entities($stringaLogin2) ?>"/></td>
-        </tr>
-    </table>
+				</select>
+			</td>
+			<td>Left menu:</td>
+			<td>
+				<select name="hide-menu">
+					<option value="always"<?= $hideMenu == 'always' ? ' selected' : '' ?>>Always</option>
+					<option value="mobile"<?= $hideMenu == 'mobile' ? ' selected' : '' ?>>Only mobile</option>
+					<option value="never"<?= $hideMenu == 'never' ? ' selected' : '' ?>>Never</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<td>Dates format:</td>
+			<td><input name="dateFormat" value="<?= entities($dateFormat) ?>"/></td>
+			<td>Login phrase 1:</td>
+			<td><input name="stringaLogin1" value="<?= entities($stringaLogin1) ?>"/></td>
+		</tr>
+		<tr>
+			<td>Currencies format:</td>
+			<td>
+				<select name="priceFormat">
+					<option value="vd"<?= $template == 'vd' ? ' selected' : '' ?>>1.234,00&euro;</option>
+					<option value="vp"<?= $template == 'vp' ? ' selected' : '' ?>>&euro; 1.234,00</option>
+					<option value="pd"<?= $template == 'pd' ? ' selected' : '' ?>>1234.00&euro;</option>
+					<option value="pp"<?= $template == 'pp' ? ' selected' : '' ?>>&euro; 1234.00</option>
+				</select>
+			</td>
+			<td>Login phrase 2:</td>
+			<td><input name="stringaLogin2" value="<?= entities($stringaLogin2) ?>"/></td>
+		</tr>
+	</table>
 
-    <hr/>
+	<hr/>
 
-    <table>
-        <tr style="color: #2693FF">
-            <td>
-                Delete?
-            </td>
-            <td>
-                Path
-            </td>
-            <td>
-                Users Table
-            </td>
-            <td>
-                Users Element
-            </td>
-            <td>
-                Users Admin Page
-            </td>
-            <td>
-            </td>
-        </tr>
+	<table>
+		<tr style="color: #2693FF">
+			<td>
+				Delete?
+			</td>
+			<td>
+				Path
+			</td>
+			<td>
+				Users Table
+			</td>
+			<td>
+				Users Element
+			</td>
+			<td>
+				Users Admin Page
+			</td>
+			<td>
+			</td>
+		</tr>
 		<?php
-		foreach ($this->options['config']['url'] as $idx => $url) {
+		foreach ($config['url'] as $idx => $url) {
 			?>
-            <tr>
-                <td>
-                    <input type="checkbox" name="delete-<?= $idx ?>" value="1"/>
-                </td>
-                <td>
-                    <input type="text" name="<?= $idx ?>-path" value="<?= entities($url['path']) ?>"/>
-                </td>
-                <td>
-                    <input type="text" name="<?= $idx ?>-table" value="<?= entities($url['table']) ?>"/>
-                </td>
-                <td>
-                    <input type="text" name="<?= $idx ?>-element" value="<?= entities($url['element'] ?? '') ?>"/>
-                </td>
-                <td>
-                    <input type="text" name="<?= $idx ?>-admin-page" value="<?= entities($url['admin-page'] ?? '') ?>"/>
-                </td>
-                <td>
-                    [<a href="#" onclick="configPages('<?= $idx ?>'); return false"> config pages </a>]
-                    <input type="hidden" name="<?= $idx ?>-pages" value="<?= entities(json_encode($url['pages'], JSON_PRETTY_PRINT)) ?>"/>
-                </td>
-            </tr>
+			<tr>
+				<td>
+					<input type="checkbox" name="delete-<?= $idx ?>" value="1"/>
+				</td>
+				<td>
+					<input type="text" name="<?= $idx ?>-path" value="<?= entities($url['path']) ?>"/>
+				</td>
+				<td>
+					<input type="text" name="<?= $idx ?>-table" value="<?= entities($url['table']) ?>"/>
+				</td>
+				<td>
+					<input type="text" name="<?= $idx ?>-element" value="<?= entities($url['element'] ?? '') ?>"/>
+				</td>
+				<td>
+					<input type="text" name="<?= $idx ?>-admin-page" value="<?= entities($url['admin-page'] ?? '') ?>"/>
+				</td>
+				<td>
+					[<a href="#" onclick="configPages('<?= $idx ?>'); return false"> config pages </a>]
+					<input type="hidden" name="<?= $idx ?>-pages" value="<?= entities(json_encode($url['pages'], JSON_PRETTY_PRINT)) ?>"/>
+				</td>
+			</tr>
 			<?php
 		}
 		?>
-        <tr>
-            <td>
-                New:
-            </td>
-            <td>
-                <input type="text" name="path"/>
-            </td>
-            <td>
-                <input type="text" name="table"/>
-            </td>
-            <td>
-                <input type="text" name="element"/>
-            </td>
-            <td>
-                <input type="text" name="admin-page"/>
-            </td>
-        </tr>
-    </table>
+		<tr>
+			<td>
+				New:
+			</td>
+			<td>
+				<input type="text" name="path"/>
+			</td>
+			<td>
+				<input type="text" name="table"/>
+			</td>
+			<td>
+				<input type="text" name="element"/>
+			</td>
+			<td>
+				<input type="text" name="admin-page"/>
+			</td>
+		</tr>
+	</table>
 
-    <p>
-        <input type="submit" value="Save"/>
-    </p>
+	<p>
+		<input type="submit" value="Save"/>
+	</p>
 </form>
 
 <div style="display: none">
-    <select id="page-prototype">
-        <option value=""></option>
+	<select id="page-prototype">
+		<option value=""></option>
 		<?php
 		$pages = [];
 
@@ -333,14 +333,14 @@
 
 		foreach ($pages as $page) {
 			?>
-            <option value="<?= entities($page) ?>"><?= entities($page) ?></option>
+			<option value="<?= entities($page) ?>"><?= entities($page) ?></option>
 			<?php
 		}
 		?>
-    </select>
+	</select>
 
-    <select id="visualizer-prototype">
-        <option value=""></option>
+	<select id="visualizer-prototype">
+		<option value=""></option>
 		<?php
 		$visualizers = [];
 
@@ -353,9 +353,9 @@
 
 		foreach ($visualizers as $visualizer) {
 			?>
-            <option value="<?= entities($visualizer) ?>"><?= entities($visualizer) ?></option>
+			<option value="<?= entities($visualizer) ?>"><?= entities($visualizer) ?></option>
 			<?php
 		}
 		?>
-    </select>
+	</select>
 </div>

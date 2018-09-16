@@ -82,24 +82,27 @@ class AdminController extends Controller
 
 							$this->model->_AdminFront->setListOptions($sId, $options);
 
-							$this->viewOptions['sId'] = $sId;
-							$this->viewOptions['sortedBy'] = $options['sortBy'];
+							$this->model->inject('sId', $sId);
+							$this->model->inject('sortedBy', $options['sortBy']);
 
-							$this->viewOptions['draggable'] = false;
+							$draggable = false;
 							if ($this->model->_Admin->options['element']) {
 								$elementData = $this->model->_ORM->getElementData($this->model->_Admin->options['element']);
 								if ($elementData and $elementData['order_by'] and $elementData['order_by']['custom']) {
-									$this->viewOptions['draggable'] = [
+									$draggable = [
 										'field' => $elementData['order_by']['field'],
 										'depending_on' => $elementData['order_by']['depending_on'],
 									];
 								}
 							}
 
+							$this->model->inject('draggable', $draggable);
+
 							if ($this->model->getInput('goTo') and is_numeric($this->model->getInput('goTo')))
 								$options['goTo'] = (int)$this->model->getInput('goTo');
 
-							$this->viewOptions['visualizer'] = $this->model->_AdminFront->getVisualizer();
+							$visualizer = $this->model->_AdminFront->getVisualizer();
+							$this->model->inject('visualizer', $visualizer);
 
 							if (isset($_GET['csv'])) {
 								$options['perPage'] = 0;
@@ -110,14 +113,14 @@ class AdminController extends Controller
 								header('Content-Type: application/csv');
 								header('Content-Disposition: attachment; filename=list.csv');
 
-								$csvBridge->export($list, $this->viewOptions['visualizer'], [
+								$csvBridge->export($list, $visualizer, [
 									'delimiter' => ';',
 									'charset' => 'ISO-8859-1',
 								]);
 								die();
 							}
 
-							$this->viewOptions['list'] = $this->model->_Admin->getList($options);
+							$this->model->inject('list', $this->model->_Admin->getList($options));
 
 							if (isset($_GET['print'])) {
 								$this->model->viewOptions['template'] = 'print';

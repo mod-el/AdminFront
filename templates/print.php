@@ -1,9 +1,9 @@
 <?php
-if (!$this->options['visualizer'])
+if (!isset($visualizer) or !$visualizer)
 	return;
 
-$this->options['visualizer']->print([
-    'list' => $this->options['list'],
-    'sortedBy' => $this->options['sortedBy'],
-    'draggable' => $this->options['draggable'],
+$visualizer->print([
+	'list' => $list,
+	'sortedBy' => $sortedBy,
+	'draggable' => $draggable,
 ]);
