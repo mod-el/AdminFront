@@ -88,6 +88,7 @@
             Page: <select name="page" data-parent="` + parent_idx + `" data-idx="` + idx + `"></select>
             Visualizer: <select name="visualizer" data-parent="` + parent_idx + `" data-idx="` + idx + `"></select>
             Mobile Visualizer: <select name="mobile-visualizer" data-parent="` + parent_idx + `" data-idx="` + idx + `"></select>
+            Direct element: <input type="number" name="direct" data-parent="` + parent_idx + `" data-idx="` + idx + `" style="width: 50px" />
             <input type="checkbox" name="hidden" id="hidden-` + parent_idx + `-` + idx + `" data-parent="` + parent_idx + `" data-idx="` + idx + `" />
             <label for="hidden-` + parent_idx + `-` + idx + `">Hidden</label>
         </div>
@@ -118,6 +119,8 @@
 		}
 		if (typeof p['hidden'] !== 'undefined' && p['hidden'])
 			div.querySelector('input[name="hidden"]').checked = true;
+		if (typeof p['direct'] !== 'undefined')
+			div.querySelector('input[name="direct"]').value = p['direct'];
 
 		if (typeof p['visualizer'] === 'undefined' || !p['visualizer'])
 			p['visualizer'] = 'Table';
@@ -174,6 +177,10 @@
 			let mobileVisualizerField = document.querySelector('select[data-idx="' + field.getAttribute('data-idx') + '"][name="mobile-visualizer"]');
 			if (mobileVisualizerField.selectedIndex)
 				page['mobile-visualizer'] = mobileVisualizerField.options[mobileVisualizerField.selectedIndex].value;
+
+			let directField = document.querySelector('input[data-idx="' + field.getAttribute('data-idx') + '"][name="direct"]');
+			if (directField.value)
+				page['direct'] = directField.value;
 
 			let hiddenField = document.querySelector('input[data-idx="' + field.getAttribute('data-idx') + '"][name="hidden"]');
 			page['hidden'] = hiddenField.checked;

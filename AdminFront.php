@@ -250,6 +250,7 @@ class AdminFront extends Module
 					'page' => null,
 					'visualizer' => 'Table',
 					'mobile-visualizer' => 'Table',
+					'direct' => null,
 					'hidden' => false,
 					'sub' => [],
 				], $p);
@@ -272,6 +273,7 @@ class AdminFront extends Module
 			'rule' => 'admin-users',
 			'visualizer' => 'Table',
 			'mobile-visualizer' => 'Table',
+			'direct' => null,
 			'hidden' => false,
 			'sub' => [],
 		];
