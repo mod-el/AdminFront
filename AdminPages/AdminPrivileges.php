@@ -1,7 +1,6 @@
 <?php namespace Model\AdminFront\AdminPages;
 
 use Model\Admin\AdminPage;
-use Model\Core\Autoloader;
 
 class AdminPrivileges extends AdminPage
 {
