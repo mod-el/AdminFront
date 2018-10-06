@@ -275,7 +275,18 @@ class AdminFront extends Module
 			'mobile-visualizer' => 'Table',
 			'direct' => null,
 			'hidden' => false,
-			'sub' => [],
+			'sub' => [
+				[
+					'name' => 'Privileges',
+					'page' => 'AdminPrivileges',
+					'rule' => 'admin-privileges',
+					'visualizer' => 'FormList',
+					'mobile-visualizer' => 'FormList',
+					'direct' => null,
+					'hidden' => false,
+					'sub' => [],
+				],
+			],
 		];
 
 		return $pages;

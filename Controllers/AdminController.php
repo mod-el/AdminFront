@@ -47,6 +47,9 @@ class AdminController extends Controller
 
 				switch ($request[1]) {
 					case '':
+						if (!$this->model->_Admin->canUser('L'))
+							$this->model->error('Can\'t open, permission denied.');
+
 						if ($this->model->_Admin->options['table']) {
 							$sId = $this->model->_AdminFront->getSessionId();
 
@@ -141,6 +144,9 @@ class AdminController extends Controller
 						}
 						break;
 					case 'edit':
+						if (!$this->model->_Admin->canUser(($this->model->element and $this->model->element->exists()) ? 'R' : 'C', null, $this->model->element ?: null))
+							$this->model->error('Can\'t read, permission denied.');
+
 						if (isset($_GET['getData'])) {
 							$arr = $this->model->_Admin->getEditArray();
 							$this->model->sendJSON($arr);
