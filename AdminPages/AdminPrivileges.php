@@ -126,7 +126,7 @@ class AdminPrivileges extends AdminPage
 	private function lookForAdminPages(array &$options, array $adminPages, string $prefix = '')
 	{
 		foreach ($adminPages as $p) {
-			if ($p['page']) {
+			if ($p['page'] ?? null) {
 				if (!isset($options[$p['page']]))
 					$options[$p['page']] = [];
 				$options[$p['page']][] = $prefix . $p['name'];
