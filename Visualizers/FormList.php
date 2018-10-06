@@ -124,10 +124,14 @@ class FormList extends DataVisualizer
 			$options['template'] = $options['name'];
 
 		if ($options['template']) {
-			$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
-			$template_path = Autoloader::searchFile('template', $dir . $this->model->_AdminFront->request[0] . DIRECTORY_SEPARATOR . $options['template']);
-			if (!$template_path)
-				$options['template'] = null;
+			if ($options['template']{0} === DIRECTORY_SEPARATOR and file_exists($options['template'])) {
+				$template_path = $options['template'];
+			} else {
+				$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
+				$template_path = Autoloader::searchFile('template', $dir . $this->model->_AdminFront->request[0] . DIRECTORY_SEPARATOR . $options['template']);
+				if (!$template_path)
+					$options['template'] = null;
+			}
 		}
 
 		echo '<input type="hidden" name="ch-' . entities($options['name'] . '-' . $el[$el->settings['primary']]) . '" value="1"/>';
