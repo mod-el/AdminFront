@@ -864,6 +864,9 @@ function loadElement(page, id, get, history_push) {
 	}
 
 	return promise.then(callElementCallback).then(monitorFields).then(() => {
+		if (!_('adminForm'))
+			return false;
+
 		Array.from(_('adminForm').elements).some(field => {
 			if (field.offsetParent !== null && field.type.toLowerCase() !== 'hidden') {
 				field.focus();
