@@ -1,7 +1,7 @@
 {
 	"name": "AdminFront",
 	"description": "Front mask for Admin module",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"dependencies": {
 		"Admin": ">=1.1.0",
 		"Output": ">=0.3.0",
@@ -11,7 +11,7 @@
 		"Popup": ">=1.0.0",
 		"WebAppManifest": ">=0.1.0",
 		"CSRF": ">=0.1.0",
-		"User": ">=2.0.0"
+		"User": ">=2.1.0"
 	},
 	"js": [
 		"files/js.js",
