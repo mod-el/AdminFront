@@ -3,6 +3,7 @@
 	"description": "Front mask for Admin module",
 	"version": "0.2.1",
 	"dependencies": {
+		"Core": ">=2.7.1",
 		"Admin": ">=1.1.0",
 		"Output": ">=0.3.0",
 		"ContextMenu": ">=1.1.0",
