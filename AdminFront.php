@@ -90,9 +90,9 @@ class AdminFront extends Module
 	 *
 	 * @param array $request
 	 * @param mixed $rule
-	 * @return array|bool
+	 * @return array|null
 	 */
-	public function getController(array $request, string $rule)
+	public function getController(array $request, string $rule): ?array
 	{
 		$config = $this->retrieveConfig();
 
@@ -105,13 +105,13 @@ class AdminFront extends Module
 		}
 
 		if (!isset($config['url'][$rule]) or (!empty($config['url'][$rule]['path']) and strpos(implode('/', $request), $config['url'][$rule]['path']) !== 0))
-			return false;
+			return null;
 
 		$this->url = $config['url'][$rule]['path'];
 
 		$realRequest = $this->getAdminRequest($request, $this->url);
 		if ($realRequest === false)
-			return false;
+			return null;
 
 		$this->request = $realRequest;
 
@@ -182,19 +182,19 @@ class AdminFront extends Module
 	 * Given a controller name, return the corresponding url.
 	 *
 	 * @param string|bool $controller
-	 * @param int|bool $id
+	 * @param null|string $id
 	 * @param array $tags
 	 * @param array $opt
 	 * @return bool|string
 	 */
-	public function getUrl(string $controller = null, $id = false, array $tags = [], array $opt = [])
+	public function getUrl(?string $controller = null, ?string $id = null, array $tags = [], array $opt = []): ?string
 	{
 		switch ($controller) {
 			case 'AdminLogin':
 				return ($this->url ? $this->url . '/' : '') . 'login';
 				break;
 			default:
-				return false;
+				return null;
 				break;
 		}
 	}

@@ -187,7 +187,7 @@ $config = ' . var_export($config, true) . ';
 	 * @param array $request
 	 * @return null|string
 	 */
-	public function getTemplate(array $request)
+	public function getTemplate(array $request): ?string
 	{
 		if (is_dir(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin'))
 			return null;
