@@ -131,16 +131,6 @@ class AdminController extends Controller
 							} else {
 								$this->model->viewOptions['template'] = 'list';
 							}
-						} else {
-							$customTemplate = strtolower(preg_replace('/(?<!^)([A-Z])/', '-\\1', $this->model->_Admin->options['page']));
-
-							$checkCustomTemplate = Autoloader::searchFile('template', $dir . $customTemplate);
-							if ($checkCustomTemplate) {
-								$this->model->viewOptions['template'] = $dir . $customTemplate;
-								unset($this->model->viewOptions['template-module']);
-							} else {
-								$this->model->viewOptions['template'] = 'form-template';
-							}
 						}
 						break;
 					case 'edit':
@@ -258,6 +248,18 @@ class AdminController extends Controller
 						$unknown = true;
 						break;
 				}
+
+				if (!isset($this->model->viewOptions['template'])) {
+					$customTemplate = strtolower(preg_replace('/(?<!^)([A-Z])/', '-\\1', $this->model->_Admin->options['page']));
+
+					$checkCustomTemplate = Autoloader::searchFile('template', $dir . $customTemplate);
+					if ($checkCustomTemplate) {
+						$this->model->viewOptions['template'] = $dir . $customTemplate;
+						unset($this->model->viewOptions['template-module']);
+					} else {
+						$this->model->viewOptions['template'] = 'form-template';
+					}
+				}
 			} else {
 				switch ($request[1]) {
 					case 'duplicate':
@@ -288,8 +290,6 @@ class AdminController extends Controller
 				$customViewOptions = call_user_func([$this->model->_Admin->page, $request[1]]);
 				if ($customViewOptions and is_array($customViewOptions))
 					$this->model->viewOptions = array_merge($this->model->viewOptions, $customViewOptions);
-				else
-					$this->model->viewOptions['template'] = null;
 			} elseif (isset($unknown)) {
 				$this->model->viewOptions['errors'][] = 'Unknown action.';
 				$this->model->viewOptions['template'] = null;
