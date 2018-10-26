@@ -27,15 +27,16 @@ class AdminFront extends Module
 			if (!$rule)
 				return;
 
+			$elId = null;
 			if (isset($this->request[2])) {
-				if (!is_numeric($this->request[2]))
-					die('Element id must be numeric');
-
-				$elId = (int)$this->request[2];
-				if ($elId <= 0)
-					$elId = null;
-			} else {
-				$elId = null;
+				if (is_numeric($this->request[2])) {
+					$elId = (int)$this->request[2];
+					if ($elId <= 0)
+						$elId = null;
+				} else {
+					if (in_array($this->request[1], ['edit', 'save', 'delete', 'changeOrder', 'duplicate']))
+						die('Element id must be numeric');
+				}
 			}
 
 			$this->model->load('Admin', [
