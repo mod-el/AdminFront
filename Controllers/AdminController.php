@@ -297,6 +297,12 @@ class AdminController extends Controller
 
 			if ($this->model->_Admin->page) {
 				$customViewOptions = $this->model->_Admin->page->viewOptions();
+				if (($this->model->viewOptions['template'] ?? null) === 'shell') {
+					if (isset($customViewOptions['template']))
+						unset($customViewOptions['template']);
+					if (isset($customViewOptions['template-module']))
+						unset($customViewOptions['template-module']);
+				}
 				if (isset($customViewOptions['template'], $this->model->viewOptions['template-module']))
 					unset($this->model->viewOptions['template-module']);
 				$this->model->viewOptions = array_merge($this->model->viewOptions, $customViewOptions);
