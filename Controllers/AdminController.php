@@ -280,19 +280,23 @@ class AdminController extends Controller
 				}
 			}
 
-			if (method_exists($this->model->_AdminFront, $request[1])) {
-				$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->model->_AdminFront, $request[1]]));
-			} elseif (method_exists($this->model->_AdminFront->getVisualizer(), $request[1])) {
-				$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->model->_AdminFront->getVisualizer(), $request[1]]));
-			} elseif (method_exists($this->templateModule, $request[1])) {
-				$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->templateModule, $request[1]]));
-			} elseif ($this->model->_Admin->page and method_exists($this->model->_Admin->page, $request[1])) {
-				$customViewOptions = call_user_func([$this->model->_Admin->page, $request[1]]);
-				if ($customViewOptions and is_array($customViewOptions))
-					$this->model->viewOptions = array_merge($this->model->viewOptions, $customViewOptions);
-			} elseif (isset($unknown)) {
-				$this->model->viewOptions['errors'][] = 'Unknown action.';
-				$this->model->viewOptions['template'] = null;
+			if(($this->model->viewOptions['template'] ?? null) !== 'shell'){
+				if (method_exists($this->model->_AdminFront, $request[1])) {
+					$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->model->_AdminFront, $request[1]]));
+				} elseif (method_exists($this->model->_AdminFront->getVisualizer(), $request[1])) {
+					$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->model->_AdminFront->getVisualizer(), $request[1]]));
+				} elseif (method_exists($this->templateModule, $request[1])) {
+					$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->templateModule, $request[1]]));
+				} elseif ($this->model->_Admin->page and method_exists($this->model->_Admin->page, $request[1])) {
+					$customViewOptions = call_user_func([$this->model->_Admin->page, $request[1]]);
+					if ($customViewOptions and is_array($customViewOptions))
+						$this->model->viewOptions = array_merge($this->model->viewOptions, $customViewOptions);
+					if (isset($this->model->viewOptions['template'], $this->model->viewOptions['template-module']))
+						unset($this->model->viewOptions['template-module']);
+				} elseif (isset($unknown)) {
+					$this->model->viewOptions['errors'][] = 'Unknown action.';
+					$this->model->viewOptions['template'] = null;
+				}
 			}
 
 			if ($this->model->_Admin->page) {
