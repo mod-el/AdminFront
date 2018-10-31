@@ -303,7 +303,7 @@ function clearMainPage() {
 /*
  Moves between admin pages, moving the left menù and taking care of the browser history
  */
-function loadAdminPage(request, get, post, history_push) {
+function loadAdminPage(request, get, post, history_push, direct) {
 	if (!checkBeforePageChange())
 		return false;
 
@@ -313,6 +313,8 @@ function loadAdminPage(request, get, post, history_push) {
 		get = '';
 	if (typeof history_push === 'undefined')
 		history_push = true;
+	if (typeof direct === 'undefined')
+		direct = true;
 
 	let full_url = request.join('/');
 
@@ -367,7 +369,10 @@ function loadAdminPage(request, get, post, history_push) {
 
 	historyWipe();
 
-	return promise;
+	if(direct)
+		return promise.then(callElementCallback);
+	else
+		return promise;
 }
 
 function checkBeforePageChange() {
@@ -850,7 +855,7 @@ function loadElement(page, id, get, history_push) {
 	let promise;
 
 	if (id) {
-		let formTemplate = loadAdminPage([page, 'edit', id], get, false, history_push).then(showLoadingMask);
+		let formTemplate = loadAdminPage([page, 'edit', id], get, false, history_push, false).then(showLoadingMask);
 		let formData = loadElementData(page, id);
 
 		promise = Promise.all([formTemplate, formData]).then(responses => {
@@ -860,7 +865,7 @@ function loadElement(page, id, get, history_push) {
 			});
 		});
 	} else {
-		promise = loadAdminPage([page, 'edit'], get, false, history_push).then(checkSubPages);
+		promise = loadAdminPage([page, 'edit'], get, false, history_push, false).then(checkSubPages);
 	}
 
 	return promise.then(callElementCallback).then(monitorFields).then(() => {
