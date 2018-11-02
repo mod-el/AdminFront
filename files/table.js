@@ -166,7 +166,7 @@ function autoResize(label) {
 
 function saveColumnWidth(k, w) {
 	let request = currentAdminPage.split('/');
-	return ajax(adminPrefix + request[0] + '/saveWidth', 'k=' + encodeURIComponent(k), 'w=' + encodeURIComponent(w) + '&c_id=' + c_id);
+	return ajax(adminPrefix + request[0] + '/saveWidth', 'ajax&k=' + encodeURIComponent(k), 'w=' + encodeURIComponent(w) + '&c_id=' + c_id);
 }
 
 function adminRowClicked(row) {
