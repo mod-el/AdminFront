@@ -369,7 +369,7 @@ function loadAdminPage(request, get, post, history_push, direct) {
 
 	historyWipe();
 
-	if(direct)
+	if (direct)
 		return promise.then(callElementCallback);
 	else
 		return promise;
@@ -731,6 +731,8 @@ function toolsLightbox(id, options) {
 	}
 
 	lightbox.style.transform = 'scale(1,1)';
+
+	changedHtml();
 }
 
 function switchFiltersForm(origin) {
