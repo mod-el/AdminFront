@@ -180,8 +180,10 @@ class AdminController extends Controller
 						break;
 					case 'save':
 						try {
-							if (!$this->model->_CSRF->checkCsrf() or !isset($_POST['data']))
-								$this->model->error('Wrong data');
+							if (!isset($_POST['data']))
+								$this->model->error('Missing technical data.');
+							if (!$this->model->_CSRF->checkCsrf())
+								$this->model->error('Unauthorized. Try refreshing the page.');
 							$data = json_decode($_POST['data'], true);
 							if ($data === null)
 								$this->model->error('Wrong data');
@@ -280,7 +282,7 @@ class AdminController extends Controller
 				}
 			}
 
-			if(($this->model->viewOptions['template'] ?? null) !== 'shell'){
+			if (($this->model->viewOptions['template'] ?? null) !== 'shell') {
 				if (method_exists($this->model->_AdminFront, $request[1])) {
 					$this->model->viewOptions = array_merge($this->model->viewOptions, call_user_func([$this->model->_AdminFront, $request[1]]));
 				} elseif (method_exists($this->model->_AdminFront->getVisualizer(), $request[1])) {
