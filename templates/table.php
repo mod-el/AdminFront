@@ -113,7 +113,7 @@
 					foreach ($columns as $column_id => $f) {
 						$c = $el['columns'][$column_id];
 						?>
-						<div style="<?= $c['background'] ? 'background: ' . entities($c['background']) . ';' : '' ?><?= $c['color'] ? 'color: ' . entities($c['color']) . ';' : '' ?>width: <?= $this->model->_ResizeTable->widths[$column_id] ?>px" data-column="<?= $column_id ?>" data-value="<?= entities($c['value']) ?>" title="<?= strip_tags($c['text']) ?>"
+						<div style="<?= $c['background'] ? 'background: ' . entities($c['background']) . ';' : '' ?><?= $c['color'] ? 'color: ' . entities($c['color']) . ';' : '' ?>width: <?= $this->model->_ResizeTable->widths[$column_id] ?>px" data-column="<?= $column_id ?>" data-value="<?= json_encode($c['value']) ?>" title="<?= strip_tags($c['text']) ?>"
 							<?php
 							if (!$f['clickable'] or $f['editable'])
 								echo ' onmousedown="event.stopPropagation()" onmouseup="event.stopPropagation()" onclick="event.stopPropagation()"';
