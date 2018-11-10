@@ -50,12 +50,6 @@ window.addEventListener('DOMContentLoaded', function () {
 	} else {
 		_('main-loading').style.display = 'none';
 	}
-
-	if (_('admin-language-selector')) {
-		ajax(adminPrefix + currentAdminPage.split('/')[0], {'getCurrentLanguage': ''}).then(r => {
-			_('admin-language-selector').setValue(r, false);
-		});
-	}
 });
 
 window.addEventListener('load', function () {
@@ -1521,20 +1515,6 @@ function callElementCallback() {
 function reportAdminError(err) {
 	console.log(err);
 	alert(err);
-}
-
-function changeAdminLang(l) {
-	if (!l)
-		return false;
-
-	return ajax(adminPrefix + currentAdminPage.split('/')[0], {
-		'mlang': l
-	}).then(r => {
-		if (r === 'ok')
-			document.location.reload();
-		else
-			alert('Error while setting language. Maybe Multilang module is not loaded in the Frontcontroller?');
-	});
 }
 
 function showLoadingMask() {
