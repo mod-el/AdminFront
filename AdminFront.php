@@ -17,6 +17,9 @@ class AdminFront extends Module
 	/** @var DataVisualizer */
 	private $visualizer = null;
 
+	/**
+	 *
+	 */
 	public function initialize()
 	{
 		$this->model->load('Paginator');
@@ -46,6 +49,9 @@ class AdminFront extends Module
 		}
 	}
 
+	/**
+	 *
+	 */
 	public function headings()
 	{
 		?>
@@ -57,6 +63,9 @@ class AdminFront extends Module
 		<?php
 	}
 
+	/**
+	 * @return User
+	 */
 	public function getUser(): User
 	{
 		if (!$this->model->isLoaded('User', 'Admin')) {
@@ -180,8 +189,6 @@ class AdminFront extends Module
 	}
 
 	/**
-	 * Given a controller name, return the corresponding url.
-	 *
 	 * @param string|bool $controller
 	 * @param null|string $id
 	 * @param array $tags
@@ -207,6 +214,33 @@ class AdminFront extends Module
 	public function getUrlPrefix(): string
 	{
 		return $this->model->prefix() . ($this->url ? $this->url . '/' : '');
+	}
+
+	/**
+	 * @param string $adminPage
+	 * @param array $pages
+	 * @return string|null
+	 */
+	public function getAdminPageUrl(string $adminPage, array $pages = []): ?string
+	{
+		if (count($pages) === 0) {
+			$pages = $this->getPages();
+			if (count($pages) === 0)
+				return null;
+		}
+
+		foreach ($pages as $p) {
+			if ($p['page'] === $adminPage and $p['rule'])
+				return $this->getUrlPrefix() . $p['rule'];
+
+			if ($p['sub']) {
+				$check = $this->getAdminPageUrl($adminPage, $p['sub']);
+				if ($check)
+					return $check;
+			}
+		}
+
+		return null;
 	}
 
 	/**
