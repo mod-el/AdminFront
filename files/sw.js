@@ -114,3 +114,12 @@ function deleteAllNotificationsCheckers() {
 		notificationIntervals[i] = null;
 	}
 }
+
+self.addEventListener('notificationclick', function (e) {
+	let notification = e.notification;
+
+	if (notification.data.url)
+		clients.openWindow(notification.data.url);
+
+	notification.close();
+});

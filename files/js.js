@@ -70,15 +70,18 @@ window.addEventListener('DOMContentLoaded', function () {
 			if (!n.sent) {
 				Notification.requestPermission().then(r => {
 					if (r === 'granted') {
-						let title = n.title;
-						let body = n.short_text;
-						if (!title) {
-							title = body;
-							body = '';
-						}
+						navigator.serviceWorker.getRegistration().then(reg => {
+							let title = n.title;
+							let body = n.short_text;
+							if (!title) {
+								title = body;
+								body = '';
+							}
 
-						Notification.showNotification(title, {
-							'body': body
+							reg.showNotification(title, {
+								'body': body,
+								'data': n
+							});
 						});
 					}
 				});
