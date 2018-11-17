@@ -52,7 +52,38 @@ window.addEventListener('DOMContentLoaded', function () {
 	}
 
 	document.addEventListener('notifications', function (event) {
-		console.log(event.detail.notifications);
+		let notifications;
+		if (typeof event.detail.notifications !== 'undefined' && event.detail.notifications.length !== 'undefined' && event.detail.notifications.length > 0)
+			notifications = event.detail.notifications;
+		else
+			notifications = [];
+
+		let counter = _('notifications-counter');
+		counter.innerHTML = notifications.length;
+		if (notifications.length > 0) {
+			counter.style.display = 'block';
+		} else {
+			counter.style.display = 'none';
+		}
+
+		notifications.forEach(n => {
+			if (!n.sent) {
+				Notification.requestPermission().then(r => {
+					if (r === 'granted') {
+						let title = n.title;
+						let body = n.short_text;
+						if (!title) {
+							title = body;
+							body = '';
+						}
+
+						Notification.showNotification(title, {
+							'body': body
+						});
+					}
+				});
+			}
+		});
 	});
 });
 
