@@ -1,6 +1,7 @@
-var CACHE_NAME = 'admin-<?=$cacheKey?>';
-var adminPrefix = '<?=$this->model->_AdminFront->getUrlPrefix()?>';
+var CACHE_NAME = 'admin-<?= $cacheKey ?>';
+var adminPrefix = '<?= $this->model->_AdminFront->getUrlPrefix() ?>';
 var urlsToCache = <?= json_encode($assets) ?>;
+var notificationIntervals = {};
 
 self.addEventListener('install', function (event) {
 	self.skipWaiting();
@@ -57,10 +58,59 @@ self.addEventListener('fetch', function (event) {
 	event.respondWith(
 		caches.match(event.request).then(function (response) {
 			// Cache hit - return response
-			if (response && !response.redirected)
-				return response;
+			/*if (response && !response.redirected)
+				return response;*/
 
 			return fetch(event.request);
 		})
 	);
 });
+
+self.addEventListener('message', function (event) {
+	if (typeof event.data.action === 'undefined')
+		return;
+
+	switch (event.data.action) {
+		case 'notifications':
+			let idx = event.data.user_idx + '-' + event.data.user;
+			if (typeof notificationIntervals[idx] === 'undefined') {
+				notificationIntervals[idx] = setInterval(() => {
+					checkNotifications(event.data.path, event.data.user_idx, event.data.user);
+				}, 10000);
+			}
+			checkNotifications(event.data.path, event.data.user_idx, event.data.user);
+			break;
+	}
+});
+
+function checkNotifications(path, user_idx, user) {
+	clients.claim().then(() => {
+		clients.matchAll().then(clients => {
+			if (clients.length === 0) {
+				deleteAllNotificationsCheckers();
+			} else {
+				fetch(path + '?user_idx=' + encodeURIComponent(user_idx) + '&user=' + encodeURIComponent(user), {
+					credentials: 'include'
+				}).then(response => {
+					return response.text();
+				}).then(text => {
+					let data = JSON.parse(text);
+
+					clients.forEach(client => {
+						client.postMessage({
+							"type": 'notifications',
+							"notifications": data
+						});
+					});
+				});
+			}
+		});
+	});
+}
+
+function deleteAllNotificationsCheckers() {
+	for (let i in notificationIntervals) {
+		clearInterval(notificationIntervals[i]);
+		notificationIntervals[i] = null;
+	}
+}

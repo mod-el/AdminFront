@@ -50,6 +50,10 @@ window.addEventListener('DOMContentLoaded', function () {
 	} else {
 		_('main-loading').style.display = 'none';
 	}
+
+	document.addEventListener('notifications', function (event) {
+		console.log(event.detail.notifications);
+	});
 });
 
 window.addEventListener('load', function () {
@@ -70,6 +74,14 @@ if ('serviceWorker' in navigator) {
 					case 'reload':
 						if (confirm('Sono stati scaricati nuovi aggiornamenti per l\'admin, si consiglia di aggiornare la pagina. Vuoi aggiornare ora?'))
 							document.location.reload();
+						break;
+					case 'notifications':
+						let notificationEvent = new CustomEvent('notifications', {
+							'detail': {
+								'notifications': event.data.notifications
+							}
+						});
+						document.dispatchEvent(notificationEvent);
 						break;
 					default:
 						console.log('Messaggio ricevuto dal Service Worker:');
