@@ -915,7 +915,7 @@ function loadElement(page, id, get, history_push) {
 			return false;
 
 		Array.from(_('adminForm').elements).some(field => {
-			if (field.offsetParent !== null && field.type.toLowerCase() !== 'hidden') {
+			if (field.offsetParent !== null && field.type.toLowerCase() !== 'hidden' && field.name !== 'fakeusernameremembered' && field.name !== 'fakepasswordremembered') {
 				field.focus();
 				if (field.select)
 					field.select();
