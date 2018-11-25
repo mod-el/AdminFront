@@ -247,9 +247,7 @@ $config = ' . var_export($config, true) . ';
 		$config = $this->retrieveConfig();
 
 		$ret = [
-			'rules' => [
-				'api' => 'api',
-			],
+			'rules' => [],
 			'controllers' => [
 				'AdminFront',
 				'AdminLogin',
