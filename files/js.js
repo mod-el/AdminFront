@@ -36,59 +36,81 @@ window.addEventListener('DOMContentLoaded', function () {
 	if (sId)
 		get = changeGetParameter(get, 'sId', sId);
 
-	if (_('main-content')) {
-		if (request.length >= 2 && request[1] === 'edit') {
-			if (request.length >= 3) {
-				loadElement(request[0], request[2], get, false);
+	adminInit().then(r => {
+		if (r && _('main-content')) {
+			if (request.length >= 2 && request[1] === 'edit') {
+				if (request.length >= 3) {
+					loadElement(request[0], request[2], get, false);
+				} else {
+					newElement(request[0], get);
+				}
 			} else {
-				newElement(request[0], get);
+				loadAdminPage(request, get, '', false);
 			}
+			loadPageAids(request);
 		} else {
-			loadAdminPage(request, get, '', false);
-		}
-		loadPageAids(request);
-	} else {
-		_('main-loading').style.display = 'none';
-	}
-
-	document.addEventListener('notifications', function (event) {
-		let notifications;
-		if (typeof event.detail.notifications !== 'undefined' && event.detail.notifications.length !== 'undefined' && event.detail.notifications.length > 0)
-			notifications = event.detail.notifications;
-		else
-			notifications = [];
-
-		let counter = _('notifications-counter');
-		counter.innerHTML = notifications.length;
-		if (notifications.length > 0) {
-			counter.style.display = 'block';
-		} else {
-			counter.style.display = 'none';
+			_('main-loading').style.display = 'none';
 		}
 
-		notifications.forEach(n => {
-			if (!n.sent) {
-				Notification.requestPermission().then(r => {
-					if (r === 'granted') {
-						navigator.serviceWorker.getRegistration().then(reg => {
-							let title = n.title;
-							let body = n.short_text;
-							if (!title) {
-								title = body;
-								body = '';
-							}
+		document.addEventListener('notifications', function (event) {
+			let notifications;
+			if (typeof event.detail.notifications !== 'undefined' && event.detail.notifications.length !== 'undefined' && event.detail.notifications.length > 0)
+				notifications = event.detail.notifications;
+			else
+				notifications = [];
 
-							reg.showNotification(title, {
-								'body': body,
-								'data': n
+			let counter = _('notifications-counter');
+			counter.innerHTML = notifications.length;
+			if (notifications.length > 0) {
+				counter.style.display = 'block';
+			} else {
+				counter.style.display = 'none';
+			}
+
+			notifications.forEach(n => {
+				if (!n.sent) {
+					Notification.requestPermission().then(r => {
+						if (r === 'granted') {
+							navigator.serviceWorker.getRegistration().then(reg => {
+								let title = n.title;
+								let body = n.short_text;
+								if (!title) {
+									title = body;
+									body = '';
+								}
+
+								reg.showNotification(title, {
+									'body': body,
+									'data': n
+								});
 							});
-						});
-					}
-				});
-			}
+						}
+					});
+				}
+			});
 		});
 	});
 });
+
+function adminInit() {
+	return new Promise(resolve => {
+		if (!_('main-grid')) {
+			resolve(false);
+			return;
+		}
+
+		let menuRequest = adminApiRequest('pages').then(r => {
+			return buildMenu(r);
+		});
+
+		Promise.all([
+			menuRequest
+		]).then(() => {
+			_('main-grid').style.display = 'block';
+			resolve(true);
+		});
+	});
+}
 
 window.addEventListener('load', function () {
 	resize();
@@ -150,6 +172,26 @@ window.onpopstate = function (event) {
 		}
 	}
 };
+
+function adminApiRequest(request, get, post) {
+	return ajax(adminApiPath + request, get, post).then(r => {
+		if (typeof r !== 'object')
+			throw r;
+		if (typeof r.status === 'undefined' || typeof r.status === 'undefined')
+			throw 'Invalid response format';
+		if (r.status !== 'OK') {
+			if (typeof r.response.error === 'undefined')
+				throw 'Unknown error';
+			else
+				throw r.response.error;
+		}
+
+		return r.response;
+	}).catch(err => {
+		alert(err);
+		throw err;
+	});
+}
 
 window.addEventListener('beforeunload', function (event) {
 	if (!saving && changeHistory.length === 0)

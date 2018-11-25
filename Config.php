@@ -171,9 +171,11 @@ $config = ' . var_export($config, true) . ';
 					$p['controller'] = str_replace(["\t", "\n", "\r", "\0", "\x0B", " "], '', ucwords(strtolower($p['name'])));
 			}
 
-			if (isset($p['controller']) and !isset($p['rule'])) {
+			if (isset($p['controller']) and !isset($p['rule']))
 				$p['rule'] = str_replace(' ', '-', strtolower($p['name']));
-			}
+
+			if (in_array($p['rule'] ?? '', ['login', 'logout', 'api', 'sw.js']))
+				$this->model->error('"' . $p['rule'] . '" is a reserved admin path, you cannot assign that rule to a page');
 
 			if (isset($p['sub']))
 				$p['sub'] = $this->parsePages($p['sub']);
@@ -245,10 +247,13 @@ $config = ' . var_export($config, true) . ';
 		$config = $this->retrieveConfig();
 
 		$ret = [
-			'rules' => [],
+			'rules' => [
+				'api' => 'api',
+			],
 			'controllers' => [
 				'AdminFront',
 				'AdminLogin',
+				'AdminApi',
 				'AdminServiceWorker',
 			],
 		];

@@ -127,6 +127,11 @@ class AdminFront extends Module
 
 		if (isset($realRequest[0])) {
 			switch ($realRequest[0]) {
+				case 'api':
+					return [
+						'controller' => 'AdminApi',
+					];
+					break;
 				case 'login':
 				case 'logout':
 					return [
