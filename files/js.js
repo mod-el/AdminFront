@@ -1401,8 +1401,9 @@ async function save() {
 			if (r.status === 'ok') {
 				historyWipe();
 
-				return loadElement(request[0], r.id, '', history_push).then(function () {
+				return loadElement(request[0], r.id, '', history_push).then(() => {
 					inPageMessage('Salvataggio correttamente effettuato.', 'green-message');
+					return r.id;
 				});
 			} else if (typeof r.err !== 'undefined') {
 				alert(r.err);
