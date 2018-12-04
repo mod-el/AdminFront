@@ -575,9 +575,29 @@ class AdminFront extends Module
 			];
 		}
 
-		if ($requestType === 'list') {
-			$visualizer = $this->getVisualizer();
-			$parsedActions = array_values($visualizer->parseActions($parsedActions));
+		switch ($requestType) {
+			case 'list':
+				$visualizer = $this->getVisualizer();
+				$parsedActions = array_values($visualizer->parseActions($parsedActions));
+				break;
+			case 'edit':
+				$elementName = $this->model->_Admin->options['element'];
+				if ($elementName and $elementName !== 'Element' and ($request[2] ?? null) and is_numeric($request[2])) {
+					$element = $this->model->_ORM->loadMainElement($elementName, $request[2]);
+					if ($element) {
+						$url = $element->getUrl();
+						if ($url) {
+							$parsedActions[] = [
+								'id' => 'public-url',
+								'text' => 'URL Pubblico',
+								'fa-icon' => 'fas fa-external-link-alt',
+								'url' => '#',
+								'action' => 'window.open(\'' . $url . '\'); return false',
+							];
+						}
+					}
+				}
+				break;
 		}
 
 		if (isset($this->model->_Admin->options['actions'])) {
