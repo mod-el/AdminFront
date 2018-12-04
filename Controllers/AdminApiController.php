@@ -25,9 +25,9 @@ class AdminApiController extends Controller
 					break;
 			}
 		} catch (\Exception $e) {
-			$this->respond(['error' => $e->getMessage()], 'ERROR');
+			$this->respond(['error' => getErr($e)], 'ERROR');
 		} catch (\Error $e) {
-			$this->respond(['error' => $e->getMessage()], 'ERROR');
+			$this->respond(['error' => getErr($e)], 'ERROR');
 		}
 	}
 
