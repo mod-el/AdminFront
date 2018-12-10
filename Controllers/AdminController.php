@@ -137,45 +137,40 @@ class AdminController extends Controller
 						if (!$this->model->_Admin->canUser(($this->model->element and $this->model->element->exists()) ? 'R' : 'C', null, $this->model->element ?: null))
 							$this->model->error('Can\'t read, permission denied.');
 
-						if (isset($_GET['getData'])) {
-							$arr = $this->model->_Admin->getEditArray();
-							$this->model->sendJSON($arr);
-						} else {
-							if ($this->model->element) {
-								if (isset($_GET['print'])) {
-									$this->model->_Admin->form->options['print'] = true;
-								} else {
-									if ($this->model->element->exists())
-										$this->model->_Admin->form->reset();
-								}
-
-								$checkCustomTemplate = Autoloader::searchFile('template', $dir . $request[0]);
-								if ($checkCustomTemplate) {
-									$this->model->viewOptions['template'] = $dir . $request[0];
-									unset($this->model->viewOptions['template-module']);
-								} else {
-									$this->model->viewOptions['template'] = 'form-template';
-								}
-
-								$this->model->viewOptions['cache'] = false; // TODO: in the final version, only form-header and form-footer should not be cached
-
-								$this->model->viewOptions['showLayout'] = true;
-								$this->model->viewOptions['template-module-layout'] = 'AdminFront';
-								$this->model->viewOptions['header'] = ['form-header'];
-								$this->model->viewOptions['footer'] = ['form-footer'];
-
-								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
-									$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
-								if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
-									array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
-
-								if (isset($_GET['duplicated']))
-									$this->model->viewOptions['messages'] = ['Succesfully duplicated!'];
+						if ($this->model->element) {
+							if (isset($_GET['print'])) {
+								$this->model->_Admin->form->options['print'] = true;
+							} else {
+								if ($this->model->element->exists())
+									$this->model->_Admin->form->reset();
 							}
 
-							if (isset($request[3])) {
-								$this->model->viewOptions['template'] = $dir . $request[0] . DIRECTORY_SEPARATOR . $request[3];
+							$checkCustomTemplate = Autoloader::searchFile('template', $dir . $request[0]);
+							if ($checkCustomTemplate) {
+								$this->model->viewOptions['template'] = $dir . $request[0];
+								unset($this->model->viewOptions['template-module']);
+							} else {
+								$this->model->viewOptions['template'] = 'form-template';
 							}
+
+							$this->model->viewOptions['cache'] = false; // TODO: in the final version, only form-header and form-footer should not be cached
+
+							$this->model->viewOptions['showLayout'] = true;
+							$this->model->viewOptions['template-module-layout'] = 'AdminFront';
+							$this->model->viewOptions['header'] = ['form-header'];
+							$this->model->viewOptions['footer'] = ['form-footer'];
+
+							if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
+								$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+							if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
+								array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
+
+							if (isset($_GET['duplicated']))
+								$this->model->viewOptions['messages'] = ['Succesfully duplicated!'];
+						}
+
+						if (isset($request[3])) {
+							$this->model->viewOptions['template'] = $dir . $request[0] . DIRECTORY_SEPARATOR . $request[3];
 						}
 						break;
 					case 'save':

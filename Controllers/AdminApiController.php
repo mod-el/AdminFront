@@ -7,10 +7,10 @@ class AdminApiController extends Controller
 	public function init()
 	{
 		$this->model->_AdminFront->getUser();
-		$this->model->_AdminFront->initialize();
+		$this->model->_AdminFront->initialize($this->model->_AdminFront->request[2] ?? null, $this->model->_AdminFront->request[3] ?? null);
 	}
 
-	public function index()
+	public function get()
 	{
 		$request = $this->model->_AdminFront->request[1] ?? '';
 		try {
@@ -19,6 +19,17 @@ class AdminApiController extends Controller
 					$pages = $this->model->_AdminFront->getPages();
 					$cleanPages = $this->cleanPages($pages);
 					$this->respond($cleanPages);
+					break;
+				case 'get':
+					$adminPage = $this->model->_AdminFront->request[2] ?? null;
+					if (!$adminPage)
+						$this->model->error('No page name defined');
+					$id = $this->model->_AdminFront->request[3] ?? null;
+					if (!$id or !is_numeric($id) or $id < 1)
+						$this->model->error('Id should be a number greater than 0');
+
+					$arr = $this->model->_Admin->getEditArray();
+					$this->respond($arr);
 					break;
 				default:
 					$this->model->error('Unknown action');

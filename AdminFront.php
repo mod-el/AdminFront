@@ -20,25 +20,33 @@ class AdminFront extends Module
 	/**
 	 *
 	 */
-	public function initialize()
+	public function initialize(string $customPage = null, int $customElement = null)
 	{
 		$this->model->load('Paginator');
 
-		if (isset($this->request[0])) {
+		$adminPage = $customPage;
+		if ($adminPage === null)
+			$adminPage = $this->request[0] ?? null;
+
+		if ($adminPage) {
 			$pages = $this->getPages();
-			$rule = $this->seekForRule($pages, $this->request[0]);
+			$rule = $this->seekForRule($pages, $adminPage);
 			if (!$rule)
 				return;
 
-			$elId = null;
-			if (isset($this->request[2])) {
-				if (is_numeric($this->request[2])) {
-					$elId = (int)$this->request[2];
-					if ($elId <= 0)
-						$elId = null;
-				} else {
-					if (in_array($this->request[1], ['edit', 'save', 'delete', 'changeOrder', 'duplicate']))
-						die('Element id must be numeric');
+			if ($customElement) {
+				$elId = $customElement;
+			} else {
+				$elId = null;
+				if (isset($this->request[2])) {
+					if (is_numeric($this->request[2])) {
+						$elId = (int)$this->request[2];
+						if ($elId <= 0)
+							$elId = null;
+					} else {
+						if (in_array($this->request[1], ['edit', 'save', 'delete', 'changeOrder', 'duplicate']))
+							die('Element id must be numeric');
+					}
 				}
 			}
 
