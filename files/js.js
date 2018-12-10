@@ -174,6 +174,9 @@ window.onpopstate = function (event) {
 };
 
 function adminApiRequest(request, get, post) {
+	if (typeof get === 'undefined')
+		get = {}
+	get.token = adminApiToken;
 	return ajax(adminApiPath + request, get, post).then(r => {
 		if (typeof r !== 'object')
 			throw r;
@@ -969,17 +972,7 @@ function loadElement(page, id, get, history_push) {
 }
 
 function loadElementData(page, id) {
-	return ajax(adminPrefix + 'api/get/' + page + '/' + id).then(r => {
-		if (typeof r !== 'object')
-			throw r;
-		if (r.status !== 'OK' || typeof r.response === 'undefined') {
-			if (typeof r.error !== 'undefined')
-				throw r.error;
-			else
-				throw 'Error while retrieving data';
-		}
-		return r.response;
-	});
+	return adminApiRequest('get/' + page + '/' + id);
 }
 
 function fillAdminForm(data) {

@@ -72,9 +72,10 @@ class AdminFront extends Module
 	}
 
 	/**
+	 * @param bool $api
 	 * @return User
 	 */
-	public function getUser(): User
+	public function getUser(bool $api = false): User
 	{
 		if (!$this->model->isLoaded('User', 'Admin')) {
 			$config = $this->retrieveConfig();
@@ -89,18 +90,48 @@ class AdminFront extends Module
 				}
 			}
 
-			$this->model->load('User', [
-				'table' => $user_table,
-				'old_password' => 'old_password',
-				'mandatory' => true,
-				'login-controller' => 'AdminLogin',
-				'affected-modules' => ['AdminFront'],
-			], 'Admin');
-			if ($this->model->_User_Admin->options['algorithm-version'] === 'old')
-				$this->model->_User_Admin->options['password'] = 'old_password';
+			if ($api) {
+				$token = $this->model->getInput('token');
+				if ($token) {
+					$token = explode('.', $token);
+					if (count($token) !== 2 or !is_numeric($token[0]))
+						$this->model->error('Unauthorized');
+
+					$check = $this->model->select($user_table, $token[0]);
+					if (sha1($check['username'] . $check['password']) !== $token[1])
+						$this->model->error('Unauthorized');
+
+					$this->model->load('User', [
+						'table' => $user_table,
+						'direct-login' => $token[0],
+					], 'Admin');
+				} else {
+					$this->model->error('Unauthorized');
+				}
+			} else {
+				$this->model->load('User', [
+					'table' => $user_table,
+					'old_password' => 'old_password',
+					'mandatory' => true,
+					'login-controller' => 'AdminLogin',
+					'affected-modules' => ['AdminFront'],
+				], 'Admin');
+				if ($this->model->_User_Admin->options['algorithm-version'] === 'old')
+					$this->model->_User_Admin->options['password'] = 'old_password';
+			}
 		}
 
 		return $this->model->_User_Admin;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getApiToken(): string
+	{
+		if (!$this->model->_User_Admin->logged())
+			return '';
+		return $this->model->_User_Admin->logged() . '.' . sha1($this->model->_User_Admin->username . $this->model->_User_Admin->password);
 	}
 
 	/**

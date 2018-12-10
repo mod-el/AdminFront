@@ -1,13 +1,18 @@
 <?php namespace Model\AdminFront\Controllers;
 
 use Model\Core\Controller;
+use Model\Core\Exception;
 
 class AdminApiController extends Controller
 {
 	public function init()
 	{
-		$this->model->_AdminFront->getUser();
-		$this->model->_AdminFront->initialize($this->model->_AdminFront->request[2] ?? null, $this->model->_AdminFront->request[3] ?? null);
+		try {
+			$this->model->_AdminFront->getUser(true);
+			$this->model->_AdminFront->initialize($this->model->_AdminFront->request[2] ?? null, $this->model->_AdminFront->request[3] ?? null);
+		} catch (Exception $e) {
+			$this->respond(['error' => getErr($e)], 'ERROR');
+		}
 	}
 
 	public function get()
