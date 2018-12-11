@@ -8,7 +8,11 @@ class AdminApiController extends Controller
 	public function init()
 	{
 		try {
-			$this->model->_AdminFront->getUser(true);
+			$token = $this->model->getInput('token');
+			if (($this->model->_AdminFront->request[1] ?? '') !== 'user' and !in_array($token, $_SESSION['admin-auth-tokens'] ?? []))
+				$this->model->error('Unauthorized');
+
+			$this->model->_AdminFront->getUser();
 			$this->model->_AdminFront->initialize($this->model->_AdminFront->request[2] ?? null, $this->model->_AdminFront->request[3] ?? null);
 		} catch (Exception $e) {
 			$this->respond(['error' => getErr($e)], 'ERROR');
@@ -36,6 +40,19 @@ class AdminApiController extends Controller
 					$arr = $this->model->_Admin->getEditArray();
 					$this->respond($arr);
 					break;
+				case 'user':
+					$subrequest = $this->model->_AdminFront->request[2] ?? null;
+					switch ($subrequest) {
+						case 'logout':
+							$this->model->_User_Admin->logout();
+							setcookie('admin-user', '', 0, $this->model->_AdminFront->getUrlPrefix());
+							$this->respond([]);
+							break;
+						default:
+							$this->model->error('Unknown action');
+							break;
+					}
+					break;
 				default:
 					$this->model->error('Unknown action');
 					break;
@@ -43,7 +60,64 @@ class AdminApiController extends Controller
 		} catch (\Exception $e) {
 			$this->respond(['error' => getErr($e)], 'ERROR');
 		} catch (\Error $e) {
+			$this->respond(['error' => $e->getMessage()], 'ERROR');
+		}
+	}
+
+	public function post()
+	{
+		$request = $this->model->_AdminFront->request[1] ?? '';
+		try {
+			switch ($request) {
+				case 'user':
+					$subrequest = $this->model->_AdminFront->request[2] ?? null;
+					switch ($subrequest) {
+						case 'login':
+							if ($id = $this->model->_User_Admin->login($this->model->getInput('username'), $this->model->getInput('password'))) {
+								$tokenInfo = $this->model->_User_Admin->getLoginToken();
+								$token = base64_encode(json_encode(['token' => $tokenInfo['token'], 'iv' => $tokenInfo['iv']]));
+								$this->respond(['token' => $token]);
+							} else {
+								$this->model->error('Dati errati');
+							}
+							break;
+						case 'auth':
+							$token = $this->model->getInput('token');
+							if (!$token)
+								$this->model->error('Token not provided');
+
+							$decodedToken = json_decode(base64_decode($token), true);
+							if (!$decodedToken)
+								$this->model->error('Invalid auth token');
+
+							if ($this->model->_User_Admin->tokenLogin($decodedToken)) {
+								if (!isset($_SESSION['admin-auth-tokens']))
+									$_SESSION['admin-auth-tokens'] = [];
+								if (!in_array($token, $_SESSION['admin-auth-tokens']))
+									$_SESSION['admin-auth-tokens'][] = $token;
+
+								$usernameColumn = $this->model->_User_Admin->getUsernameColumn();
+								$this->respond([
+									'username' => $this->model->_User_Admin->get($usernameColumn),
+								]);
+							} else {
+								setcookie('admin-user', '', 0, $this->model->_AdminFront->getUrlPrefix());
+								$this->model->error('Invalid auth token');
+							}
+							break;
+						default:
+							$this->model->error('Unknown action');
+							break;
+					}
+					break;
+				default:
+					$this->model->error('Unknown action');
+					break;
+			}
+		} catch (\Exception $e) {
 			$this->respond(['error' => getErr($e)], 'ERROR');
+		} catch (\Error $e) {
+			$this->respond(['error' => $e->getMessage()], 'ERROR');
 		}
 	}
 

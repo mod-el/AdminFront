@@ -10,6 +10,8 @@ var holdingRowsSelection = null;
 var searchCounter = 0;
 var pageLoadingHash = '';
 var aidsLoadingHash = '';
+var isInLoginPage = false;
+var adminApiToken = null;
 
 var dataCache = {'data': {}, 'children': []};
 
@@ -27,30 +29,52 @@ window.addEventListener('DOMContentLoaded', function () {
 	if (history.replaceState)
 		history.replaceState({'request': request}, '', document.location);
 
-	if (document.location.search.match(/sId=[0-9]+/))
-		sId = document.location.search.replace(/.*sId=([0-9]+).*/, '$1');
+	if (_('main-grid') && _('main-content')) {
+		adminApiToken = getCookie('admin-user');
+		adminInit();
+	} else {
+		_('main-loading').style.display = 'none';
+	}
+});
 
-	let get = document.location.search;
-	if (get.charAt(0) === '?')
-		get = get.substr(1);
-	if (sId)
-		get = changeGetParameter(get, 'sId', sId);
+function adminInit() {
+	_('main-grid').style.display = 'block';
 
-	adminInit().then(r => {
-		if (r && _('main-content')) {
-			if (request.length >= 2 && request[1] === 'edit') {
-				if (request.length >= 3) {
-					loadElement(request[0], request[2], get, false);
-				} else {
-					newElement(request[0], get);
-				}
+	checkUserToken().then(r => {
+		if (!r)
+			return false;
+
+		let menuRequest = adminApiRequest('pages').then(r => buildMenu(r));
+
+		return Promise.all([
+			menuRequest
+		]);
+	}).then(r => {
+		if (!r)
+			return;
+
+		let request = currentAdminPage.split('/');
+
+		if (document.location.search.match(/sId=[0-9]+/))
+			sId = document.location.search.replace(/.*sId=([0-9]+).*/, '$1');
+
+		let get = document.location.search;
+		if (get.charAt(0) === '?')
+			get = get.substr(1);
+		if (sId)
+			get = changeGetParameter(get, 'sId', sId);
+
+		if (request.length >= 2 && request[1] === 'edit') {
+			if (request.length >= 3) {
+				loadElement(request[0], request[2], get, false);
 			} else {
-				loadAdminPage(request, get, '', false);
+				newElement(request[0], get);
 			}
-			loadPageAids(request);
 		} else {
-			_('main-loading').style.display = 'none';
+			loadAdminPage(request, get, '', false);
 		}
+
+		loadPageAids(request);
 
 		document.addEventListener('notifications', function (event) {
 			let notifications;
@@ -90,26 +114,74 @@ window.addEventListener('DOMContentLoaded', function () {
 			});
 		});
 	});
-});
+}
 
-function adminInit() {
-	return new Promise(resolve => {
-		if (!_('main-grid')) {
-			resolve(false);
-			return;
-		}
+function checkUserToken() {
+	if (!adminApiToken)
+		return loadLoginPage().then(() => false);
 
-		let menuRequest = adminApiRequest('pages').then(r => {
-			return buildMenu(r);
-		});
+	unloadLoginPage();
 
-		Promise.all([
-			menuRequest
-		]).then(() => {
-			_('main-grid').style.display = 'block';
-			resolve(true);
-		});
+	return adminApiRequest('user/auth', {'token': adminApiToken}).then(r => {
+		_('header-username').innerHTML = r.username;
+		return r;
+	}).catch(err => {
+		alert(err);
+		adminApiToken = null;
+		deleteCookie('admin-user');
+		adminInit();
+		throw err;
 	});
+}
+
+function loadLoginPage() {
+	isInLoginPage = true;
+	_('main-menu').style.display = 'none';
+	_('main-page-cont').style.width = '100%';
+	_('toolbar').style.display = 'none';
+	_('header-right').style.display = 'none';
+	_('header-user-cont').style.display = 'none';
+	buildMenu([]);
+	return loadPage(adminPrefix + 'login');
+}
+
+function unloadLoginPage() {
+	isInLoginPage = false;
+	_('main-menu').style.display = 'inline-block';
+	_('toolbar').style.display = 'block';
+	_('header-right').style.display = 'block';
+	_('header-user-cont').style.display = 'inline-block';
+	resize();
+}
+
+async function login() {
+	_('login-button').innerHTML = 'Attendere...';
+
+	let form = _('login');
+	let username = await form['username'].getValue();
+	let password = await form['password'].getValue();
+
+	return adminApiRequest('user/login', {
+		'username': username,
+		'password': password
+	}, 'POST').then(r => {
+		setCookie('admin-user', r.token, 365 * 10, adminPrefix);
+		adminApiToken = r.token;
+		return adminInit();
+	}).catch(err => {
+		_('login-button').innerHTML = 'Login';
+
+		let errorMessageDiv = _('login-error-message');
+		errorMessageDiv.innerHTML = err;
+		errorMessageDiv.style.display = 'block';
+	});
+}
+
+function logout() {
+	clearMainPage();
+	adminApiToken = null;
+	deleteCookie('admin-user');
+	return adminApiRequest('user/logout').then(loadLoginPage);
 }
 
 window.addEventListener('load', function () {
@@ -173,11 +245,13 @@ window.onpopstate = function (event) {
 	}
 };
 
-function adminApiRequest(request, get, post) {
-	if (typeof get === 'undefined')
-		get = {}
-	get.token = adminApiToken;
-	return ajax(adminApiPath + request, get, post).then(r => {
+function adminApiRequest(request, payload, method) {
+	if (typeof payload === 'undefined')
+		payload = {};
+	if (typeof method === 'undefined')
+		method = null;
+
+	return ajax(adminApiPath + request, {'token': adminApiToken}, payload, {'method': method}).then(r => {
 		if (typeof r !== 'object')
 			throw r;
 		if (typeof r.status === 'undefined' || typeof r.status === 'undefined')
@@ -191,7 +265,6 @@ function adminApiRequest(request, get, post) {
 
 		return r.response;
 	}).catch(err => {
-		alert(err);
 		throw err;
 	});
 }
@@ -304,6 +377,9 @@ function switchMenu() {
 }
 
 function openMenu() {
+	if (isInLoginPage)
+		return;
+
 	_('main-menu').style.width = '40%';
 	_('main-menu').style.maxWidth = maxMenuWidth + 'px';
 	_('main-page-cont').style.width = 'calc(100% - ' + maxMenuWidth + 'px)';
@@ -322,6 +398,9 @@ function openMenu() {
 }
 
 function closeMenu() {
+	if (isInLoginPage)
+		return;
+
 	_('main-menu').style.width = '0%';
 	_('main-page-cont').style.width = '100%';
 	_('img-open-menu').style.opacity = 1;
