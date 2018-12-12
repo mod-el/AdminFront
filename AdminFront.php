@@ -91,7 +91,6 @@ class AdminFront extends Module
 
 			$this->model->load('User', [
 				'table' => $user_table,
-				'old_password' => 'old_password',
 			], 'Admin');
 
 			if ($this->model->_User_Admin->options['algorithm-version'] === 'old')

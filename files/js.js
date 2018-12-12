@@ -151,7 +151,7 @@ function unloadLoginPage() {
 	_('toolbar').style.display = 'block';
 	_('header-right').style.display = 'block';
 	_('header-user-cont').style.display = 'inline-block';
-	resize();
+	openMenu();
 }
 
 async function login() {
