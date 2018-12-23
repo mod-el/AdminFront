@@ -160,6 +160,8 @@ async function login() {
 	let username = await form['username'].getValue();
 	let password = await form['password'].getValue();
 
+	form.style.display = 'none';
+
 	return adminApiRequest('user/login', {
 		'username': username,
 		'password': password
@@ -168,6 +170,7 @@ async function login() {
 		adminApiToken = r.token;
 		return adminInit();
 	}).catch(err => {
+		form.style.display = 'block';
 		_('login-button').innerHTML = 'Login';
 
 		let errorMessageDiv = _('login-error-message');
