@@ -128,7 +128,6 @@ function checkUserToken() {
 	}).catch(err => {
 		alert(err);
 		adminApiToken = null;
-		deleteCookie('admin-user');
 		adminInit();
 		throw err;
 	});
