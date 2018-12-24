@@ -131,6 +131,7 @@ class Config extends Module_Config
 		if (isset($data['priceFormat'])) $config['priceFormat'] = $data['priceFormat'];
 		if (isset($data['stringaLogin1'])) $config['stringaLogin1'] = $data['stringaLogin1'];
 		if (isset($data['stringaLogin2'])) $config['stringaLogin2'] = $data['stringaLogin2'];
+		if (isset($data['api-path'])) $config['api-path'] = $data['api-path'];
 
 		if ($this->model->isLoaded('Output')) {
 			$headerTemplate = $this->model->_Output->findTemplateFile('header', $config['template']);

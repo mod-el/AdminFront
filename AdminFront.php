@@ -131,12 +131,14 @@ class AdminFront extends Module
 		$this->request = $realRequest;
 
 		if (isset($realRequest[0])) {
+			$apiPath = $config['api-path'] ?? 'api';
+			if ($realRequest[0] === $apiPath) {
+				return [
+					'controller' => 'AdminApi',
+				];
+			}
+
 			switch ($realRequest[0]) {
-				case 'api':
-					return [
-						'controller' => 'AdminApi',
-					];
-					break;
 				case 'login':
 				case 'logout':
 					return [
@@ -942,5 +944,21 @@ class AdminFront extends Module
 		}
 
 		return null;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getApiPath(): string
+	{
+		$config = $this->retrieveConfig();
+		$apiPath = $config['api-path'] ?? 'api';
+		if (stripos($apiPath, 'http://') !== 0 and stripos($apiPath, 'https://') !== 0)
+			$apiPath = $this->getUrlPrefix() . $apiPath;
+
+		if (substr($apiPath, -1) === '/')
+			return $apiPath;
+		else
+			return $apiPath . '/';
 	}
 }

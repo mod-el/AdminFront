@@ -1,9 +1,9 @@
 {
 	"name": "AdminFront",
 	"description": "Front mask for Admin module",
-	"version": "0.3.2",
+	"version": "0.3.3",
 	"dependencies": {
-		"Core": ">=2.7.2",
+		"Core": ">=2.8.0",
 		"Admin": ">=1.1.0",
 		"Output": ">=0.3.0",
 		"ContextMenu": ">=1.1.0",

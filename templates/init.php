@@ -65,6 +65,12 @@
 			<td>Login phrase 2:</td>
 			<td><input name="stringaLogin2" value=""/></td>
 		</tr>
+		<tr>
+			<td>API path:</td>
+			<td>
+				<input type="text" name="api-path" value="api"/>
+			</td>
+		</tr>
 	</table>
 	<hr/>
 	<table>
