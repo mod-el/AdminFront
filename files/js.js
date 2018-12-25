@@ -166,7 +166,7 @@ async function login() {
 		'username': username,
 		'password': password
 	}, 'POST').then(r => {
-		setCookie('admin-user', r.token, 365 * 10, adminPrefix);
+		setCookie('admin-user', r.token, 365 * 10, adminPrefix.substr(0, adminPrefix.length - 1));
 		adminApiToken = r.token;
 		return adminInit();
 	}).catch(err => {
@@ -720,7 +720,7 @@ document.addEventListener('mouseup', event => {
 			} else {
 				maxMenuWidth = menuResizing.endW;
 				openMenu();
-				setCookie('menu-width', maxMenuWidth, 365 * 10);
+				setCookie('menu-width', maxMenuWidth, 365 * 10, adminPrefix.substr(0, adminPrefix.length - 1));
 			}
 		}
 		menuResizing = false;
