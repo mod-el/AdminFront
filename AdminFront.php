@@ -350,7 +350,7 @@ class AdminFront extends Module
 		$sId = $this->model->getInput('sId');
 		if ($sId === null) {
 			$sId = 0;
-			while (isset($_SESSION[SESSION_ID]['admin-search-sessions'][$this->request[0]][$sId]))
+			while (isset($_SESSION['admin-search-sessions'][$this->request[0]][$sId]))
 				$sId++;
 		}
 		return (int)$sId;
@@ -367,8 +367,8 @@ class AdminFront extends Module
 		if ($sId === null)
 			$sId = $this->getSessionId();
 
-		if (isset($_SESSION[SESSION_ID]['admin-search-sessions'][$this->request[0]][$sId])) {
-			$options = $_SESSION[SESSION_ID]['admin-search-sessions'][$this->request[0]][$sId];
+		if (isset($_SESSION['admin-search-sessions'][$this->request[0]][$sId])) {
+			$options = $_SESSION['admin-search-sessions'][$this->request[0]][$sId];
 		} else {
 			$options = [
 				'p' => 1,
@@ -398,7 +398,7 @@ class AdminFront extends Module
 	 */
 	public function setListOptions(int $sId, array $options)
 	{
-		$_SESSION[SESSION_ID]['admin-search-sessions'][$this->request[0]][$sId] = $options;
+		$_SESSION['admin-search-sessions'][$this->request[0]][$sId] = $options;
 	}
 
 	/**

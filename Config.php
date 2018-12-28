@@ -115,7 +115,7 @@ class Config extends Module_Config
 			$config['url'] = [];
 		}
 
-		if ($data['table']) {
+		if (isset($data['table']) and $data['table'] and empty($config['url'])) {
 			$config['url'][] = [
 				'path' => $data['path'],
 				'table' => $data['table'],
@@ -187,17 +187,17 @@ $config = ' . var_export($config, true) . ';
 	}
 
 	/**
-	 * @param array $request
+	 * @param string $type
 	 * @return null|string
 	 */
-	public function getTemplate(array $request): ?string
+	public function getTemplate(string $type): ?string
 	{
 		if (is_dir(INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Admin'))
 			return null;
-
-		if (!in_array($request[2], ['init', 'config']))
+		if (!in_array($type, ['init', 'config']))
 			return null;
-		return $request[2];
+
+		return $type;
 	}
 
 	/**
@@ -205,12 +205,12 @@ $config = ' . var_export($config, true) . ';
 	 * @return mixed
 	 * @throws \Exception
 	 */
-	public function install(array $data = []): bool
+	public function init(?array $data = null): bool
 	{
-		if (empty($data))
-			return true;
+		if ($data === null)
+			return false;
 
-		if (isset($data['path'], $data['table'], $data['username'], $data['password']) and $data['table']) {
+		if (isset($data['template'])) {
 			if (isset($data['make-account']) and $data['password'] != $data['repassword']) {
 				$this->model->error('The passwords do not match');
 			} else {
@@ -223,9 +223,8 @@ $config = ' . var_export($config, true) . ';
 						  PRIMARY KEY (`id`)
 						) ENGINE=InnoDB DEFAULT CHARSET=utf8;');
 					}
-					if (isset($data['make-account'])) {
+					if (isset($data['make-account']))
 						$this->model->_Db->query('INSERT INTO `' . $data['table'] . '`(username,password) VALUES(' . $this->model->_Db->quote($data['username']) . ',' . $this->model->_Db->quote(password_hash($data['password'], PASSWORD_DEFAULT)) . ')');
-					}
 
 					return true;
 				} else {

@@ -199,14 +199,6 @@
 
 <form action="" method="post" name="configForm">
 	<hr/>
-	<?php
-	$template = $config['template'];
-	$hideMenu = $config['hide-menu'];
-	$dateFormat = $config['dateFormat'];
-	$priceFormat = $config['priceFormat'];
-	$stringaLogin1 = $config['stringaLogin1'];
-	$stringaLogin2 = $config['stringaLogin2'];
-	?>
 	<table>
 		<tr>
 			<td>Template module:</td>
@@ -214,10 +206,10 @@
 				<select name="template">
 					<option value=""></option>
 					<?php
-					$templates = $config_class->searchTemplates();
+					$templates = $configClass->searchTemplates();
 					foreach ($templates as $t => $t_name) {
 						?>
-						<option value="<?= entities($t) ?>"<?= $t == $template ? ' selected' : '' ?>><?= entities($t_name) ?></option><?php
+						<option value="<?= entities($t) ?>"<?= $t === $config['template'] ? ' selected' : '' ?>><?= entities($t_name) ?></option><?php
 					}
 					?>
 				</select>
@@ -225,30 +217,30 @@
 			<td>Left menu:</td>
 			<td>
 				<select name="hide-menu">
-					<option value="always"<?= $hideMenu == 'always' ? ' selected' : '' ?>>Always</option>
-					<option value="mobile"<?= $hideMenu == 'mobile' ? ' selected' : '' ?>>Only mobile</option>
-					<option value="never"<?= $hideMenu == 'never' ? ' selected' : '' ?>>Never</option>
+					<option value="always"<?= $config['hide-menu'] == 'always' ? ' selected' : '' ?>>Always</option>
+					<option value="mobile"<?= $config['hide-menu'] == 'mobile' ? ' selected' : '' ?>>Only mobile</option>
+					<option value="never"<?= $config['hide-menu'] == 'never' ? ' selected' : '' ?>>Never</option>
 				</select>
 			</td>
 		</tr>
 		<tr>
 			<td>Dates format:</td>
-			<td><input name="dateFormat" value="<?= entities($dateFormat) ?>"/></td>
+			<td><input name="dateFormat" value="<?= entities($config['dateFormat']) ?>"/></td>
 			<td>Login phrase 1:</td>
-			<td><input name="stringaLogin1" value="<?= entities($stringaLogin1) ?>"/></td>
+			<td><input name="stringaLogin1" value="<?= entities($config['stringaLogin1']) ?>"/></td>
 		</tr>
 		<tr>
 			<td>Currencies format:</td>
 			<td>
 				<select name="priceFormat">
-					<option value="vd"<?= $template == 'vd' ? ' selected' : '' ?>>1.234,00&euro;</option>
-					<option value="vp"<?= $template == 'vp' ? ' selected' : '' ?>>&euro; 1.234,00</option>
-					<option value="pd"<?= $template == 'pd' ? ' selected' : '' ?>>1234.00&euro;</option>
-					<option value="pp"<?= $template == 'pp' ? ' selected' : '' ?>>&euro; 1234.00</option>
+					<option value="vd"<?= $config['priceFormat'] == 'vd' ? ' selected' : '' ?>>1.234,00&euro;</option>
+					<option value="vp"<?= $config['priceFormat'] == 'vp' ? ' selected' : '' ?>>&euro; 1.234,00</option>
+					<option value="pd"<?= $config['priceFormat'] == 'pd' ? ' selected' : '' ?>>1234.00&euro;</option>
+					<option value="pp"<?= $config['priceFormat'] == 'pp' ? ' selected' : '' ?>>&euro; 1234.00</option>
 				</select>
 			</td>
 			<td>Login phrase 2:</td>
-			<td><input name="stringaLogin2" value="<?= entities($stringaLogin2) ?>"/></td>
+			<td><input name="stringaLogin2" value="<?= entities($config['stringaLogin2']) ?>"/></td>
 		</tr>
 		<tr>
 			<td>API path:</td>
