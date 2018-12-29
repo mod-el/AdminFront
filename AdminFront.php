@@ -923,7 +923,7 @@ class AdminFront extends Module
 	 * @param string $page
 	 * @return string|null
 	 */
-	public function getRuleForPage(string $page)
+	public function getRuleForPage(string $page): ?string
 	{
 		$pages = $this->getPages();
 		return $this->searchRuleForPage($pages, $page);
@@ -931,9 +931,10 @@ class AdminFront extends Module
 
 	/**
 	 * @param array $pages
+	 * @param string $page
 	 * @return string|null
 	 */
-	private function searchRuleForPage(array $pages, string $page)
+	private function searchRuleForPage(array $pages, string $page): ?string
 	{
 		foreach ($pages as $p) {
 			if ($p['page'] === $page)
