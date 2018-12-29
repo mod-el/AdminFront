@@ -865,10 +865,12 @@ class AdminFront extends Module
 					$fieldOptions['label'] = 'Ricerca generale';
 					$fieldOptions['attributes']['data-filter'] = 'all';
 					$fieldOptions['attributes']['data-filter-type'] = 'custom';
+				} elseif (isset($this->model->element->settings['fields'][$k])) {
+					$fieldOptions = array_merge($this->model->element->settings['fields'][$k], $fieldOptions);
 				}
 
 				if ($t === 'range') {
-
+					// TODO: implemente range filter type
 				} else {
 					$datum = $form->add($k, $fieldOptions);
 					if (isset($values[$k]))
