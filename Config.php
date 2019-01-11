@@ -212,7 +212,7 @@ $config = ' . var_export($config, true) . ';
 			if (isset($data['make-account']) and $data['password'] != $data['repassword']) {
 				$this->model->error('The passwords do not match');
 			} else {
-				if ($this->saveConfig('install', $data)) {
+				if ($this->saveConfig('init', $data)) {
 					if (isset($data['make-users-table'])) {
 						$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `' . $data['table'] . '` (
 						  `id` int(11) NOT NULL AUTO_INCREMENT,
