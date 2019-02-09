@@ -1,11 +1,11 @@
 {
 	"name": "AdminFront",
 	"description": "Front mask for Admin module",
-	"version": "0.3.3",
+	"version": "0.4.0",
 	"dependencies": {
-		"Core": ">=2.8.1",
-		"Admin": ">=1.1.0",
-		"Output": ">=0.3.0",
+		"Core": ">=2.8.2",
+		"Admin": ">=1.2.0",
+		"Output": ">=0.3.2",
 		"ContextMenu": ">=1.1.0",
 		"FrontEnd": ">=1.1.2",
 		"ResizeTable": ">=1.2.0",

@@ -18,7 +18,7 @@
 	}
 </style>
 
-<h2>Admin module install</h2>
+<h2>Admin Front module install</h2>
 
 <form action="" method="post">
 	<?php
@@ -29,8 +29,6 @@
 		'priceFormat' => $config['priceFormat'] ?? 'vd',
 		'stringaLogin1' => $config['stringaLogin1'] ?? '',
 		'stringaLogin2' => $config['stringaLogin2'] ?? '',
-		'api-path' => $config['api-path'] ?? 'api',
-		'url' => $config['url'] ?? [],
 	];
 	?>
 	<hr/>
@@ -76,12 +74,6 @@
 			</td>
 			<td>Login phrase 2:</td>
 			<td><input name="stringaLogin2" value="<?= entities($config['stringaLogin2']) ?>"/></td>
-		</tr>
-		<tr>
-			<td>API path:</td>
-			<td>
-				<input type="text" name="api-path" value="<?= entities($config['api-path']) ?>"/>
-			</td>
 		</tr>
 	</table>
 	<?php

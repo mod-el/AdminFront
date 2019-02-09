@@ -3,7 +3,6 @@
 use Model\Core\Autoloader;
 use Model\Core\Module;
 use Model\Form\Form;
-use Model\User\User;
 use Model\Core\Globals;
 
 class AdminFront extends Module
@@ -69,35 +68,6 @@ class AdminFront extends Module
 			var elementCallback = null;
 		</script>
 		<?php
-	}
-
-	/**
-	 * @return User
-	 */
-	public function getUser(): User
-	{
-		if (!$this->model->isLoaded('User', 'Admin')) {
-			$config = $this->retrieveConfig();
-
-			$user_table = 'admin_users';
-			if (isset($config['url']) and is_array($config['url'])) {
-				foreach ($config['url'] as $u) {
-					if (is_array($u) and $u['path'] == $this->url) {
-						$user_table = $u['table'];
-						break;
-					}
-				}
-			}
-
-			$this->model->load('User', [
-				'table' => $user_table,
-			], 'Admin');
-
-			if ($this->model->_User_Admin->options['algorithm-version'] === 'old')
-				$this->model->_User_Admin->options['password'] = 'old_password';
-		}
-
-		return $this->model->_User_Admin;
 	}
 
 	/**
@@ -947,21 +917,5 @@ class AdminFront extends Module
 		}
 
 		return null;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getApiPath(): string
-	{
-		$config = $this->retrieveConfig();
-		$apiPath = $config['api-path'] ?? 'api';
-		if (stripos($apiPath, 'http://') !== 0 and stripos($apiPath, 'https://') !== 0)
-			$apiPath = $this->getUrlPrefix() . $apiPath;
-
-		if (substr($apiPath, -1) === '/')
-			return $apiPath;
-		else
-			return $apiPath . '/';
 	}
 }

@@ -21,13 +21,12 @@ class Config extends Module_Config
 	public function makeCache(): bool
 	{
 		$config = $this->retrieveConfig();
-		$adminRules = $this->getRules();
+
+		$adminConfigClass = new \Model\Admin\Config($this->model);
+		$adminCache = $adminConfigClass->buildCache();
 
 		if ($this->model->moduleExists('WebAppManifest')) {
-			foreach ($adminRules['rules'] as $ruleIdx => $rule) {
-				if (substr($ruleIdx, 0, 2) === 'sw')
-					continue;
-
+			foreach ($adminCache['macro'] as $rule) {
 				if ($rule)
 					$rule .= '/';
 
@@ -65,7 +64,7 @@ class Config extends Module_Config
 		}
 
 		$md5 = [
-			json_encode($adminRules),
+			json_encode($adminCache['rules']),
 		];
 		foreach ($assets as $asset) {
 			if (substr($asset, 0, 4) === 'http') {
@@ -82,6 +81,14 @@ class Config extends Module_Config
 	}
 
 	/**
+	 * @return array
+	 */
+	public function cacheDependencies(): array
+	{
+		return ['Admin'];
+	}
+
+	/**
 	 * Saves configuration
 	 *
 	 * @param string $type
@@ -92,38 +99,6 @@ class Config extends Module_Config
 	public function saveConfig(string $type, array $data): bool
 	{
 		$config = $this->retrieveConfig();
-		if (isset($config['url'])) {
-			foreach ($config['url'] as $idx => $url) {
-				if (isset($data[$idx . '-path']))
-					$url['path'] = $data[$idx . '-path'];
-				if (isset($data[$idx . '-table']))
-					$url['table'] = $data[$idx . '-table'];
-				if (isset($data[$idx . '-element']))
-					$url['element'] = $data[$idx . '-element'];
-				if (isset($data[$idx . '-admin-page']))
-					$url['admin-page'] = $data[$idx . '-admin-page'];
-				if (isset($data[$idx . '-pages']))
-					$url['pages'] = $this->parsePages(json_decode($data[$idx . '-pages'], true));
-				$config['url'][$idx] = $url;
-			}
-
-			foreach ($config['url'] as $idx => $url) {
-				if (isset($data['delete-' . $idx]))
-					unset($config['url'][$idx]);
-			}
-		} else {
-			$config['url'] = [];
-		}
-
-		if (isset($data['table']) and $data['table'] and empty($config['url'])) {
-			$config['url'][] = [
-				'path' => $data['path'],
-				'table' => $data['table'],
-				'element' => '',
-				'admin-page' => '',
-				'pages' => [],
-			];
-		}
 
 		if (isset($data['template'])) $config['template'] = $data['template'];
 		if (isset($data['hide-menu'])) $config['hide-menu'] = $data['hide-menu'];
@@ -131,7 +106,6 @@ class Config extends Module_Config
 		if (isset($data['priceFormat'])) $config['priceFormat'] = $data['priceFormat'];
 		if (isset($data['stringaLogin1'])) $config['stringaLogin1'] = $data['stringaLogin1'];
 		if (isset($data['stringaLogin2'])) $config['stringaLogin2'] = $data['stringaLogin2'];
-		if (isset($data['api-path'])) $config['api-path'] = $data['api-path'];
 
 		if ($this->model->isLoaded('Output')) {
 			$headerTemplate = $this->model->_Output->findTemplateFile('header', $config['template']);
@@ -152,38 +126,6 @@ class Config extends Module_Config
 		return (bool)file_put_contents($configFile, '<?php
 $config = ' . var_export($config, true) . ';
 ');
-	}
-
-	/**
-	 * Parses the input pages, during config save, and returns them in a standard format
-	 *
-	 * @param array $pages
-	 * @return array
-	 * @throws \Model\Core\Exception
-	 */
-	private function parsePages(array $pages): array
-	{
-		foreach ($pages as &$p) {
-			if (!isset($p['name']))
-				$this->model->error('Name for all Admin pages is required.');
-
-			if (isset($p['name']) and !isset($p['controller'])) {
-				if (!isset($p['sub']) or isset($p['link']))
-					$p['controller'] = str_replace(["\t", "\n", "\r", "\0", "\x0B", " "], '', ucwords(strtolower($p['name'])));
-			}
-
-			if (isset($p['controller']) and !isset($p['rule']))
-				$p['rule'] = str_replace(' ', '-', strtolower($p['name']));
-
-			if (in_array($p['rule'] ?? '', ['login', 'logout', 'api', 'sw.js']))
-				$this->model->error('"' . $p['rule'] . '" is a reserved admin path, you cannot assign that rule to a page');
-
-			if (isset($p['sub']))
-				$p['sub'] = $this->parsePages($p['sub']);
-		}
-		unset($p);
-
-		return $pages;
 	}
 
 	/**
@@ -242,23 +184,21 @@ $config = ' . var_export($config, true) . ';
 	 */
 	public function getRules(): array
 	{
-		$config = $this->retrieveConfig();
+		$adminConfigClass = new \Model\Admin\Config($this->model);
+		$adminCache = $adminConfigClass->buildCache();
 
 		$ret = [
 			'rules' => [],
 			'controllers' => [
 				'AdminFront',
 				'AdminLogin',
-				'AdminApi',
 				'AdminServiceWorker',
 			],
 		];
 
-		if (isset($config['url'])) {
-			foreach ($config['url'] as $idx => $p) {
-				$ret['rules'][$idx] = $p['path'] ?: null;
-				$ret['rules']['sw' . $idx] = ($p['path'] ? $p['path'] . '/' : '') . 'sw.js';
-			}
+		foreach (($adminCache['macro'] ?? []) as $idx => $path) {
+			$ret['rules'][$idx] = $path ?: null;
+			$ret['rules']['sw' . $idx] = ($path ? $path . '/' : '') . 'sw.js';
 		}
 
 		return $ret;
