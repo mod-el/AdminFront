@@ -3,7 +3,6 @@
 use Model\Core\Autoloader;
 use Model\Core\Module;
 use Model\Form\Form;
-use Model\Core\Globals;
 
 class AdminFront extends Module
 {
@@ -17,7 +16,8 @@ class AdminFront extends Module
 	private $visualizer = null;
 
 	/**
-	 *
+	 * @param string|null $customPage
+	 * @param int|null $customElement
 	 */
 	public function initialize(string $customPage = null, int $customElement = null)
 	{
@@ -28,7 +28,7 @@ class AdminFront extends Module
 			$adminPage = $this->request[0] ?? null;
 
 		if ($adminPage) {
-			$pages = $this->getPages();
+			$pages = $this->model->_Admin->getPages($this->url);
 			$rule = $this->seekForRule($pages, $adminPage);
 			if (!$rule)
 				return;
@@ -49,7 +49,7 @@ class AdminFront extends Module
 				}
 			}
 
-			$this->model->load('Admin', [
+			$this->model->_Admin->init([
 				'page' => $rule['page'] ?: null,
 				'id' => $elId,
 			]);
@@ -207,7 +207,7 @@ class AdminFront extends Module
 	public function getAdminPageUrl(string $adminPage, array $pages = []): ?string
 	{
 		if (count($pages) === 0) {
-			$pages = $this->getPages();
+			$pages = $this->model->_Admin->getPages($this->url);
 			if (count($pages) === 0)
 				return null;
 		}
@@ -239,76 +239,6 @@ class AdminFront extends Module
 			$this->model->error('No template module was defined in the configuration.');
 
 		return $config['template'];
-	}
-
-	/**
-	 * Retrieves the array of pages
-	 *
-	 * @return array
-	 */
-	public function getPages(): array
-	{
-		$config = $this->retrieveConfig();
-
-		$pages = [];
-
-		if (isset($config['url']) and is_array($config['url'])) {
-			foreach ($config['url'] as $u) {
-				if (is_array($u) and $u['path'] == $this->url) {
-					$pages = $u['pages'];
-					break;
-				}
-			}
-		}
-
-		if (isset(Globals::$data['adminAdditionalPages'])) {
-			foreach (Globals::$data['adminAdditionalPages'] as $p) {
-				$pages[] = array_merge([
-					'name' => '',
-					'rule' => '',
-					'page' => null,
-					'visualizer' => 'Table',
-					'mobile-visualizer' => 'Table',
-					'direct' => null,
-					'hidden' => false,
-					'sub' => [],
-				], $p);
-			}
-		}
-
-		$usersAdminPage = 'AdminUsers';
-		if (isset($config['url']) and is_array($config['url'])) {
-			foreach ($config['url'] as $u) {
-				if (is_array($u) and $u['path'] == $this->url and ($u['admin-page'] ?? '')) {
-					$usersAdminPage = $u['admin-page'];
-					break;
-				}
-			}
-		}
-
-		$pages[] = [
-			'name' => 'Users',
-			'page' => $usersAdminPage,
-			'rule' => 'admin-users',
-			'visualizer' => 'Table',
-			'mobile-visualizer' => 'Table',
-			'direct' => null,
-			'hidden' => false,
-			'sub' => [
-				[
-					'name' => 'Privileges',
-					'page' => 'AdminPrivileges',
-					'rule' => 'admin-privileges',
-					'visualizer' => 'FormList',
-					'mobile-visualizer' => 'FormList',
-					'direct' => null,
-					'hidden' => false,
-					'sub' => [],
-				],
-			],
-		];
-
-		return $pages;
 	}
 
 	/**
@@ -418,7 +348,7 @@ class AdminFront extends Module
 	{
 		if ($visualizer === null) {
 			if (!$this->visualizer and isset($this->request[0])) {
-				$pages = $this->getPages();
+				$pages = $this->model->_Admin->getPages($this->url);
 				$rule = $this->seekForRule($pages, $this->request[0]);
 				if (!$rule or !isset($rule['visualizer']) or !$rule['visualizer'])
 					return null;
@@ -667,7 +597,7 @@ class AdminFront extends Module
 	public function getBreadcrumbs(array &$breadcrumbs, array $request, array $pages = null): bool
 	{
 		if ($pages === null)
-			$pages = $this->getPages();
+			$pages = $this->model->_Admin->getPages($this->url);
 
 		foreach ($pages as $p) {
 			if (isset($p['rule']) and $p['rule'] === $request[0]) {
@@ -896,7 +826,7 @@ class AdminFront extends Module
 	 */
 	public function getRuleForPage(string $page): ?string
 	{
-		$pages = $this->getPages();
+		$pages = $this->model->_Admin->getPages($this->url);
 		return $this->searchRuleForPage($pages, $page);
 	}
 

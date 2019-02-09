@@ -122,8 +122,9 @@ function checkUserToken() {
 
 	unloadLoginPage();
 
-	return adminApiRequest('user/auth', {'token': adminApiToken}).then(r => {
+	return adminApiRequest('user/auth').then(r => {
 		_('header-username').innerHTML = r.username;
+		model_notifications_user = r.id;
 		return r;
 	}).catch(err => {
 		alert(err);
@@ -255,13 +256,14 @@ function adminApiRequest(request, payload, method) {
 	if (typeof method === 'undefined')
 		method = null;
 
-	let get = {};
+	let headers = {};
 	if (adminApiToken !== null)
-		get['token'] = adminApiToken;
+		headers['Authorization'] = 'Bearer ' + adminApiToken;
 
-	return ajax(adminApiPath + request, get, payload, {
+	return ajax(adminApiPath + request, {}, payload, {
 		'method': method,
-		'fullResponse': true
+		'fullResponse': true,
+		'headers': headers
 	}).then(response => {
 		return response.text().then(text => {
 			try {
