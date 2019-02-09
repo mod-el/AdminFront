@@ -64,6 +64,7 @@ class AdminFront extends Module
 		?>
 		<link rel="manifest" href="<?= $this->getUrlPrefix() ?>manifest.json">
 		<script>
+			var adminPath = '<?=$this->url?>';
 			var adminPrefix = <?=json_encode($this->getUrlPrefix())?>;
 			var elementCallback = null;
 		</script>

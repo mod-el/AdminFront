@@ -127,6 +127,7 @@ function checkUserToken() {
 		return r;
 	}).catch(err => {
 		alert(err);
+		deleteCookie('admin-user', getAdminCookiePath());
 		adminApiToken = null;
 		adminInit();
 		throw err;
@@ -163,10 +164,11 @@ async function login() {
 	form.style.display = 'none';
 
 	return adminApiRequest('user/login', {
+		'path': adminPath,
 		'username': username,
 		'password': password
 	}, 'POST').then(r => {
-		setCookie('admin-user', r.token, 365 * 10, adminPrefix.substr(0, adminPrefix.length - 1));
+		setCookie('admin-user', r.token, 365 * 10, getAdminCookiePath());
 		adminApiToken = r.token;
 		return adminInit();
 	}).catch(err => {
@@ -182,7 +184,7 @@ async function login() {
 function logout() {
 	clearMainPage();
 	adminApiToken = null;
-	deleteCookie('admin-user');
+	deleteCookie('admin-user', getAdminCookiePath());
 	return adminApiRequest('user/logout').then(loadLoginPage);
 }
 
@@ -253,7 +255,11 @@ function adminApiRequest(request, payload, method) {
 	if (typeof method === 'undefined')
 		method = null;
 
-	return ajax(adminApiPath + request, {'token': adminApiToken}, payload, {
+	let get = {};
+	if (adminApiToken !== null)
+		get['token'] = adminApiToken;
+
+	return ajax(adminApiPath + request, get, payload, {
 		'method': method,
 		'fullResponse': true
 	}).then(response => {
@@ -739,7 +745,7 @@ document.addEventListener('mouseup', event => {
 			} else {
 				maxMenuWidth = menuResizing.endW;
 				openMenu();
-				setCookie('menu-width', maxMenuWidth, 365 * 10, adminPrefix.substr(0, adminPrefix.length - 1));
+				setCookie('menu-width', maxMenuWidth, 365 * 10, getAdminCookiePath());
 			}
 		}
 		menuResizing = false;
@@ -1713,4 +1719,12 @@ function showLoadingMask() {
 function hideLoadingMask() {
 	_('main-loading').removeClass('grey');
 	_('main-loading').style.display = 'none';
+}
+
+function getAdminCookiePath() {
+	if (adminPrefix.substr(-1) === '/') {
+		return adminPrefix.substr(0, adminPrefix.length - 1);
+	} else {
+		return adminPrefix;
+	}
 }
