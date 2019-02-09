@@ -253,19 +253,38 @@ function adminApiRequest(request, payload, method) {
 	if (typeof method === 'undefined')
 		method = null;
 
-	return ajax(adminApiPath + request, {'token': adminApiToken}, payload, {'method': method}).then(r => {
-		if (typeof r !== 'object')
-			throw r;
-		if (typeof r.status === 'undefined' || typeof r.status === 'undefined')
-			throw 'Invalid response format';
-		if (r.status !== 'OK') {
-			if (typeof r.response.error === 'undefined')
-				throw 'Unknown error';
-			else
-				throw r.response.error;
+	return ajax(adminApiPath + request, {'token': adminApiToken}, payload, {
+		'method': method,
+		'fullResponse': true
+	}).then(response => {
+		return response.text().then(text => {
+			try {
+				let resp = JSON.parse(text);
+
+				return {
+					'status': response.status,
+					'body': resp
+				};
+			} catch (e) {
+				return {
+					'status': response.status,
+					'body': text
+				};
+			}
+		});
+	}).then(response => {
+		if (typeof response.body !== 'object')
+			throw response.body;
+
+		if (response.status !== 200) {
+			if (typeof response.body.error !== 'undefined') {
+				throw response.body.error;
+			} else {
+				throw 'Invalid response from server';
+			}
 		}
 
-		return r.response;
+		return response.body;
 	}).catch(err => {
 		throw err;
 	});
