@@ -185,7 +185,7 @@ function logout() {
 	clearMainPage();
 	adminApiToken = null;
 	deleteCookie('admin-user', getAdminCookiePath());
-	return adminApiRequest('user/logout').then(loadLoginPage);
+	return loadLoginPage();
 }
 
 window.addEventListener('load', function () {
