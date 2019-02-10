@@ -21,6 +21,45 @@ class Table extends DataVisualizer
 
 	/**
 	 * @param array $options
+	 * @param array $visualizerOptions
+	 * @param array $fields
+	 * @return array
+	 */
+	public function elaboratePageDetails(array $options, array &$visualizerOptions, array $fields): array
+	{
+		if (isset($visualizerOptions['columns'])) {
+			$defaultColumns = $visualizerOptions['columns'];
+			$allColumns = $visualizerOptions['columns'];
+
+			foreach ($fields as $idx => $field) {
+				if (!isset($allColumns[$field]) and !in_array($field, $allColumns))
+					$allColumns[] = $field;
+			}
+		} else {
+			$defaultColumns = $fields;
+			$allColumns = $fields;
+		}
+
+		$columns = $this->getColumns($allColumns, $options['table']);
+		$defaultFields = array_keys($this->getColumns($defaultColumns, $options['table']));
+
+		$fieldsArr = [];
+		foreach ($columns as $idx => $column) {
+			$fieldsArr[$idx] = [
+				'label' => $column['label'],
+				'editable' => $column['editable'],
+				'sortable' => $column['sortable'],
+			];
+		}
+
+		return [
+			'fields' => $fieldsArr,
+			'default-fields' => $defaultFields,
+		];
+	}
+
+	/**
+	 * @param array $options
 	 */
 	public function render(array $options = [])
 	{
@@ -122,15 +161,13 @@ class Table extends DataVisualizer
 	}
 
 	/**
+	 * @param array $columns
+	 * @param string|null $table
 	 * @return array
 	 */
-	private function getColumns(): array
+	private function getColumns(array $columns, ?string $table): array
 	{
-		$tableModel = $this->options['table'] ? $this->model->_Db->getTable($this->options['table']) : false;
-		$columns = $this->options['columns'] ?: [];
-
-		if (empty($columns))
-			$columns = $this->getFields();
+		$tableModel = $table ? $this->model->_Db->getTable($table) : false;
 
 		$new_columns = []; // I loop through the columns to standardize the format
 		foreach ($columns as $k => $column) {
@@ -143,7 +180,7 @@ class Table extends DataVisualizer
 			 * 'label'=>'campo'
 			 * * The key is both column id and label, the value is the db field to use
 			 * 'label'=>array()
-			 * * The key is the colum id, in the array there will be the remaining options (if a label is not provided, the column is will be used)
+			 * * The key is the column id, in the array there will be the remaining options (if a label is not provided, the column is will be used)
 			*/
 			if (is_numeric($k)) {
 				if (is_array($column)) {
@@ -177,7 +214,7 @@ class Table extends DataVisualizer
 			if (!isset($column['field']) and !isset($column['display']))
 				$column['field'] = $k;
 
-			$column = array_merge(array(
+			$column = array_merge([
 				'label' => $k,
 				'field' => false,
 				'display' => false,
@@ -187,7 +224,7 @@ class Table extends DataVisualizer
 				'print' => true,
 				'total' => false,
 				'price' => false,
-			), $column);
+			], $column);
 
 			if (is_string($column['display']) and !$column['field'] and $column['display'])
 				$column['field'] = $column['display'];

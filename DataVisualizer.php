@@ -18,11 +18,11 @@ abstract class DataVisualizer
 	 * @param Core $core
 	 * @param array $options
 	 */
-	public function __construct(Core $core, array $options = [])
+	public function __construct(Core $core)
 	{
 		$this->model = $core;
 
-		$this->defaultOptions = array_merge([
+		/*$this->defaultOptions = array_merge([
 			'name' => 'list',
 			'privileges' => true,
 		], $this->defaultOptions);
@@ -34,8 +34,25 @@ abstract class DataVisualizer
 			$dummy->update([$dummy->settings['primary'] => '[n]']);
 			$this->model->_Admin->runFormThroughAdminCustomizations($dummy->getForm());
 			$this->options['dummy'] = $dummy;
-		}
+		}*/
 	}
+
+	/**
+	 * @param array $options
+	 * @param array $visualizerOptions
+	 * @param array $fields
+	 * @return array
+	 */
+	public function elaboratePageDetails(array $options, array &$visualizerOptions, array $fields): array
+	{
+		return [
+			'fields' => [],
+			'default-fields' => [],
+		];
+	}
+
+	/*************************************************************************************/
+	/*************************************************************************************/
 
 	/**
 	 * @param array $options

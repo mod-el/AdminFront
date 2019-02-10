@@ -1,5 +1,6 @@
 var sId = null;
 var currentAdminPage = false;
+var currentPageDetails = {};
 var menuResizing = false;
 var columnResizing = false;
 var menuIsOpen = true;
@@ -490,7 +491,7 @@ function clearMainPage() {
 }
 
 /*
- Moves between admin pages, moving the left menù and taking care of the browser history
+ Moves between admin pages, moving the left menu and taking care of the browser history
  */
 function loadAdminPage(request, get, post, history_push, direct) {
 	if (!checkBeforePageChange())
@@ -500,67 +501,82 @@ function loadAdminPage(request, get, post, history_push, direct) {
 
 	if (request.length === 0)
 		return false;
-	if (typeof get === 'undefined')
-		get = '';
-	if (typeof history_push === 'undefined')
-		history_push = true;
-	if (typeof direct === 'undefined')
-		direct = true;
 
-	let full_url = request.join('/');
-
-	let state = {'request': request.join('/')};
-	if (typeof get['sId'] !== 'undefined') {
-		sId = get['sId'];
-		state['sId'] = sId;
-	} else if (currentAdminPage.split('/')[0] !== request[0]) {
-		sId = null;
-	}
-
-	if (typeof get['p'] !== 'undefined') {
-		currentPage = parseInt(get['p']);
-		if (isNaN(currentPage) || currentPage < 1)
-			currentPage = 1;
-	} else {
-		currentPage = 1;
-	}
-
-	state['p'] = currentPage;
-	let forcePage = currentPage;
-
-	if (history.pushState && history_push)
-		history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
-
-	clearMainPage();
-
-	let promise;
-	if (currentAdminPage !== full_url) {
-		if (typeof request[1] === 'undefined' || request[1] === '') { // Table page
-			promise = loadPageAids(request, get).then(() => search(forcePage));
+	return new Promise(resolve => {
+		if (currentAdminPage.split('/')[0] === request[0]) {
+			resolve();
 		} else {
-			promise = Promise.all([
-				loadPage(adminPrefix + full_url, get, post),
-				loadPageAids(request, get)
-			]);
+			return adminApiRequest('page/' + request[0]).then(r => {
+				if (typeof r !== 'object')
+					throw r;
+
+				currentPageDetails = r;
+				resolve();
+			});
 		}
-	} else {
-		promise = loadPage(adminPrefix + full_url, get, post);
-	}
+	}).then(() => {
+		if (typeof get === 'undefined')
+			get = {};
+		if (typeof history_push === 'undefined')
+			history_push = true;
+		if (typeof direct === 'undefined')
+			direct = true;
 
-	selectFromMainMenu(request);
+		let full_url = request.join('/');
 
-	if (window.innerWidth < 800)
-		closeMenu();
+		let state = {'request': request.join('/')};
+		if (typeof get['sId'] !== 'undefined') {
+			sId = get['sId'];
+			state['sId'] = sId;
+		} else if (currentAdminPage.split('/')[0] !== request[0]) {
+			sId = null;
+		}
 
-	selectedRows = [];
-	currentAdminPage = full_url;
+		if (typeof get['p'] !== 'undefined') {
+			currentPage = parseInt(get['p']);
+			if (isNaN(currentPage) || currentPage < 1)
+				currentPage = 1;
+		} else {
+			currentPage = 1;
+		}
 
-	historyWipe();
+		state['p'] = currentPage;
+		let forcePage = currentPage;
 
-	if (direct)
-		return promise.then(callElementCallback);
-	else
-		return promise;
+		if (history.pushState && history_push)
+			history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
+
+		clearMainPage();
+
+		let promise;
+		if (currentAdminPage !== full_url) {
+			if (typeof request[1] === 'undefined' || request[1] === '') { // List page
+				promise = loadPageAids(request, get).then(() => search(forcePage));
+			} else {
+				promise = Promise.all([
+					loadPage(adminPrefix + full_url, get, post),
+					loadPageAids(request, get)
+				]);
+			}
+		} else {
+			promise = loadPage(adminPrefix + full_url, get, post);
+		}
+
+		selectFromMainMenu(request);
+
+		if (window.innerWidth < 800)
+			closeMenu();
+
+		selectedRows = [];
+		currentAdminPage = full_url;
+
+		historyWipe();
+
+		if (direct)
+			return promise.then(callElementCallback);
+		else
+			return promise;
+	});
 }
 
 function checkBeforePageChange() {
