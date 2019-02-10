@@ -260,7 +260,7 @@ function deleteRows(ids) {
 			if (request.length === 1)
 				reloadResultsTable();
 			else
-				loadAdminPage([request[0]]);
+				loadAdminPage(request[0]);
 		}
 
 		return r;

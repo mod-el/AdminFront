@@ -539,9 +539,9 @@ class AdminFront extends Module
 
 		$breadcrumbsHtml = [];
 		$prefix = $this->getUrlPrefix();
-		foreach ($breadcrumbs as $b) {
-			$breadcrumbsHtml[] = $b['url'] !== null ? '<a href="' . $prefix . $b['url'] . '" onclick="loadAdminPage([\'' . $b['url'] . '\'], \'' . $b['get'] . '\'); return false">' . entities($b['name']) . '</a>' : '<a>' . entities($b['name']) . '</a>';
-		}
+		foreach ($breadcrumbs as $b)
+			$breadcrumbsHtml[] = $b['url'] !== null ? '<a href="' . $prefix . $b['url'] . '" onclick="loadAdminPage(\'' . $b['url'] . '\', \'' . $b['get'] . '\'); return false">' . entities($b['name']) . '</a>' : '<a>' . entities($b['name']) . '</a>';
+
 		$breadcrumbsHtml = implode(' -&gt; ', $breadcrumbsHtml);
 
 		$filterForms = $this->getFiltersForms();

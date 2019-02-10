@@ -55,14 +55,12 @@ function adminInit() {
 
 		let request = currentAdminPage.split('/');
 
-		if (document.location.search.match(/sId=[0-9]+/))
-			sId = document.location.search.replace(/.*sId=([0-9]+).*/, '$1');
+		let get = objectFromQueryString();
 
-		let get = document.location.search;
-		if (get.charAt(0) === '?')
-			get = get.substr(1);
-		if (sId)
-			get = changeGetParameter(get, 'sId', sId);
+		if (typeof get['sId'] !== 'undefined')
+			sId = get['sId'];
+		else if (sId)
+			get['sId'] = sId;
 
 		if (request.length >= 2 && request[1] === 'edit') {
 			if (request.length >= 3) {
@@ -71,7 +69,7 @@ function adminInit() {
 				newElement(request[0], get);
 			}
 		} else {
-			loadAdminPage(request, get, '', false);
+			loadAdminPage(currentAdminPage, get, '', false);
 		}
 
 		loadPageAids(request);
@@ -231,18 +229,20 @@ if ('serviceWorker' in navigator) {
 window.onpopstate = function (event) {
 	var s = event.state;
 	if (typeof s['request'] !== 'undefined') {
-		if (s['request'].join('/') === currentAdminPage && typeof s['p'] !== 'undefined') {
+		if (s['request'] === currentAdminPage && typeof s['p'] !== 'undefined') {
 			goToPage(s['p'], false);
 		} else {
-			var get = '';
-			if (typeof s['sId'] !== 'undefined')
-				get = changeGetParameter(get, 'sId', s['sId']);
+			let request = s['request'].split('/');
 
-			if (s['request'][1] === 'edit') {
-				loadElement(s['request'][0], s['request'][2], get, false);
+			let get = {};
+			if (typeof s['sId'] !== 'undefined')
+				get['sId'] = s['sId'];
+
+			if (request[1] === 'edit') {
+				loadElement(request[0], request[2], get, false);
 			} else {
 				if (typeof s['p'] !== 'undefined')
-					get = changeGetParameter(get, 'p', s['p']);
+					get['p'] = s['p'];
 				loadAdminPage(s['request'], get, false, false);
 			}
 		}
@@ -450,18 +450,18 @@ function loadPage(url, get, post, deleteContent) {
 		return false;
 
 	if (typeof get === 'undefined')
-		get = '';
+		get = {};
 	if (typeof post === 'undefined')
-		post = false;
+		post = {};
 	if (typeof deleteContent === 'undefined')
 		deleteContent = true;
 
-	get = changeGetParameter(get, 'ajax', '');
+	get['ajax'] = '';
 
 	if (deleteContent)
 		clearMainPage();
 
-	pageLoadingHash = url + get + post;
+	pageLoadingHash = url + JSON.stringify(get) + JSON.stringify(post);
 
 	return ajax(url, get, post).then((function (hash) {
 		return function (response) {
@@ -496,6 +496,8 @@ function loadAdminPage(request, get, post, history_push, direct) {
 	if (!checkBeforePageChange())
 		return false;
 
+	request = request.split('/');
+
 	if (request.length === 0)
 		return false;
 	if (typeof get === 'undefined')
@@ -507,16 +509,18 @@ function loadAdminPage(request, get, post, history_push, direct) {
 
 	let full_url = request.join('/');
 
-	let state = {'request': request};
-	if (get.match(/sId=[0-9]+/)) {
-		sId = get.replace(/.*sId=([0-9]+).*/, '$1');
+	let state = {'request': request.join('/')};
+	if (typeof get['sId'] !== 'undefined') {
+		sId = get['sId'];
 		state['sId'] = sId;
 	} else if (currentAdminPage.split('/')[0] !== request[0]) {
 		sId = null;
 	}
 
-	if (get.match(/p=[0-9]+/)) {
-		currentPage = parseInt(get.replace(/.*p=([0-9]+).*/, '$1'));
+	if (typeof get['p'] !== 'undefined') {
+		currentPage = parseInt(get['p']);
+		if (isNaN(currentPage) || currentPage < 1)
+			currentPage = 1;
 	} else {
 		currentPage = 1;
 	}
@@ -524,20 +528,15 @@ function loadAdminPage(request, get, post, history_push, direct) {
 	state['p'] = currentPage;
 	let forcePage = currentPage;
 
-	if (history.pushState && history_push) {
-		history.pushState(state, '', adminPrefix + full_url + '?' + get);
-	}
+	if (history.pushState && history_push)
+		history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
 
 	clearMainPage();
 
 	let promise;
 	if (currentAdminPage !== full_url) {
 		if (typeof request[1] === 'undefined' || request[1] === '') { // Table page
-			promise = loadPageAids(request, get).then((function (forcePage) {
-				return function () {
-					return search(forcePage);
-				};
-			})(forcePage));
+			promise = loadPageAids(request, get).then(() => search(forcePage));
 		} else {
 			promise = Promise.all([
 				loadPage(adminPrefix + full_url, get, post),
@@ -583,14 +582,14 @@ function loadPageAids(request, get) {
 		return new Promise(resolve => resolve());
 
 	if (typeof get === 'undefined')
-		get = '';
+		get = {};
 
 	if (sId !== null)
-		get = changeGetParameter(get, 'sId', sId);
+		get['sId'] = sId;
 	if (typeof request[1] !== 'undefined')
-		get = changeGetParameter(get, 'action', request[1]);
+		get['action'] = request[1];
 	if (typeof request[2] !== 'undefined')
-		get = changeGetParameter(get, 'id', request[2]);
+		get['id'] = request[2];
 
 	_('toolbar').innerHTML = '';
 	_('breadcrumbs').innerHTML = '';
@@ -602,7 +601,7 @@ function loadPageAids(request, get) {
 		return new Promise(resolve => resolve());
 	}
 
-	aidsLoadingHash = request.join(',') + get;
+	aidsLoadingHash = request.join(',') + JSON.stringify(get);
 
 	return ajax(adminPrefix + request[0] + '/pageAids', get + '&ajax').then((function (hash) {
 		return function (aids) {
@@ -617,12 +616,15 @@ function loadPageAids(request, get) {
 				let url = document.location.href.replace(document.location.search, '');
 				if (url.substr(-1) === '?')
 					url = url.substr(0, -1);
-				let queryString = changeGetParameter(document.location.search.substr(1), 'sId', sId);
+
+				let queryString = objectFromQueryString();
+				queryString['sId'] = sId;
+
 				history.replaceState({
-					'request': currentAdminPage.split('/'),
+					'request': currentAdminPage,
 					'sId': sId,
 					'p': currentPage
-				}, '', url + '?' + queryString);
+				}, '', url + '?' + queryStringFromObject(queryString));
 			}
 
 			let toolbar = _('toolbar');
@@ -789,29 +791,12 @@ function changeSorting(event, column) {
 
 function reloadResultsTable(get, post) {
 	if (typeof get === 'undefined')
-		get = document.location.search.substr(1);
-	get = changeGetParameter(get, 'sId', sId);
+		get = objectFromQueryString();
+	get['sId'] = sId;
 	if (sortedBy)
-		get += '&sortBy=' + encodeURIComponent(JSON.stringify(sortedBy));
-	return loadPage(adminPrefix + (currentAdminPage.split('/')[0]), get, post)
-}
+		get['sortBy'] = JSON.stringify(sortedBy);
 
-function changeGetParameter(queryString, k, v) {
-	if (queryString === '' && v !== null) {
-		queryString = k + '=' + encodeURIComponent(v);
-	} else {
-		if (queryString.indexOf(k + '=') === -1) {
-			if (v !== null)
-				queryString += '&' + k + '=' + encodeURIComponent(v);
-		} else {
-			let regexp = new RegExp(k + '=[^&]*(&|$)');
-			if (v === null)
-				queryString = queryString.replace(regexp, '');
-			else
-				queryString = queryString.replace(regexp, k + '=' + encodeURIComponent(v) + '$1');
-		}
-	}
-	return queryString;
+	return loadPage(adminPrefix + (currentAdminPage.split('/')[0]), get, post);
 }
 
 function goToPage(p, history_push) {
@@ -824,16 +809,19 @@ function goToPage(p, history_push) {
 	if (p > currentPage)
 		moveBy *= -1;
 
-	get = changeGetParameter(document.location.search.substr(1), 'sId', sId);
-	get = changeGetParameter(get, 'goTo', null);
-	get = changeGetParameter(get, 'p', p);
+	let get = objectFromQueryString();
+	get['sId'] = sId;
+	if (typeof get['goTo'] !== 'undefined')
+		delete get['goTo'];
+
+	get['p'] = p;
 
 	if (history_push && history.pushState)
 		history.pushState({
-			'request': currentAdminPage.split('/'),
+			'request': currentAdminPage,
 			'sId': sId,
 			'p': p
-		}, '', adminPrefix + currentAdminPage + '?' + get);
+		}, '', adminPrefix + currentAdminPage + '?' + queryStringFromObject(get));
 
 	let pageMove = new Promise(resolve => {
 		if (p !== currentPage) {
@@ -965,9 +953,10 @@ function search(forcePage) {
 		filters.push(f);
 	});
 
-	get = changeGetParameter(document.location.search.substr(1), 'sId', sId);
-	get = changeGetParameter(get, 'p', forcePage);
-	get = changeGetParameter(get, 'filters', JSON.stringify(filters));
+	let get = objectFromQueryString();
+	get['sId'] = sId;
+	get['p'] = forcePage;
+	get['filters'] = JSON.stringify(filters);
 
 	return loadPage(adminPrefix + currentAdminPage.split('/')[0], get);
 }
@@ -1036,7 +1025,7 @@ function saveSearchFields() {
 
 function loadElement(page, id, get, history_push) {
 	if (typeof get === 'undefined')
-		get = '';
+		get = {};
 	if (typeof history_push === 'undefined')
 		history_push = true;
 
@@ -1046,7 +1035,7 @@ function loadElement(page, id, get, history_push) {
 	let promise;
 
 	if (id) {
-		let formTemplate = loadAdminPage([page, 'edit', id], get, false, history_push, false).then(showLoadingMask);
+		let formTemplate = loadAdminPage(page + '/edit/' + id, get, false, history_push, false).then(showLoadingMask);
 		let formData = loadElementData(page, id);
 
 		promise = Promise.all([formTemplate, formData]).then(responses => {
@@ -1056,7 +1045,7 @@ function loadElement(page, id, get, history_push) {
 			});
 		});
 	} else {
-		promise = loadAdminPage([page, 'edit'], get, false, history_push, false).then(checkSubPages);
+		promise = loadAdminPage(page + '/edit', get, false, history_push, false).then(checkSubPages);
 	}
 
 	return promise.then(callElementCallback).then(monitorFields).then(() => {
@@ -1392,7 +1381,7 @@ function newElement(page, get) {
 	if (typeof page === 'undefined')
 		page = currentAdminPage.split('/')[0];
 	if (typeof get === 'undefined')
-		get = '';
+		get = {};
 	return loadElement(page, 0, get).then(initializeEmptyForm).then(monitorFields);
 }
 
@@ -1504,7 +1493,7 @@ async function save() {
 			if (r.status === 'ok') {
 				historyWipe();
 
-				return loadElement(request[0], r.id, '', history_push).then(() => {
+				return loadElement(request[0], r.id, {}, history_push).then(() => {
 					inPageMessage('Salvataggio correttamente effettuato.', 'green-message');
 					return r.id;
 				});
@@ -1525,10 +1514,10 @@ function inPageMessage(text, className) {
 }
 
 function allInOnePage() {
-	let get = changeGetParameter('', 'sId', sId);
-	get = changeGetParameter(get, 'nopag', 1);
-
-	loadAdminPage([currentAdminPage.split('/')[0]], get);
+	return loadAdminPage(currentAdminPage.split('/')[0], {
+		'sId': sId,
+		'nopag': 1
+	});
 }
 
 function setLoadingBar(percentage) {
