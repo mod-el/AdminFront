@@ -490,7 +490,7 @@ function clearMainPage() {
 }
 
 /*
- Moves between admin pages, moving the left menù and taking care of the browser history
+ Moves between admin pages, moving the left menu and taking care of the browser history
  */
 function loadAdminPage(request, get, post, history_push, direct) {
 	if (!checkBeforePageChange())
@@ -501,7 +501,7 @@ function loadAdminPage(request, get, post, history_push, direct) {
 	if (request.length === 0)
 		return false;
 	if (typeof get === 'undefined')
-		get = '';
+		get = {};
 	if (typeof history_push === 'undefined')
 		history_push = true;
 	if (typeof direct === 'undefined')

@@ -143,7 +143,7 @@ class Table extends DataVisualizer
 			 * 'label'=>'campo'
 			 * * The key is both column id and label, the value is the db field to use
 			 * 'label'=>array()
-			 * * The key is the colum id, in the array there will be the remaining options (if a label is not provided, the column is will be used)
+			 * * The key is the column id, in the array there will be the remaining options (if a label is not provided, the column is will be used)
 			*/
 			if (is_numeric($k)) {
 				if (is_array($column)) {
