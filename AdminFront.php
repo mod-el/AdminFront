@@ -27,9 +27,9 @@ class AdminFront extends Module
 		if ($adminPage === null)
 			$adminPage = $this->request[0] ?? null;
 
-		if ($adminPage) {
+		if ($adminPage) { // TODO: da rivedere
 			$pages = $this->model->_Admin->getPages($this->url);
-			$rule = $this->seekForRule($pages, $adminPage);
+			$rule = $this->model->_Admin->seekForRule($pages, $adminPage);
 			if (!$rule)
 				return;
 
@@ -50,6 +50,7 @@ class AdminFront extends Module
 			}
 
 			$this->model->_Admin->init([
+				'path' => $this->url,
 				'page' => $rule['page'] ?: null,
 				'id' => $elId,
 			]);
@@ -151,27 +152,6 @@ class AdminFront extends Module
 	}
 
 	/**
-	 * Recursively looks for the rule corresponding to a given request, in the pages and sub-pages
-	 *
-	 * @param array $pages
-	 * @param string $request
-	 * @return string|bool
-	 */
-	private function seekForRule(array $pages, string $request)
-	{
-		foreach ($pages as $p) {
-			if (isset($p['rule']) and $p['rule'] === $request)
-				return $p;
-			if (isset($p['sub'])) {
-				$rule = $this->seekForRule($p['sub'], $request);
-				if ($rule)
-					return $rule;
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * @param string|bool $controller
 	 * @param null|string $id
 	 * @param array $tags
@@ -207,7 +187,7 @@ class AdminFront extends Module
 	public function getAdminPageUrl(string $adminPage, array $pages = []): ?string
 	{
 		if (count($pages) === 0) {
-			$pages = $this->model->_Admin->getPages($this->url);
+			$pages = $this->model->_Admin->getPages();
 			if (count($pages) === 0)
 				return null;
 		}
@@ -348,8 +328,8 @@ class AdminFront extends Module
 	{
 		if ($visualizer === null) {
 			if (!$this->visualizer and isset($this->request[0])) {
-				$pages = $this->model->_Admin->getPages($this->url);
-				$rule = $this->seekForRule($pages, $this->request[0]);
+				$pages = $this->model->_Admin->getPages();
+				$rule = $this->model->_Admin->seekForRule($pages, $this->request[0]);
 				if (!$rule or !isset($rule['visualizer']) or !$rule['visualizer'])
 					return null;
 
@@ -597,7 +577,7 @@ class AdminFront extends Module
 	public function getBreadcrumbs(array &$breadcrumbs, array $request, array $pages = null): bool
 	{
 		if ($pages === null)
-			$pages = $this->model->_Admin->getPages($this->url);
+			$pages = $this->model->_Admin->getPages();
 
 		foreach ($pages as $p) {
 			if (isset($p['rule']) and $p['rule'] === $request[0]) {
@@ -826,7 +806,7 @@ class AdminFront extends Module
 	 */
 	public function getRuleForPage(string $page): ?string
 	{
-		$pages = $this->model->_Admin->getPages($this->url);
+		$pages = $this->model->_Admin->getPages();
 		return $this->searchRuleForPage($pages, $page);
 	}
 

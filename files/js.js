@@ -127,7 +127,6 @@ function checkUserToken() {
 		model_notifications_user = r.id;
 		return r;
 	}).catch(err => {
-		alert(err);
 		deleteCookie('admin-user', getAdminCookiePath());
 		adminApiToken = null;
 		adminInit();
@@ -168,7 +167,7 @@ async function login() {
 		'path': adminPath,
 		'username': username,
 		'password': password
-	}, 'POST').then(r => {
+	}).then(r => {
 		setCookie('admin-user', r.token, 365 * 10, getAdminCookiePath());
 		adminApiToken = r.token;
 		return adminInit();
@@ -250,18 +249,15 @@ window.onpopstate = function (event) {
 	}
 };
 
-function adminApiRequest(request, payload, method) {
+function adminApiRequest(request, payload) {
 	if (typeof payload === 'undefined')
 		payload = {};
-	if (typeof method === 'undefined')
-		method = null;
 
 	let headers = {};
 	if (adminApiToken !== null)
 		headers['Authorization'] = 'Bearer ' + adminApiToken;
 
 	return ajax(adminApiPath + request, {}, payload, {
-		'method': method,
 		'fullResponse': true,
 		'headers': headers
 	}).then(response => {
@@ -1080,7 +1076,7 @@ function loadElement(page, id, get, history_push) {
 }
 
 function loadElementData(page, id) {
-	return adminApiRequest('get/' + page + '/' + id);
+	return adminApiRequest('page/' + page + '/data/' + id);
 }
 
 function fillAdminForm(data) {
