@@ -603,7 +603,8 @@ function loadPageAids(request, get) {
 
 	aidsLoadingHash = request.join(',') + JSON.stringify(get);
 
-	return ajax(adminPrefix + request[0] + '/pageAids', get + '&ajax').then((function (hash) {
+	get['ajax'] = '';
+	return ajax(adminPrefix + request[0] + '/pageAids', get).then((function (hash) {
 		return function (aids) {
 			if (typeof aids !== 'object')
 				return false;
