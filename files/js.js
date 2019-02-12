@@ -1388,13 +1388,16 @@ function newElement(page, get) {
 
 function toolbarButtonLoading(button) {
 	let img = _('#toolbar-button-' + button + ' img');
-	let icon = _('#toolbar-button-' + button + ' i');
-
+	if (!img)
+		img = _('#toolbar-button-custom-' + button + ' img');
 	if (img) {
 		img.setAttribute('data-old-path', img.src);
 		img.src = absolute_path + 'model/Output/files/loading.gif';
 	}
 
+	let icon = _('#toolbar-button-' + button + ' i');
+	if (!icon)
+		icon = _('#toolbar-button-custom-' + button + ' i');
 	if (icon) {
 		icon.setAttribute('data-old-class', icon.className);
 		icon.className = 'fas fa-spinner';
@@ -1403,11 +1406,14 @@ function toolbarButtonLoading(button) {
 
 function toolbarButtonRestore(button) {
 	let img = _('#toolbar-button-' + button + ' img');
-	let icon = _('#toolbar-button-' + button + ' i');
-
+	if (!img)
+		img = _('#toolbar-button-custom-' + button + ' img');
 	if (img)
 		img.src = img.getAttribute('data-old-path');
 
+	let icon = _('#toolbar-button-' + button + ' i');
+	if (!icon)
+		icon = _('#toolbar-button-custom-' + button + ' i');
 	if (icon)
 		icon.className = icon.getAttribute('data-old-class');
 }
