@@ -1,6 +1,8 @@
 var sId = null;
 var currentAdminPage = false;
 var currentPageDetails = {};
+var runtimeLoadedJs = [];
+var runtimeLoadedCss = [];
 var menuResizing = false;
 var columnResizing = false;
 var menuIsOpen = true;
@@ -510,6 +512,26 @@ function loadAdminPage(request, get, post, history_push, direct) {
 				if (typeof r !== 'object')
 					throw r;
 
+				runtimeLoadedCss.forEach(file => {
+					unloadRuntimeCss(file);
+				});
+				runtimeLoadedCss = [];
+
+				r.js.forEach(file => {
+					loadRuntimeJs(file);
+				});
+				r.css.forEach(file => {
+					loadRuntimeCss(file);
+				});
+
+				// Se custom, caricare direttamente il template, altrimenti:
+
+				// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser)
+				// Caricare js e css dell'apposito visualizer
+				// Lanciare una richiesta search
+				// Lanciare una richiesta results
+				// Popolare il visualizer
+
 				currentPageDetails = r;
 				resolve();
 			});
@@ -577,6 +599,39 @@ function loadAdminPage(request, get, post, history_push, direct) {
 		else
 			return promise;
 	});
+}
+
+function loadRuntimeJs(file) {
+	if (runtimeLoadedJs.indexOf(file) !== -1)
+		return;
+
+	let fileref = document.createElement('script');
+	fileref.setAttribute('type', 'text/javascript');
+	fileref.setAttribute('src', file);
+	document.getElementsByTagName('head')[0].appendChild(fileref);
+
+	runtimeLoadedJs.push(file);
+}
+
+function loadRuntimeCss(file) {
+	if (runtimeLoadedCss.indexOf(file) !== -1)
+		return;
+
+	let fileref = document.createElement('link');
+	fileref.setAttribute('rel', 'stylesheet');
+	fileref.setAttribute('type', 'text/css');
+	fileref.setAttribute('href', file);
+	document.getElementsByTagName('head')[0].appendChild(fileref);
+
+	runtimeLoadedCss.push(file);
+}
+
+function unloadRuntimeCss(file) {
+	let allsuspects = document.getElementsByTagName('link');
+	for (let i = allsuspects.length; i >= 0; i--) {
+		if (allsuspects[i] && allsuspects[i].getAttribute('href') !== null && allsuspects[i].getAttribute('href').indexOf(file) !== -1)
+			allsuspects[i].parentNode.removeChild(allsuspects[i]);
+	}
 }
 
 function checkBeforePageChange() {
