@@ -619,7 +619,8 @@ function loadPageAids(request, get) {
 
 	aidsLoadingHash = request.join(',') + JSON.stringify(get);
 
-	return ajax(adminPrefix + request[0] + '/pageAids', get + '&ajax').then((function (hash) {
+	get['ajax'] = '';
+	return ajax(adminPrefix + request[0] + '/pageAids', get).then((function (hash) {
 		return function (aids) {
 			if (typeof aids !== 'object')
 				return false;
@@ -1401,26 +1402,36 @@ function newElement(page, get) {
 	return loadElement(page, 0, get).then(initializeEmptyForm).then(monitorFields);
 }
 
-function changeSaveButton() {
-	if (_('#toolbar-button-save img'))
-		_('#toolbar-button-save img').src = absolute_path + 'model/Output/files/loading.gif';
-	if (_('#toolbar-button-save i')) {
-		_('#toolbar-button-save i').removeClass('far');
-		_('#toolbar-button-save i').removeClass('fa-save');
-		_('#toolbar-button-save i').addClass('fas');
-		_('#toolbar-button-save i').addClass('fa-spinner');
+function toolbarButtonLoading(button) {
+	let img = _('#toolbar-button-' + button + ' img');
+	if (!img)
+		img = _('#toolbar-button-custom-' + button + ' img');
+	if (img) {
+		img.setAttribute('data-old-path', img.src);
+		img.src = absolute_path + 'model/Output/files/loading.gif';
+	}
+
+	let icon = _('#toolbar-button-' + button + ' i');
+	if (!icon)
+		icon = _('#toolbar-button-custom-' + button + ' i');
+	if (icon) {
+		icon.setAttribute('data-old-class', icon.className);
+		icon.className = 'fas fa-spinner';
 	}
 }
 
-function restoreSaveButton() {
-	if (_('#toolbar-button-save img'))
-		_('#toolbar-button-save img').src = absolute_path + 'model/AdminTemplateEditt/files/img/toolbar/save.png';
-	if (_('#toolbar-button-save i')) {
-		_('#toolbar-button-save i').removeClass('fas');
-		_('#toolbar-button-save i').removeClass('fa-spinner');
-		_('#toolbar-button-save i').addClass('far');
-		_('#toolbar-button-save i').addClass('fa-save');
-	}
+function toolbarButtonRestore(button) {
+	let img = _('#toolbar-button-' + button + ' img');
+	if (!img)
+		img = _('#toolbar-button-custom-' + button + ' img');
+	if (img)
+		img.src = img.getAttribute('data-old-path');
+
+	let icon = _('#toolbar-button-' + button + ' i');
+	if (!icon)
+		icon = _('#toolbar-button-custom-' + button + ' i');
+	if (icon)
+		icon.className = icon.getAttribute('data-old-class');
 }
 
 async function save() {
@@ -1444,7 +1455,7 @@ async function save() {
 	}
 
 	saving = true;
-	changeSaveButton();
+	toolbarButtonLoading('save');
 	resize();
 
 	setLoadingBar(0);
@@ -1500,7 +1511,7 @@ async function save() {
 			let request = currentAdminPage.split('/');
 
 			saving = false;
-			restoreSaveButton();
+			toolbarButtonRestore('save');
 
 			if (typeof r !== 'object') {
 				alert(r);

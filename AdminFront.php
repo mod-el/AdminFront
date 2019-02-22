@@ -532,7 +532,7 @@ class AdminFront extends Module
 			[
 				'name' => 'Home',
 				'url' => '',
-				'get' => '',
+				'get' => [],
 			],
 		];
 		$this->getBreadcrumbs($breadcrumbs, $request);
@@ -540,7 +540,7 @@ class AdminFront extends Module
 		$breadcrumbsHtml = [];
 		$prefix = $this->getUrlPrefix();
 		foreach ($breadcrumbs as $b)
-			$breadcrumbsHtml[] = $b['url'] !== null ? '<a href="' . $prefix . $b['url'] . '" onclick="loadAdminPage(\'' . $b['url'] . '\', \'' . $b['get'] . '\'); return false">' . entities($b['name']) . '</a>' : '<a>' . entities($b['name']) . '</a>';
+			$breadcrumbsHtml[] = $b['url'] !== null ? '<a href="' . $prefix . $b['url'] . '" onclick="loadAdminPage(\'' . $b['url'] . '\', ' . entities(json_encode($b['get'])) . '); return false">' . entities($b['name']) . '</a>' : '<a>' . entities($b['name']) . '</a>';
 
 		$breadcrumbsHtml = implode(' -&gt; ', $breadcrumbsHtml);
 
@@ -584,21 +584,21 @@ class AdminFront extends Module
 				$breadcrumbs[] = [
 					'name' => $p['name'],
 					'url' => $p['rule'],
-					'get' => '',
+					'get' => [],
 				];
 				if (isset($request[1]) and $request[1] === 'edit') {
 					if (isset($request[2])) {
-						$breadcrumbs[count($breadcrumbs) - 1]['get'] = 'goTo=' . urlencode($request[2]);
+						$breadcrumbs[count($breadcrumbs) - 1]['get'] = ['goTo' => urlencode($request[2])];
 						$breadcrumbs[] = [
 							'name' => 'Edit',
 							'url' => null,
-							'get' => '',
+							'get' => [],
 						];
 					} else {
 						$breadcrumbs[] = [
 							'name' => 'New',
 							'url' => null,
-							'get' => '',
+							'get' => [],
 						];
 					}
 				}
@@ -609,7 +609,7 @@ class AdminFront extends Module
 				$temp[] = [
 					'name' => $p['name'],
 					'url' => isset($p['rule']) ? $p['rule'] : null,
-					'get' => '',
+					'get' => [],
 				];
 				if ($this->getBreadcrumbs($temp, $request, $p['sub'])) {
 					$breadcrumbs = $temp;
