@@ -32,7 +32,8 @@ class Field {
 		this.options = array_merge({
 			'type': 'text',
 			'value': null,
-			'attributes': {}
+			'attributes': {},
+			'options': []
 		}, options);
 	}
 
@@ -44,18 +45,12 @@ class Field {
 			case 'textarea':
 				nodeType = 'textarea';
 				break;
-			case 'radio':
-				// TODO
-				break;
 			case 'select':
-				// TODO
+				nodeType = 'select';
 				break;
 			case 'date':
 				nodeType = 'input';
 				attributes['type'] = 'date';
-				break;
-			case 'checkbox':
-				// TODO
 				break;
 			default:
 				nodeType = 'input';
@@ -72,7 +67,19 @@ class Field {
 			node.setAttribute(k, attributes[k]);
 		});
 
-		node.setValue(this.options['value'], false);
+		if (this.options['type'] === 'select') {
+			node.innerHTML = '<option value=""></option>';
+			this.options['options'].forEach(option => {
+				let el = document.createElement('option');
+				el.value = option.id;
+				el.innerHTML = option.text;
+				if (option.id == this.options['value'])
+					el.setAttribute('selected', '');
+				node.appendChild(el);
+			});
+		} else {
+			node.value = this.options['value'];
+		}
 
 		return node;
 	}
