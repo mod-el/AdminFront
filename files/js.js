@@ -1,4 +1,5 @@
 var sId = null;
+var firstLoad = true;
 var currentAdminPage = false;
 var currentPageDetails = {};
 var runtimeLoadedJs = [];
@@ -24,6 +25,58 @@ var saving = false;
 var changedValues = {};
 var changeHistory = [];
 var canceledChanges = [];
+
+class Field {
+	constructor(name, options = {}) {
+		this.name = name;
+		this.options = array_merge({
+			'type': 'text',
+			'value': null,
+			'attributes': {}
+		}, options);
+	}
+
+	render() {
+		let nodeType = null;
+		let attributes = this.options['attributes'];
+
+		switch (this.options['type']) {
+			case 'textarea':
+				nodeType = 'textarea';
+				break;
+			case 'radio':
+				// TODO
+				break;
+			case 'select':
+				// TODO
+				break;
+			case 'date':
+				nodeType = 'input';
+				attributes['type'] = 'date';
+				break;
+			case 'checkbox':
+				// TODO
+				break;
+			default:
+				nodeType = 'input';
+				attributes['type'] = this.options['type'];
+				break;
+		}
+
+		if (typeof attributes['name'] === 'undefined')
+			attributes['name'] = this.name;
+
+		let node = document.createElement(nodeType);
+
+		Object.keys(attributes).forEach(k => {
+			node.setAttribute(k, attributes[k]);
+		});
+
+		node.setValue(this.options['value'], false);
+
+		return node;
+	}
+}
 
 window.addEventListener('DOMContentLoaded', function () {
 	currentAdminPage = document.location.pathname.substr(adminPrefix.length);
@@ -505,39 +558,93 @@ function loadAdminPage(request, get, post, history_push, direct) {
 		return false;
 
 	return new Promise(resolve => {
-		if (currentAdminPage.split('/')[0] === request[0]) {
+		if (!firstLoad && currentAdminPage.split('/')[0] === request[0]) {
 			resolve();
 		} else {
+			if (firstLoad)
+				firstLoad = false;
+
 			return adminApiRequest('page/' + request[0]).then(r => {
 				if (typeof r !== 'object')
 					throw r;
-
-				runtimeLoadedCss.forEach(file => {
-					unloadRuntimeCss(file);
-				});
-				runtimeLoadedCss = [];
-
-				r.js.forEach(file => {
-					loadRuntimeJs(file);
-				});
-				r.css.forEach(file => {
-					loadRuntimeCss(file);
-				});
-
-				// Se custom, caricare direttamente il template, altrimenti:
-
-				// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser)
-				// Caricare js e css dell'apposito visualizer
-				// Lanciare una richiesta search
-				// Lanciare una richiesta results
-				// Popolare il visualizer
 
 				currentPageDetails = r;
 				resolve();
 			});
 		}
 	}).then(() => {
-		if (typeof get === 'undefined')
+		runtimeLoadedCss.forEach(file => {
+			unloadRuntimeCss(file);
+		});
+		runtimeLoadedCss = [];
+
+		currentPageDetails.js.forEach(file => {
+			loadRuntimeJs(file);
+		});
+		currentPageDetails.css.forEach(file => {
+			loadRuntimeCss(file);
+		});
+
+		// TODO: rimuovere scritte sottostanti quando saranno fatte
+		// Se custom, caricare direttamente il template, altrimenti:
+
+		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser)
+		// Caricare js e css dell'apposito visualizer
+		// Lanciare una richiesta search
+		// Lanciare una richiesta results
+		// Popolare il visualizer
+
+		let toolbar = _('toolbar');
+		toolbar.style.display = 'none';
+
+		switch (currentPageDetails.type) {
+			case 'Custom':
+
+				break;
+			default:
+				toolbar.style.display = 'block';
+				toolbar.innerHTML = '';
+
+				addPageAction('filters', {
+					'fa-icon': 'fas fa-filter',
+					'text': 'Filtri',
+					'action': 'switchFiltersForm(this)',
+				});
+
+				let filters = getFiltersFromPageDetails();
+
+				let form = document.createElement('form');
+				form.id = 'topForm';
+				form.innerHTML = '<div class="flex-fields"></div>';
+				form.setAttribute('onsubmit', 'return false');
+				toolbar.appendChild(form);
+
+				let secondaryForm = _('filtersFormCont');
+				secondaryForm.innerHTML = '<div class="flex-fields-wrap"></div>';
+
+				let forms = {
+					'primary': form,
+					'secondary': secondaryForm
+				};
+
+				Object.keys(filters).forEach(formName => {
+					filters[formName].forEach(filter => {
+						if (typeof filter.options['label'] !== 'undefined' && typeof filter.options['attributes']['placeholder'] === 'undefined')
+							filter.options['attributes']['placeholder'] = filter.options['label'];
+
+						let div = document.createElement('div');
+						let field = filter.render();
+						div.appendChild(field);
+						forms[formName].firstChild.appendChild(div);
+					});
+				});
+
+				break;
+		}
+
+		resize();
+
+		/*if (typeof get === 'undefined')
 			get = {};
 		if (typeof history_push === 'undefined')
 			history_push = true;
@@ -597,7 +704,7 @@ function loadAdminPage(request, get, post, history_push, direct) {
 		if (direct)
 			return promise.then(callElementCallback);
 		else
-			return promise;
+			return promise;*/
 	});
 }
 
@@ -634,6 +741,36 @@ function unloadRuntimeCss(file) {
 	}
 }
 
+function getFiltersFromPageDetails() {
+	// TODO: aggiungere possibilità di personalizzare i filtri
+
+	let filtersArrangement = currentPageDetails['default-filters'];
+
+	let filters = {
+		'primary': [],
+		'secondary': []
+	};
+
+	let idx = 0;
+	Object.keys(filtersArrangement).forEach(form => {
+		filtersArrangement[form].forEach(filterOptions => {
+			if (typeof currentPageDetails['filters'][filterOptions.filter] === 'undefined')
+				return;
+
+			let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
+			if (typeof fieldOptions['attributes'] === 'undefined')
+				fieldOptions['attributes'] = {};
+			fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
+
+			let filter = new Field('filter-' + idx, fieldOptions);
+			filters[form].push(filter);
+			idx++;
+		});
+	});
+
+	return filters;
+}
+
 function checkBeforePageChange() {
 	if (saving) {
 		alert('Cannot change page while saving. Wait until finished or reload the page.');
@@ -643,6 +780,34 @@ function checkBeforePageChange() {
 		return confirm('There are unsaved data. Do you really want to change page?');
 	}
 	return true;
+}
+
+function addPageAction(name, action) {
+	if (_('toolbar-button-' + name))
+		_('toolbar-button-' + name).parentNode.removeChild(_('toolbar-button-' + name));
+
+	var button = document.createElement('a');
+	button.className = 'toolbar-button';
+	button.id = 'toolbar-button-' + name;
+
+	if (typeof action.url !== 'undefined' && action.url)
+		button.href = action.url;
+	else
+		button.href = '#';
+
+	if (typeof action.action !== 'undefined' && action.action)
+		button.setAttribute('onclick', action.action + '; return false');
+
+	if (typeof action.icon !== 'undefined' && action.icon)
+		button.innerHTML = '<img src="' + action.icon + '" alt="" onload="resize()" /> ';
+
+	if (typeof action['fa-icon'] !== 'undefined' && action['fa-icon'])
+		button.innerHTML = '<i class="' + action['fa-icon'] + '" aria-hidden="true"></i> ';
+
+	if (typeof action.text !== 'undefined' && action.text)
+		button.innerHTML += action.text;
+
+	_('toolbar').appendChild(button);
 }
 
 /*
