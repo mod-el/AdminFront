@@ -119,16 +119,15 @@ function adminInit() {
 			get['sId'] = sId;
 
 		if (request.length >= 2 && request[1] === 'edit') {
-			if (request.length >= 3) {
+			// TODO: da rivedere
+			/*if (request.length >= 3) {
 				loadElement(request[0], request[2], get, false);
 			} else {
 				newElement(request[0], get);
-			}
+			}*/
 		} else {
-			loadAdminPage(currentAdminPage, get, '', false);
+			loadAdminPage(currentAdminPage, get, false);
 		}
-
-		loadPageAids(request);
 
 		document.addEventListener('notifications', function (event) {
 			let notifications;
@@ -548,9 +547,14 @@ function clearMainPage() {
 /*
  Moves between admin pages, moving the left menu and taking care of the browser history
  */
-function loadAdminPage(request, get, post, history_push, direct) {
+function loadAdminPage(request, get, history_push) {
 	if (!checkBeforePageChange())
 		return false;
+
+	if (typeof get === 'undefined')
+		get = {};
+	if (typeof history_push === 'undefined')
+		history_push = true;
 
 	request = request.split('/');
 
@@ -605,6 +609,8 @@ function loadAdminPage(request, get, post, history_push, direct) {
 				toolbar.style.display = 'block';
 				toolbar.innerHTML = '';
 
+				// ==== Filters ====
+
 				addPageAction('filters', {
 					'fa-icon': 'fas fa-filter',
 					'text': 'Filtri',
@@ -634,77 +640,95 @@ function loadAdminPage(request, get, post, history_push, direct) {
 
 						let div = document.createElement('div');
 						let field = filter.render();
+						switch (field.nodeName.toLowerCase()) {
+							case 'input':
+							case 'textarea':
+								switch (field.type.toLowerCase()) {
+									case 'checkbox':
+									case 'radio':
+									case 'hidden':
+									case 'date':
+										field.addEventListener('change', function () {
+											search();
+										});
+										break;
+									default:
+										field.addEventListener('keyup', function (event) {
+											if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
+												return false;
+
+											searchCounter++;
+											setTimeout((function (c) {
+												return function () {
+													if (c === searchCounter)
+														search();
+												}
+											})(searchCounter), 400);
+										});
+										break;
+								}
+								break;
+							default:
+								field.addEventListener('change', function () {
+									search();
+								});
+								break;
+						}
+
 						div.appendChild(field);
 						forms[formName].firstChild.appendChild(div);
 					});
 				});
 
+				resize();
+
+				// ==== Load visualizer files ====
+
+				loadRuntimeJs(PATH + 'model/AdminFront/files/visualizers/' + currentPageDetails.type + '.js');
+				loadRuntimeCss(PATH + 'model/AdminFront/files/visualizers/' + currentPageDetails.type + '.css');
+
+				// ==== Set variables ====
+
+				let full_url = request.join('/');
+
+				let state = {'request': request.join('/')};
+				if (typeof get['sId'] !== 'undefined') {
+					sId = get['sId'];
+					state['sId'] = sId;
+				} else if (currentAdminPage.split('/')[0] !== request[0]) {
+					sId = null;
+				}
+
+				if (typeof get['p'] !== 'undefined') {
+					currentPage = parseInt(get['p']);
+					if (isNaN(currentPage) || currentPage < 1)
+						currentPage = 1;
+				} else {
+					currentPage = 1;
+				}
+
+				state['p'] = currentPage;
+
+				if (history.pushState && history_push)
+					history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
+
+				clearMainPage();
+
+				selectFromMainMenu(request);
+
+				if (window.innerWidth < 800)
+					closeMenu();
+
+				selectedRows = [];
+				currentAdminPage = full_url;
+
+				historyWipe();
+
+				// ==== First search ====
+
+				return search();
 				break;
 		}
-
-		resize();
-
-		/*if (typeof get === 'undefined')
-			get = {};
-		if (typeof history_push === 'undefined')
-			history_push = true;
-		if (typeof direct === 'undefined')
-			direct = true;
-
-		let full_url = request.join('/');
-
-		let state = {'request': request.join('/')};
-		if (typeof get['sId'] !== 'undefined') {
-			sId = get['sId'];
-			state['sId'] = sId;
-		} else if (currentAdminPage.split('/')[0] !== request[0]) {
-			sId = null;
-		}
-
-		if (typeof get['p'] !== 'undefined') {
-			currentPage = parseInt(get['p']);
-			if (isNaN(currentPage) || currentPage < 1)
-				currentPage = 1;
-		} else {
-			currentPage = 1;
-		}
-
-		state['p'] = currentPage;
-		let forcePage = currentPage;
-
-		if (history.pushState && history_push)
-			history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
-
-		clearMainPage();
-
-		let promise;
-		if (currentAdminPage !== full_url) {
-			if (typeof request[1] === 'undefined' || request[1] === '') { // List page
-				promise = loadPageAids(request, get).then(() => search(forcePage));
-			} else {
-				promise = Promise.all([
-					loadPage(adminPrefix + full_url, get, post),
-					loadPageAids(request, get)
-				]);
-			}
-		} else {
-			promise = loadPage(adminPrefix + full_url, get, post);
-		}
-
-		selectFromMainMenu(request);
-
-		if (window.innerWidth < 800)
-			closeMenu();
-
-		selectedRows = [];
-		currentAdminPage = full_url;
-
-		historyWipe();
-
-		if (direct)
-			return promise.then(callElementCallback);
-		else
-			return promise;*/
 	});
 }
 
@@ -760,6 +784,7 @@ function getFiltersFromPageDetails() {
 			let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
 			if (typeof fieldOptions['attributes'] === 'undefined')
 				fieldOptions['attributes'] = {};
+			fieldOptions['attributes']['data-filter'] = filterOptions.filter;
 			fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
 
 			let filter = new Field('filter-' + idx, fieldOptions);
@@ -1169,7 +1194,7 @@ function switchFiltersForm(origin) {
 	}
 }
 
-function search(forcePage) {
+function searchOld(forcePage) { // TODO: old function
 	if (typeof forcePage === 'undefined')
 		forcePage = 1;
 
@@ -1196,6 +1221,35 @@ function search(forcePage) {
 	get['filters'] = JSON.stringify(filters);
 
 	return loadPage(adminPrefix + currentAdminPage.split('/')[0], get);
+}
+
+function search() {
+	let filters = [];
+	let searchValue = '';
+	document.querySelectorAll('[data-filter]').forEach(el => {
+		let v = el.getValue(true);
+		if (v === '')
+			return;
+
+		if (el.getAttribute('data-filter') === 'zk-all') {
+			searchValue = v;
+			return;
+		}
+
+		filters.push({
+			'filter': el.getAttribute('data-filter'),
+			'type': el.getAttribute('data-filter-type'),
+			'value': v
+		});
+	});
+
+	let payload = {
+		'search': searchValue,
+		'search-fields': [], // TODO
+		'filters': filters
+	};
+
+	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload);
 }
 
 function filtersReset() {
