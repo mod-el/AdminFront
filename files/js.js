@@ -4,6 +4,7 @@ var currentAdminPage = false;
 var currentPageDetails = {};
 var runtimeLoadedJs = [];
 var runtimeLoadedCss = [];
+var searchToken = null;
 var menuResizing = false;
 var columnResizing = false;
 var menuIsOpen = true;
@@ -699,12 +700,6 @@ function loadAdminPage(request, get, history_push) {
 				let full_url = request.join('/');
 
 				let state = {'request': request.join('/')};
-				if (typeof get['sId'] !== 'undefined') {
-					sId = get['sId'];
-					state['sId'] = sId;
-				} else if (currentAdminPage.split('/')[0] !== request[0]) {
-					sId = null;
-				}
 
 				if (typeof get['p'] !== 'undefined') {
 					currentPage = parseInt(get['p']);
@@ -776,6 +771,13 @@ function getFiltersFromPageDetails() {
 	// TODO: aggiungere possibilità di personalizzare i filtri
 
 	let filtersArrangement = currentPageDetails['default-filters'];
+	let filtersValues = sessionStorage.getItem('filters-values');
+	try {
+		if (filtersValues)
+			filtersValues = JSON.parse(filtersValues);
+	} catch (e) {
+		filtersValues = null;
+	}
 
 	let filters = {
 		'primary': [],
@@ -793,6 +795,9 @@ function getFiltersFromPageDetails() {
 				fieldOptions['attributes'] = {};
 			fieldOptions['attributes']['data-filter'] = filterOptions.filter;
 			fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
+
+			if (filtersValues && typeof filtersValues[filterOptions.filter + '-' + filterOptions.type] !== 'undefined')
+				fieldOptions['value'] = filtersValues[filterOptions.filter + '-' + filterOptions.type];
 
 			let filter = new Field('filter-' + idx, fieldOptions);
 			filters[form].push(filter);
@@ -1233,8 +1238,13 @@ function searchOld(forcePage) { // TODO: old function
 function search() {
 	let filters = [];
 	let searchValue = '';
+	let filtersValues = {};
+
 	document.querySelectorAll('[data-filter]').forEach(el => {
 		let v = el.getValue(true);
+
+		filtersValues[el.getAttribute('data-filter') + '-' + el.getAttribute('data-filter-type')] = v;
+
 		if (v === '')
 			return;
 
@@ -1250,13 +1260,17 @@ function search() {
 		});
 	});
 
+	sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
+
 	let payload = {
 		'search': searchValue,
 		'search-fields': [], // TODO
 		'filters': filters
 	};
 
-	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload);
+	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload).then(r => {
+		searchToken = r['search-token'];
+	});
 }
 
 function filtersReset() {
