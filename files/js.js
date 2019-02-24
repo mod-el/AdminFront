@@ -623,70 +623,7 @@ function loadAdminPage(request, get, history_push) {
 					'action': 'switchFiltersForm(this)',
 				});
 
-				let filters = getFiltersFromPageDetails();
-
-				let form = document.createElement('form');
-				form.id = 'topForm';
-				form.innerHTML = '<div class="flex-fields"></div>';
-				form.setAttribute('onsubmit', 'return false');
-				toolbar.appendChild(form);
-
-				let secondaryForm = _('filtersFormCont');
-				secondaryForm.innerHTML = '<div class="flex-fields-wrap"></div>';
-
-				let forms = {
-					'primary': form,
-					'secondary': secondaryForm
-				};
-
-				Object.keys(filters).forEach(formName => {
-					filters[formName].forEach(filter => {
-						if (typeof filter.options['label'] !== 'undefined' && typeof filter.options['attributes']['placeholder'] === 'undefined')
-							filter.options['attributes']['placeholder'] = filter.options['label'];
-
-						let div = document.createElement('div');
-						let field = filter.render();
-						switch (field.nodeName.toLowerCase()) {
-							case 'input':
-							case 'textarea':
-								switch (field.type.toLowerCase()) {
-									case 'checkbox':
-									case 'radio':
-									case 'hidden':
-									case 'date':
-										field.addEventListener('change', function () {
-											search();
-										});
-										break;
-									default:
-										field.addEventListener('keyup', function (event) {
-											if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
-												return false;
-
-											searchCounter++;
-											setTimeout((function (c) {
-												return function () {
-													if (c === searchCounter)
-														search();
-												}
-											})(searchCounter), 400);
-										});
-										break;
-								}
-								break;
-							default:
-								field.addEventListener('change', function () {
-									search();
-								});
-								break;
-						}
-
-						div.appendChild(field);
-						forms[formName].firstChild.appendChild(div);
-					});
-				});
-
-				resize();
+				rebuildFilters();
 
 				// ==== Load visualizer files ====
 
@@ -775,10 +712,78 @@ function unloadRuntimeCss(file) {
 	}
 }
 
-function getFiltersFromPageDetails() {
-	// TODO: aggiungere possibilità di personalizzare i filtri
+function rebuildFilters() {
+	let form = _('topForm');
+	if (!form) {
+		form = document.createElement('form');
+		form.id = 'topForm';
+		form.setAttribute('onsubmit', 'return false');
+		_('toolbar').appendChild(form);
+	}
+	form.innerHTML = '<div class="flex-fields"></div>';
 
-	let filtersArrangement = currentPageDetails['default-filters'];
+	let secondaryForm = _('filtersFormCont');
+	secondaryForm.innerHTML = '<div class="flex-fields-wrap"></div>';
+
+	let filters = getFiltersFromPageDetails();
+
+	let forms = {
+		'primary': form,
+		'secondary': secondaryForm
+	};
+
+	Object.keys(filters).forEach(formName => {
+		filters[formName].forEach(filter => {
+			if (typeof filter.options['label'] !== 'undefined' && typeof filter.options['attributes']['placeholder'] === 'undefined')
+				filter.options['attributes']['placeholder'] = filter.options['label'];
+
+			let div = document.createElement('div');
+			let field = filter.render();
+			switch (field.nodeName.toLowerCase()) {
+				case 'input':
+				case 'textarea':
+					switch (field.type.toLowerCase()) {
+						case 'checkbox':
+						case 'radio':
+						case 'hidden':
+						case 'date':
+							field.addEventListener('change', function () {
+								search();
+							});
+							break;
+						default:
+							field.addEventListener('keyup', function (event) {
+								if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
+									return false;
+
+								searchCounter++;
+								setTimeout((function (c) {
+									return function () {
+										if (c === searchCounter)
+											search();
+									}
+								})(searchCounter), 400);
+							});
+							break;
+					}
+					break;
+				default:
+					field.addEventListener('change', function () {
+						search();
+					});
+					break;
+			}
+
+			div.appendChild(field);
+			forms[formName].firstChild.appendChild(div);
+		});
+	});
+
+	resize();
+}
+
+function getFiltersFromPageDetails() {
+	let filtersArrangement = getFiltersListFromStorage();
 	let filtersValues = getFiltersValuesFromStorage();
 
 	let filters = {
@@ -798,8 +803,16 @@ function getFiltersFromPageDetails() {
 			fieldOptions['attributes']['data-filter'] = filterOptions.filter;
 			fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
 
+			let defaultValue = '';
+			if (typeof fieldOptions.default !== 'undefined')
+				defaultValue = fieldOptions.default;
+
+			let value = defaultValue;
 			if (filtersValues && typeof filtersValues[filterOptions.filter + '-' + filterOptions.type] !== 'undefined')
-				fieldOptions['value'] = filtersValues[filterOptions.filter + '-' + filterOptions.type];
+				value = filtersValues[filterOptions.filter + '-' + filterOptions.type];
+
+			fieldOptions['value'] = value;
+			fieldOptions['attributes']['data-default'] = defaultValue;
 
 			let filter = new Field('filter-' + idx, fieldOptions);
 			filters[form].push(filter);
@@ -808,6 +821,23 @@ function getFiltersFromPageDetails() {
 	});
 
 	return filters;
+}
+
+function getFiltersListFromStorage() {
+	let request = currentAdminPage.split('/');
+	let filters = localStorage.getItem('filters-' + request[0]);
+	try {
+		if (filters)
+			filters = JSON.parse(filters);
+	} catch (e) {
+		filters = null;
+	}
+
+	if (filters !== null) {
+		return filters;
+	} else {
+		return currentPageDetails['default-filters']
+	}
 }
 
 function getFiltersValuesFromStorage() {
@@ -1288,39 +1318,142 @@ function search() {
 }
 
 function filtersReset() {
+	let promises = [];
 	document.querySelectorAll('[data-filter]').forEach(function (el) {
-		el.setValue(el.dataset.default, false);
+		promises.push(el.setValue(el.dataset.default, false));
 	});
-	search();
+	return Promise.all(promises).then(search);
 }
 
 function manageFilters() {
-	var request = currentAdminPage.split('/');
-	zkPopup({'url': adminPrefix + request[0] + '/pickFilters', 'get': 'ajax'});
+	if (typeof currentPageDetails.filters === 'undefined')
+		return;
+
+	let fieldset = document.createElement('fieldset');
+	fieldset.className = 'p-3';
+	fieldset.style.width = '1000px';
+
+	fieldset.innerHTML = '<form action="#" method="post" id="pick-filters-form" onsubmit="saveFilters(); return false"><h2>Seleziona i filtri:</h2><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div><div class="container-fluid" id="pick-filters-cont"></div><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div></form>';
+
+	let cont = fieldset.querySelector('#pick-filters-cont');
+
+	Object.keys(currentPageDetails.filters).forEach(name => {
+		let filter = currentPageDetails.filters[name];
+
+		let row = document.createElement('div');
+		row.className = 'row';
+
+		let label = document.createElement('div');
+		label.className = 'col-3 align-self-center';
+		label.innerHTML = filter.label;
+		row.appendChild(label);
+
+		let selection = document.createElement('div');
+		selection.className = 'col-6 align-self-center';
+		selection = row.appendChild(selection);
+
+		appendRadioToFiltersSelection(selection, 'type', name, '', 'No', true);
+		appendRadioToFiltersSelection(selection, 'type', name, '=', 'S&igrave;');
+
+		switch (filter.type) {
+			case 'number':
+				appendRadioToFiltersSelection(selection, 'type', name, '<', '&lt;');
+				appendRadioToFiltersSelection(selection, 'type', name, '<=', '&lt;=');
+				appendRadioToFiltersSelection(selection, 'type', name, '>', '&gt;');
+				appendRadioToFiltersSelection(selection, 'type', name, '>=', '&gt;=');
+				break;
+			case 'text':
+				if (name !== 'zk-all') {
+					appendRadioToFiltersSelection(selection, 'type', name, 'begins', 'Inizia con...');
+					appendRadioToFiltersSelection(selection, 'type', name, 'contains', 'Contiene...');
+				}
+				break;
+		}
+
+		if (name !== 'zk-all' && filter.type !== 'select') {
+			appendRadioToFiltersSelection(selection, 'type', name, '!=', 'Diverso da');
+			appendRadioToFiltersSelection(selection, 'type', name, 'empty', 'Vuoto');
+		}
+
+		let position = document.createElement('div');
+		position.className = 'col-3 align-self-center';
+		position = row.appendChild(position);
+
+		appendRadioToFiltersSelection(position, 'form', name, 'primary', 'Primario');
+		appendRadioToFiltersSelection(position, 'form', name, 'secondary', 'Secondario', true);
+
+		cont.appendChild(row);
+	});
+
+	zkPopup(fieldset.outerHTML).then(() => {
+		let filters = getFiltersListFromStorage();
+		Object.keys(filters).forEach(form => {
+			filters[form].forEach(filter => {
+				let typeRadio = _('filter-' + filter.filter + '-type-' + filter.type);
+				if (typeRadio)
+					typeRadio.checked = true;
+
+				let positionRadio = _('filter-' + filter.filter + '-form-' + form);
+				if (positionRadio)
+					positionRadio.checked = true;
+			});
+		});
+	});
+}
+
+function appendRadioToFiltersSelection(selection, type, name, value, label, checked) {
+	if (typeof checked === 'undefined')
+		checked = false;
+
+	let radio = document.createElement('input');
+	radio.setAttribute('type', 'radio');
+	radio.setAttribute('name', name + '-' + type);
+	radio.setAttribute('data-manage-filter-' + type, name);
+	radio.setAttribute('id', 'filter-' + name + '-' + type + '-' + value);
+	radio.setAttribute('value', value);
+	radio = selection.appendChild(radio);
+	if (checked)
+		radio.setAttribute('checked', '');
+
+	let labelNode = document.createElement('label');
+	labelNode.setAttribute('for', 'filter-' + name + '-' + type + '-' + value);
+	labelNode.innerHTML = label;
+	selection.appendChild(labelNode);
 }
 
 function saveFilters() {
-	var request = currentAdminPage.split('/');
+	let request = currentAdminPage.split('/');
 
-	var filters = {};
-	document.querySelectorAll('[data-managefilters]').forEach(function (radio) {
-		if (radio.checked && radio.value != '0') {
-			filters[radio.getAttribute('data-managefilters')] = radio.value;
+	let filters = {
+		'primary': [],
+		'secondary': []
+	};
+	document.querySelectorAll('[data-manage-filter-type]').forEach(radio => {
+		if (radio.checked && radio.value !== '') {
+			let name = radio.getAttribute('data-manage-filter-type');
+
+			let position = 'secondary';
+			if (_('filter-' + name + '-form-primary').checked)
+				position = 'primary';
+
+			filters[position].push({
+				'filter': name,
+				'type': radio.value
+			});
 		}
 	});
 
-	_('popup-real').loading();
-	return ajax(adminPrefix + request[0] + '/pickFilters', 'ajax', 'c_id=' + c_id + '&filters=' + encodeURIComponent(JSON.stringify(filters))).then(function (r) {
-		if (r !== 'ok') {
-			alert(r);
-			return false;
-		} else {
-			return loadPageAids(currentAdminPage.split('/'));
-		}
-	}).then(function () {
-		zkPopupClose();
-		return search();
-	});
+	localStorage.setItem('filters-' + request[0], JSON.stringify(filters));
+	zkPopupClose();
+	rebuildFilters();
+	search();
+}
+
+function filtersLayoutReset() {
+	let request = currentAdminPage.split('/');
+	localStorage.removeItem('filters-' + request[0]);
+	rebuildFilters();
+	search();
 }
 
 function manageSearchFields() {
