@@ -88,10 +88,6 @@ class Field {
 
 window.addEventListener('DOMContentLoaded', function () {
 	currentAdminPage = document.location.pathname.substr(adminPrefix.length);
-	let request = currentAdminPage.split('/');
-
-	if (history.replaceState)
-		history.replaceState({'request': request}, '', document.location);
 
 	if (_('main-grid') && _('main-content')) {
 		adminApiToken = getCookie('admin-user');
@@ -121,11 +117,6 @@ function adminInit() {
 
 		let get = objectFromQueryString();
 
-		if (typeof get['sId'] !== 'undefined')
-			sId = get['sId'];
-		else if (sId)
-			get['sId'] = sId;
-
 		if (request.length >= 2 && request[1] === 'edit') {
 			// TODO: da rivedere
 			/*if (request.length >= 3) {
@@ -134,7 +125,7 @@ function adminInit() {
 				newElement(request[0], get);
 			}*/
 		} else {
-			loadAdminPage(currentAdminPage, get, false);
+			loadAdminPage(currentAdminPage, get, 'replace');
 		}
 
 		document.addEventListener('notifications', function (event) {
@@ -298,8 +289,11 @@ window.onpopstate = function (event) {
 			let request = s['request'].split('/');
 
 			let get = {};
-			if (typeof s['sId'] !== 'undefined')
-				get['sId'] = s['sId'];
+
+			sessionStorage.setItem('current-page', request[0]);
+
+			if (typeof s['filters'] !== 'undefined')
+				sessionStorage.setItem('filters-values', JSON.stringify(s['filters']));
 
 			if (request[1] === 'edit') {
 				loadElement(request[0], request[2], get, false);
@@ -600,11 +594,15 @@ function loadAdminPage(request, get, history_push) {
 		// TODO: rimuovere scritte sottostanti quando saranno fatte
 		// Se custom, caricare direttamente il template, altrimenti:
 
-		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser)
-		// Caricare js e css dell'apposito visualizer
-		// Lanciare una richiesta search
-		// Lanciare una richiesta results
+		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [da fare: possibilità di personalizzare i filtri, gestione dei valori di default]
+		// Caricare js e css dell'apposito visualizer [fatto]
+		// Lanciare una richiesta search [fatto]
+		// Lanciare una richiesta results (memo: memorizzare nel replace/pushState anche i filtri)
 		// Popolare il visualizer
+
+		if (sessionStorage.getItem('current-page') !== request[0])
+			sessionStorage.removeItem('filters-values');
+		sessionStorage.setItem('current-page', request[0]);
 
 		let toolbar = _('toolbar');
 		toolbar.style.display = 'none';
@@ -701,6 +699,9 @@ function loadAdminPage(request, get, history_push) {
 
 				let state = {'request': request.join('/')};
 
+				let filtersValues = getFiltersValuesFromStorage();
+				state['filters'] = filtersValues;
+
 				if (typeof get['p'] !== 'undefined') {
 					currentPage = parseInt(get['p']);
 					if (isNaN(currentPage) || currentPage < 1)
@@ -711,8 +712,15 @@ function loadAdminPage(request, get, history_push) {
 
 				state['p'] = currentPage;
 
-				if (history.pushState && history_push)
-					history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
+				if (history_push) {
+					if (history_push === 'replace') {
+						if (history.replaceState)
+							history.replaceState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
+					} else {
+						if (history.pushState)
+							history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
+					}
+				}
 
 				clearMainPage();
 
@@ -771,13 +779,7 @@ function getFiltersFromPageDetails() {
 	// TODO: aggiungere possibilità di personalizzare i filtri
 
 	let filtersArrangement = currentPageDetails['default-filters'];
-	let filtersValues = sessionStorage.getItem('filters-values');
-	try {
-		if (filtersValues)
-			filtersValues = JSON.parse(filtersValues);
-	} catch (e) {
-		filtersValues = null;
-	}
+	let filtersValues = getFiltersValuesFromStorage();
 
 	let filters = {
 		'primary': [],
@@ -806,6 +808,18 @@ function getFiltersFromPageDetails() {
 	});
 
 	return filters;
+}
+
+function getFiltersValuesFromStorage() {
+	let filtersValues = sessionStorage.getItem('filters-values');
+	try {
+		if (filtersValues)
+			filtersValues = JSON.parse(filtersValues);
+	} catch (e) {
+		filtersValues = null;
+	}
+
+	return filtersValues;
 }
 
 function checkBeforePageChange() {
