@@ -738,10 +738,22 @@ function rebuildFilters() {
 
 	Object.keys(filters).forEach(formName => {
 		filters[formName].forEach(filter => {
-			if (typeof filter.options['label'] !== 'undefined' && typeof filter.options['attributes']['placeholder'] === 'undefined')
-				filter.options['attributes']['placeholder'] = filter.options['label'];
-
 			let div = document.createElement('div');
+
+			let label = '';
+			if (typeof filter.options['label'] !== 'undefined') {
+				label = filter.options['label'];
+				if (filter.options['attributes']['data-filter-type'] !== '=')
+					label += ' (' + filter.options['attributes']['data-filter-type'] + ')';
+			}
+
+			if (formName === 'secondary') {
+				div.innerHTML = label + '<br/>';
+			} else {
+				if (typeof filter.options['attributes']['placeholder'] === 'undefined')
+					filter.options['attributes']['placeholder'] = label;
+			}
+
 			let field = filter.render();
 			switch (field.nodeName.toLowerCase()) {
 				case 'input':
