@@ -598,10 +598,10 @@ function loadAdminPage(request, get, history_push) {
 		// TODO: rimuovere scritte sottostanti quando saranno fatte
 		// Se custom, caricare direttamente il template, altrimenti:
 
-		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [da fare: possibilità di personalizzare i filtri, gestione dei valori di default]
+		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
 		// Lanciare una richiesta search [fatto]
-		// Lanciare una richiesta results (memo: memorizzare nel replace/pushState anche i filtri)
+		// Lanciare una richiesta results (memo: memorizzare nel replace/pushState anche i filtri | probabilmente accorpare con search in un'unica richiesta)
 		// Popolare il visualizer
 
 		if (sessionStorage.getItem('current-page') !== request[0])
