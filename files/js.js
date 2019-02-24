@@ -310,13 +310,17 @@ function adminApiRequest(request, payload) {
 	if (typeof payload === 'undefined')
 		payload = {};
 
-	let headers = {};
+	let headers = {
+		'Accept': 'application/json',
+		'Content-Type': 'application/json'
+	};
 	if (adminApiToken !== null)
 		headers['Authorization'] = 'Bearer ' + adminApiToken;
 
 	return ajax(adminApiPath + request, {}, payload, {
 		'fullResponse': true,
-		'headers': headers
+		'headers': headers,
+		'json': true
 	}).then(response => {
 		return response.text().then(text => {
 			try {
