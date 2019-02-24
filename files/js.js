@@ -1308,9 +1308,12 @@ function search() {
 
 	let payload = {
 		'search': searchValue,
-		'search-fields': [], // TODO
 		'filters': filters
 	};
+
+	let searchFields = getSearchFieldsFromStorage();
+	if (searchFields.length > 0)
+		payload['search-fields'] = searchFields;
 
 	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload).then(r => {
 		searchToken = r['search-token'];
@@ -1333,7 +1336,7 @@ function manageFilters() {
 	fieldset.className = 'p-3';
 	fieldset.style.width = '1000px';
 
-	fieldset.innerHTML = '<form action="#" method="post" id="pick-filters-form" onsubmit="saveFilters(); return false"><h2>Seleziona i filtri:</h2><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div><div class="container-fluid" id="pick-filters-cont"></div><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div></form>';
+	fieldset.innerHTML = '<form action="#" method="post" id="pick-filters-form" onsubmit="saveFilters(); return false"><h2>Seleziona i filtri:</h2><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div><div class="container-fluid py-2" id="pick-filters-cont"></div><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div></form>';
 
 	let cont = fieldset.querySelector('#pick-filters-cont');
 
@@ -1456,30 +1459,76 @@ function filtersLayoutReset() {
 	search();
 }
 
+function getSearchFieldsFromStorage() {
+	let request = currentAdminPage.split('/');
+	let fields = localStorage.getItem('search-fields-' + request[0]);
+	try {
+		if (fields)
+			fields = JSON.parse(fields);
+	} catch (e) {
+		fields = null;
+	}
+
+	return fields ? fields : [];
+}
+
 function manageSearchFields() {
-	var request = currentAdminPage.split('/');
-	zkPopup({'url': adminPrefix + request[0] + '/pickSearchFields', 'get': 'ajax'});
+	if (typeof currentPageDetails.filters === 'undefined')
+		return;
+
+	let fieldset = document.createElement('fieldset');
+	fieldset.className = 'p-3';
+
+	fieldset.innerHTML = '<form action="?" method="post" id="pick-search-fields-form" onsubmit="saveSearchFields(); return false"><h2>Cerca nei seguenti campi:</h2><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div><div class="container-fluid py-2" id="pick-search-fields-cont"></div><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div></form>';
+
+	let cont = fieldset.querySelector('#pick-search-fields-cont');
+
+	let currentSearchFields = getSearchFieldsFromStorage();
+
+	Object.keys(currentPageDetails.filters).forEach(name => {
+		let filter = currentPageDetails.filters[name];
+		if (name === 'zk-all' || (filter.type !== 'text' && filter.type !== 'number'))
+			return;
+
+		let row = document.createElement('div');
+		row.className = 'row';
+
+		let col = document.createElement('div');
+		col.className = 'col-12';
+		col = row.appendChild(col);
+
+		let checkbox = document.createElement('input');
+		checkbox.setAttribute('type', 'checkbox');
+		checkbox.setAttribute('name', name);
+		checkbox.setAttribute('data-managesearchfields', name);
+		checkbox.setAttribute('id', 'search-field-' + name);
+		checkbox = col.appendChild(checkbox);
+		if (currentSearchFields.length === 0 || currentSearchFields.indexOf(name) !== -1)
+			checkbox.setAttribute('checked', '');
+
+		let labelNode = document.createElement('label');
+		labelNode.setAttribute('for', 'search-field-' + name);
+		labelNode.innerHTML = filter.label;
+		col.appendChild(labelNode);
+
+		cont.appendChild(row);
+	});
+
+	zkPopup(fieldset.outerHTML);
 }
 
 function saveSearchFields() {
-	var request = currentAdminPage.split('/');
+	let request = currentAdminPage.split('/');
 
-	var fields = [];
+	let fields = [];
 	document.querySelectorAll('[data-managesearchfields]').forEach(function (check) {
 		if (check.checked)
 			fields.push(check.getAttribute('data-managesearchfields'));
 	});
-	var post = 'c_id=' + c_id + '&fields=' + encodeURIComponent(fields.join(','));
 
-	_('popup-real').loading();
-	return ajax(adminPrefix + request[0] + '/pickSearchFields', 'ajax', post).then(function (r) {
-		zkPopupClose();
-		if (r !== 'ok') {
-			alert(r);
-		} else {
-			return search();
-		}
-	});
+	localStorage.setItem('search-fields-' + request[0], JSON.stringify(fields));
+	zkPopupClose();
+	search();
 }
 
 function loadElement(page, id, get, history_push) {
