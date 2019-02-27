@@ -4,7 +4,6 @@ var currentAdminPage = false;
 var currentPageDetails = {};
 var runtimeLoadedJs = [];
 var runtimeLoadedCss = [];
-var searchToken = null;
 var menuResizing = false;
 var columnResizing = false;
 var menuIsOpen = true;
@@ -600,9 +599,8 @@ function loadAdminPage(request, get, history_push) {
 
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto]
-		// Lanciare una richiesta results (memo: memorizzare nel replace/pushState anche i filtri | probabilmente accorpare con search in un'unica richiesta)
-		// Popolare il visualizer
+		// Lanciare una richiesta search [fatto] (ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Elaborare e mostrare i risultati (memo: memorizzare nel replace/pushState anche i filtri)
 
 		if (sessionStorage.getItem('current-page') !== request[0])
 			sessionStorage.removeItem('filters-values');
@@ -1332,7 +1330,7 @@ function search() {
 		payload['search-fields'] = searchFields;
 
 	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload).then(r => {
-		searchToken = r['search-token'];
+
 	});
 }
 
