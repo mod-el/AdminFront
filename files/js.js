@@ -17,6 +17,9 @@ var aidsLoadingHash = '';
 var isInLoginPage = false;
 var adminApiToken = null;
 
+var visualizerClasses = {};
+var visualizers = {};
+
 var dataCache = {'data': {}, 'children': []};
 
 var saving = false;
@@ -600,7 +603,7 @@ function loadAdminPage(request, get, history_push) {
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
 		// Lanciare una richiesta search [fatto] (ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
-		// Elaborare e mostrare i risultati (memo: memorizzare nel replace/pushState anche i filtri)
+		// Elaborare e mostrare i risultati (memo: memorizzare nel replace/pushState anche i filtri e il sortby)
 
 		if (sessionStorage.getItem('current-page') !== request[0])
 			sessionStorage.removeItem('filters-values');
@@ -1264,35 +1267,6 @@ function switchFiltersForm(origin) {
 	}
 }
 
-function searchOld(forcePage) { // TODO: old function
-	if (typeof forcePage === 'undefined')
-		forcePage = 1;
-
-	var filters = [];
-	document.querySelectorAll('[data-filter]').forEach(function (el) {
-		var v = el.getValue(true);
-		if (v === '')
-			return;
-
-		switch (el.getAttribute('data-filter-type')) {
-			case 'custom':
-				var f = [el.getAttribute('data-filter'), v];
-				break;
-			default:
-				var f = [el.getAttribute('data-filter'), el.getAttribute('data-filter-type'), v];
-				break;
-		}
-		filters.push(f);
-	});
-
-	let get = objectFromQueryString();
-	get['sId'] = sId;
-	get['p'] = forcePage;
-	get['filters'] = JSON.stringify(filters);
-
-	return loadPage(adminPrefix + currentAdminPage.split('/')[0], get);
-}
-
 function search() {
 	let filters = [];
 	let searchValue = '';
@@ -1329,8 +1303,23 @@ function search() {
 	if (searchFields.length > 0)
 		payload['search-fields'] = searchFields;
 
-	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload).then(r => {
+	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload).then(response => {
+		visualizers['main'] = new visualizerClasses[currentPageDetails['type']](currentPageDetails);
 
+		_('breadcrumbs').style.display = 'block'; // TODO: temporary
+		_('breadcrumbs').innerHTML = '<a>Home</a>';
+
+		_('main-content').innerHTML = `<div class="px-3 no-overflow">
+			<div id="results-table-count">
+				<div>` + response.tot + ` risultati presenti</div>
+				<span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>
+			</div>
+			<div id="results-table-pages"></div>
+		</div>`;
+
+		visualizers['main'].render(_('main-content'), response.list);
+
+		_('main-loading').style.display = 'none';
 	});
 }
 

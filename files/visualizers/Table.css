@@ -1,0 +1,177 @@
+.table-head {
+	font-size: 0;
+	overflow: hidden;
+	padding-right: 20px;
+}
+
+.table-head > div {
+	overflow: hidden;
+	white-space: nowrap;
+	display: inline-block;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+}
+
+.table-head > div > div {
+	font-family: 'Raleway', sans-serif;
+	font-size: 1rem;
+	display: inline-block;
+	box-sizing: border-box;
+	padding-left: 10px;
+	height: 30px;
+	line-height: 28px;
+	text-transform: capitalize;
+	color: #333;
+	vertical-align: middle;
+	background: #f7f7f6;
+	border: solid #ececec 1px;
+	border-right: none;
+	border-bottom: none;
+}
+
+.table-head > div > div:last-of-type {
+	border-right: solid #ececec 1px;
+}
+
+.table-head-label, .results-table-row > div {
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.table-head-resize {
+	float: right;
+	width: 10px;
+	height: 30px;
+	cursor: ew-resize;
+}
+
+.table-head-label {
+	width: calc(100% - 10px);
+	cursor: default;
+}
+
+.table-head-label.sortable {
+	cursor: pointer;
+}
+
+.table-head-label.sortable:hover, .table-head-label.selected {
+	color: #00ADEF;
+}
+
+.special-cell {
+	text-align: center;
+	width: 30px !important;
+}
+
+.just-for-calculation {
+	display: inline-block !important;
+	width: auto !important;
+}
+
+#results-table {
+	overflow: auto;
+	padding-bottom: 3px;
+
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.results-table-row-cont {
+	height: 30px;
+	font-size: 0;
+}
+
+.results-table-row {
+	white-space: nowrap;
+	position: relative;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	display: inline-block;
+
+	-webkit-transition: top 0.3s ease-out;
+	-moz-transition: top 0.3s ease-out;
+	-o-transition: top 0.3s ease-out;
+	-ms-transition: top 0.3s ease-out;
+	transition: top 0.3s ease-out;
+}
+
+.results-table-row.selected {
+	border: solid #44c48d 1px;
+}
+
+.results-table-row.moving {
+	-webkit-transition: none;
+	-moz-transition: none;
+	-o-transition: none;
+	-ms-transition: none;
+	transition: none;
+	position: absolute;
+	z-index: 10;
+	opacity: 0.9;
+}
+
+#results-table-row-segnaposto {
+	width: 100%;
+	height: 30px;
+	position: absolute;
+	background: #FFA64C;
+	opacity: 0.4;
+	z-index: 5;
+}
+
+.results-table-row > div {
+	font-size: 1rem;
+	display: inline-block;
+	box-sizing: border-box;
+	padding: 6px;
+	height: 30px;
+	cursor: pointer;
+	border-right: solid #ececec 1px;
+	border-bottom: solid #ececec 1px;
+}
+
+div:first-of-type > .results-table-row > div {
+	border-top: solid #ececec 1px;
+}
+
+.results-table-row > div:first-of-type {
+	border-left: solid #ececec 1px;
+}
+
+div:nth-child(even) > .results-table-row {
+	background: #FAFAFA;
+}
+
+div:nth-child(odd) > .results-table-row {
+	background: #FFF;
+}
+
+.results-table-row:hover > div {
+	background: rgba(205, 205, 205, 0.4);
+}
+
+.results-table-row div.editable-cell {
+	padding: 0;
+	text-align: center;
+}
+
+.results-table-row div input, .results-table-row select {
+	margin: 0;
+}
+
+.results-table-row div.editable-cell input, .results-table-row div.editable-cell select {
+	height: 30px;
+	padding: 0 7px;
+	border: none;
+}
+
+.results-table-row div.editable-cell input[type="checkbox"] {
+	padding: 0;
+	margin-top: 7px;
+	height: auto;
+}
