@@ -568,6 +568,8 @@ function loadAdminPage(request, get, history_push) {
 	if (request.length === 0)
 		return false;
 
+	visualizers = {};
+
 	return new Promise(resolve => {
 		if (!firstLoad && currentAdminPage.split('/')[0] === request[0]) {
 			resolve();
@@ -1300,8 +1302,6 @@ function search() {
 		payload['search-fields'] = searchFields;
 
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
-		visualizers['main'] = new visualizerClasses[currentPageDetails['type']](request[0], currentPageDetails);
-
 		_('breadcrumbs').style.display = 'block'; // TODO: temporary
 		_('breadcrumbs').innerHTML = '<a>Home</a>';
 
@@ -1311,9 +1311,11 @@ function search() {
 				<span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>
 			</div>
 			<div id="results-table-pages"></div>
-		</div>`;
+		</div>
+		<div id="main-visualizer-cont"></div>`;
 
-		visualizers['main'].render(_('main-content'), response.list);
+		visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), currentPageDetails);
+		visualizers[request[0]].render(response.list);
 
 		_('main-loading').style.display = 'none';
 

@@ -12,7 +12,8 @@
 		"Popup": ">=1.0.0",
 		"WebAppManifest": ">=0.1.0",
 		"CSRF": ">=0.1.0",
-		"User": ">=2.2.0"
+		"User": ">=2.2.0",
+		"DraggableOrder": ">=0.1.1"
 	},
 	"js": [
 		"files/js.js",

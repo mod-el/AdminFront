@@ -16,6 +16,12 @@ class AdminController extends Controller
 		if ($this->model->isCLI())
 			die('Front Admin is not accessible via CLI');
 
+		$this->model->load('DraggableOrder');
+		$this->model->load('Popup');
+		$this->model->load('Form');
+		$this->model->load('ContextMenu');
+		$this->model->load('CSRF');
+
 		$this->model->_AdminFront->initialize(); // TODO: quando sarà tutto API based questo non servirà più
 
 		$this->templateModuleName = $this->model->_AdminFront->getTemplateModule();
