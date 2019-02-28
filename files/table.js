@@ -107,68 +107,6 @@ function instantSave(id, f, field) {
 	});
 }
 
-document.addEventListener('mousemove', event => {
-	let coords = getMouseCoords(event);
-	if (columnResizing !== false) {
-		let diff = coords.x - columnResizing.startX;
-		let newW = columnResizing.startW + diff;
-		if (newW < 20)
-			newW = 20;
-
-		let celle = document.querySelectorAll('[data-column="' + columnResizing.k + '"]');
-		celle.forEach(function (cella) {
-			cella.style.width = newW + 'px';
-		});
-
-		columnResizing.endW = newW;
-	}
-});
-
-document.addEventListener('mouseup', event => {
-	if (columnResizing !== false) {
-		if (columnResizing.endW !== false)
-			saveColumnWidth(columnResizing.k, columnResizing.endW);
-		columnResizing = false;
-	}
-});
-
-function autoResize(label) {
-	if (label !== false) {
-		let startW = parseInt(_('column-' + label).style.width);
-		let maxW = 0;
-
-		let celle = document.querySelectorAll('[data-column="' + label + '"]');
-		celle.forEach(function (cella) {
-			cella.lastElementChild.addClass('just-for-calculation');
-			let w = cella.lastElementChild.scrollWidth;
-			cella.lastElementChild.removeClass('just-for-calculation');
-
-			if (w > maxW)
-				maxW = w;
-		});
-
-		if (maxW) {
-			maxW += 20;
-			celle.forEach(function (cella) {
-				cella.style.width = maxW + 'px';
-			});
-		}
-
-		if (startW != maxW)
-			saveColumnWidth(label, maxW);
-	} else {
-		let celle = document.querySelectorAll('#table-headings div[data-column]');
-		celle.forEach(function (cella) {
-			autoResize(cella.dataset.column);
-		});
-	}
-}
-
-function saveColumnWidth(k, w) {
-	let request = currentAdminPage.split('/');
-	return ajax(adminPrefix + request[0] + '/saveWidth', 'ajax&k=' + encodeURIComponent(k), 'w=' + encodeURIComponent(w) + '&c_id=' + c_id);
-}
-
 function adminRowClicked(row) {
 	if (row.dataset.clickable === '1') {
 		if (row.dataset.onclick) {

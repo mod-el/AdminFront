@@ -5,7 +5,6 @@ var currentPageDetails = {};
 var runtimeLoadedJs = [];
 var runtimeLoadedCss = [];
 var menuResizing = false;
-var columnResizing = false;
 var menuIsOpen = true;
 var sortedBy = [];
 var currentPage = 1;
@@ -1053,11 +1052,6 @@ function loadPageAids(request, get) {
 	})(aidsLoadingHash));
 }
 
-function startColumnResize(event, k) {
-	let coords = getMouseCoords(event);
-	columnResizing = {'k': k, 'startX': coords.x, 'startW': parseInt(_('column-' + k).style.width), 'endW': false};
-}
-
 document.addEventListener('mousemove', event => {
 	let coords = getMouseCoords(event);
 	if (menuResizing !== false) {
@@ -1268,6 +1262,8 @@ function switchFiltersForm(origin) {
 }
 
 function search() {
+	let request = currentAdminPage.split('/');
+
 	let filters = [];
 	let searchValue = '';
 	let filtersValues = {};
@@ -1303,8 +1299,8 @@ function search() {
 	if (searchFields.length > 0)
 		payload['search-fields'] = searchFields;
 
-	return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/search', payload).then(response => {
-		visualizers['main'] = new visualizerClasses[currentPageDetails['type']](currentPageDetails);
+	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
+		visualizers['main'] = new visualizerClasses[currentPageDetails['type']](request[0], currentPageDetails);
 
 		_('breadcrumbs').style.display = 'block'; // TODO: temporary
 		_('breadcrumbs').innerHTML = '<a>Home</a>';
@@ -1320,6 +1316,8 @@ function search() {
 		visualizers['main'].render(_('main-content'), response.list);
 
 		_('main-loading').style.display = 'none';
+
+		return changedHtml();
 	});
 }
 
