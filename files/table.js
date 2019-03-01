@@ -1,19 +1,19 @@
 function tableEvents() {
 	let table = _('results-table');
 
-	table.addEventListener('scroll', function () {
+	/*table.addEventListener('scroll', function () {
 		let intest = _('table-headings');
 		if (this.scrollLeft > (intest.scrollWidth - intest.clientWidth))
 			this.scrollLeft = intest.scrollWidth - intest.clientWidth;
 		intest.scrollLeft = this.scrollLeft;
-	});
+	});*/
 
 	table.querySelectorAll('[id^="row-checkbox-"]').forEach(function (checkbox) {
 		if (selectedRows.indexOf(checkbox.dataset.id) !== -1)
 			checkbox.setValue(1, false);
 	});
 
-	table.querySelectorAll('.results-table-row').forEach(function (row) {
+	/*table.querySelectorAll('.results-table-row').forEach(function (row) {
 		if (!row.parentNode.parentNode.hasAttribute('data-draggable-cont')) {
 			row.addEventListener('click', function (event) {
 				if (event.button === 0) {
@@ -21,7 +21,7 @@ function tableEvents() {
 				}
 			});
 		}
-	});
+	});*/
 
 	if (_('sortedBy'))
 		sortedBy = JSON.parse(_('sortedBy').getValue(true));

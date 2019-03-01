@@ -68,7 +68,7 @@
 	width: auto !important;
 }
 
-#results-table {
+.results-table {
 	overflow: auto;
 	padding-bottom: 3px;
 

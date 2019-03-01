@@ -59,9 +59,136 @@ class Table {
 			label.innerHTML = field.label;
 		});
 
+		this.container.appendChild(head);
+
 		/**************************/
 
-		this.container.appendChild(head);
+		let draggable = this.options['custom-order']; // TODO: solo se non è stato applicato un sort manuale
+
+		let body = document.createElement('div');
+		body.className = 'results-table';
+		body.setAttribute('data-table', this.id);
+		body.addEventListener('scroll', () => {
+			if (body.scrollLeft > (head.scrollWidth - head.clientWidth))
+				body.scrollLeft = head.scrollWidth - head.clientWidth;
+			head.scrollLeft = body.scrollLeft;
+		});
+
+		let bodyMain = body.appendChild(document.createElement('div'));
+		if (draggable) {
+			bodyMain.setAttribute('data-draggable-cont', '');
+			bodyMain.setAttribute('data-draggable-callback', 'adminRowDragged(element, target)');
+		}
+
+		let rowCount = 0;
+		list.forEach(item => {
+			let clickable = '1';
+			if (!item.id || !item.permissions['R'])
+				clickable = '0';
+
+			let row = bodyMain.appendChild(document.createElement('div'));
+			row.className = 'results-table-row-cont';
+			if (draggable) {
+				if (item.id) {
+					row.setAttribute('data-draggable-id', item.id);
+					row.setAttribute('data-draggable-index', item['order-idx']);
+
+					if (draggable.depending_on.length > 0) {
+						let depending_values = [];
+						draggable.depending_on.forEach(depending_field => {
+							if (typeof item.data[depending_field] !== 'undefined')
+								depending_values.push(item.data[depending_field].value);
+						});
+						row.setAttribute('data-draggable-parent', depending_values.join(','));
+					}
+				} else {
+					row.setAttribute('data-draggable-set', '1');
+				}
+			} else {
+				row.addEventListener('click', event => {
+					if (event.button === 0)
+						adminRowClicked(row);
+				});
+			}
+
+			let innerRow = row.appendChild(document.createElement('div'));
+			innerRow.className = 'results-table-row';
+			innerRow.setAttribute('data-n', rowCount.toString());
+			innerRow.setAttribute('data-id', item.id);
+			innerRow.setAttribute('data-clickable', clickable);
+			// TODO: "onclick" personalizzato; colore di sfondo; colore testo
+
+			let checkboxCell = innerRow.appendChild(document.createElement('div'));
+			checkboxCell.className = 'special-cell';
+			checkboxCell.addEventListener('mousedown', event => {
+				event.stopPropagation();
+			});
+			checkboxCell.addEventListener('mouseup', event => {
+				event.stopPropagation();
+			});
+			checkboxCell.addEventListener('click', function (event) {
+				event.stopPropagation();
+
+				let check = this.firstElementChild.firstElementChild;
+				check.getValue().then(v => {
+					if (v)
+						check.setValue(0);
+					else
+						check.setValue(1);
+				});
+			});
+			checkboxCell = checkboxCell.appendChild(document.createElement('div'));
+			checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseup="event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
+			// TODO: gestione dello shift per selezionare checkbox multipli
+
+			let deleteCell = innerRow.appendChild(document.createElement('div'));
+			deleteCell.className = 'special-cell';
+			deleteCell.addEventListener('mousedown', event => {
+				event.stopPropagation();
+			});
+			deleteCell.addEventListener('click', event => {
+				event.stopPropagation();
+			});
+			deleteCell = deleteCell.appendChild(document.createElement('div'));
+			if (item.permissions['D']) {
+				deleteCell.innerHTML = '<a href="#" onclick="event.stopPropagation(); deleteRows([\'' + item.id + '\']); return false"><img src="' + PATHBASE + 'model/AdminTemplateEditt/files/img/delete.png" alt="" style="vertical-align: middle"/></a>';
+			}
+
+			columns.forEach(fieldName => {
+				let field = this.options['fields'][fieldName];
+
+				let width = 150;
+				if (typeof widths[fieldName] !== 'undefined')
+					width = widths[fieldName];
+
+				let div = innerRow.appendChild(document.createElement('div'));
+				// TODO: colore sfondo e colore testo
+				div.style.width = width + 'px';
+				div.setAttribute('data-column', fieldName);
+				div.setAttribute('title', item.data[fieldName].text);
+
+				// TODO: gestione editable
+				if (!clickable) {
+					div.addEventListener('mousedown', event => {
+						event.stopPropagation();
+					});
+					div.addEventListener('mouseup', event => {
+						event.stopPropagation();
+					});
+					div.addEventListener('click', event => {
+						event.stopPropagation();
+					});
+				}
+
+				// TODO: gestione delle colonne price
+				let innerDiv = div.appendChild(document.createElement('div'));
+				innerDiv.innerHTML = entities(item.data[fieldName].text);
+			});
+
+			rowCount++;
+		});
+
+		this.container.appendChild(body);
 	}
 
 	getWidths() {
