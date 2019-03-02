@@ -7,6 +7,7 @@ var runtimeLoadedCss = [];
 var menuResizing = false;
 var menuIsOpen = true;
 var sortedBy = [];
+var selectedRows = [];
 var currentPage = 1;
 var searchCounter = 0;
 var pageLoadingHash = '';
@@ -580,13 +581,15 @@ function loadAdminPage(request, get, history_push) {
 			});
 		}
 	}).then(() => {
+		let loadingPromises = [];
+
 		runtimeLoadedCss.forEach(file => {
 			unloadRuntimeCss(file);
 		});
 		runtimeLoadedCss = [];
 
 		currentPageDetails.js.forEach(file => {
-			loadRuntimeJs(file);
+			loadingPromises.push(loadRuntimeJs(file));
 		});
 		currentPageDetails.css.forEach(file => {
 			loadRuntimeCss(file);
@@ -627,9 +630,18 @@ function loadAdminPage(request, get, history_push) {
 
 				// ==== Load visualizer files ====
 
-				loadRuntimeJs(PATH + 'model/AdminFront/files/visualizers/' + currentPageDetails.type + '.js');
+				loadingPromises.push(loadRuntimeJs(PATH + 'model/AdminFront/files/visualizers/' + currentPageDetails.type + '.js'));
 				loadRuntimeCss(PATH + 'model/AdminFront/files/visualizers/' + currentPageDetails.type + '.css');
+				break;
+		}
 
+		return Promise.all(loadingPromises);
+	}).then(() => {
+		switch (currentPageDetails.type) {
+			case 'Custom':
+
+				break;
+			default:
 				// ==== Set variables ====
 
 				let full_url = request.join('/');
@@ -683,12 +695,17 @@ function loadRuntimeJs(file) {
 	if (runtimeLoadedJs.indexOf(file) !== -1)
 		return;
 
-	let fileref = document.createElement('script');
-	fileref.setAttribute('type', 'text/javascript');
-	fileref.setAttribute('src', file);
-	document.getElementsByTagName('head')[0].appendChild(fileref);
+	return new Promise(resolve => {
+		let fileref = document.createElement('script');
+		fileref.setAttribute('type', 'text/javascript');
+		document.getElementsByTagName('head')[0].appendChild(fileref);
+		fileref.onload = () => {
+			resolve();
+		};
+		fileref.setAttribute('src', file);
 
-	runtimeLoadedJs.push(file);
+		runtimeLoadedJs.push(file);
+	});
 }
 
 function loadRuntimeCss(file) {
@@ -1295,20 +1312,25 @@ function search() {
 	if (searchFields.length > 0)
 		payload['search-fields'] = searchFields;
 
-	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
-		_('breadcrumbs').style.display = 'block'; // TODO: temporary
-		_('breadcrumbs').innerHTML = '<a>Home</a>';
-
-		_('main-content').innerHTML = `<div class="px-3 no-overflow">
+	_('main-content').innerHTML = `<div class="px-3 no-overflow">
 			<div id="results-table-count">
-				<div>` + response.tot + ` risultati presenti</div>
-				<span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>
+				<div>Loading...</div>
 			</div>
 			<div id="results-table-pages"></div>
 		</div>
 		<div id="main-visualizer-cont"></div>`;
 
-		visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), currentPageDetails);
+	visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), currentPageDetails);
+
+	let columns = visualizers[request[0]].getFieldsToRetrieve();
+	if (columns !== null)
+		payload['fields'] = columns;
+
+	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
+		_('breadcrumbs').style.display = 'block'; // TODO: temporary
+		_('breadcrumbs').innerHTML = '<a>Home</a>';
+
+		_('results-table-count').innerHTML = '<div>'+response.tot + ' risultati presenti</div><span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>';
 		visualizers[request[0]].render(response.list);
 
 		_('main-loading').style.display = 'none';

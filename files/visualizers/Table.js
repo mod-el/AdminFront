@@ -1,14 +1,15 @@
 var columnResizing = false;
-var selectedRows = [];
 var holdingRowsSelection = null;
 
 class Table {
+	// Standard visualizers method
 	constructor(id, container, options) {
 		this.id = id;
 		this.options = options;
 		this.container = container;
 	}
 
+	// Standard visualizers method
 	render(list) {
 		let head = document.createElement('div');
 		head.className = 'table-head';
@@ -182,15 +183,22 @@ class Table {
 					});
 				}
 
-				// TODO: gestione delle colonne price
 				let innerDiv = div.appendChild(document.createElement('div'));
-				innerDiv.innerHTML = entities(item.data[fieldName].text);
+				if (field.price)
+					innerDiv.innerHTML = makePrice(item.data[fieldName].value);
+				else
+					innerDiv.innerHTML = entities(item.data[fieldName].text);
 			});
 
 			rowCount++;
 		});
 
 		this.container.appendChild(body);
+	}
+
+	// Standard visualizers method
+	getFieldsToRetrieve() {
+		return this.getColumnsFromStorage();
 	}
 
 	getWidths() {
@@ -215,6 +223,15 @@ class Table {
 	}
 
 	getColumns() {
+		let columns = this.getColumnsFromStorage();
+
+		if (columns === null)
+			columns = this.options['default-fields'];
+
+		return columns;
+	}
+
+	getColumnsFromStorage() {
 		let columns = null;
 
 		if (localStorage.getItem('columns-' + this.id)) {
@@ -224,9 +241,6 @@ class Table {
 				columns = null;
 			}
 		}
-
-		if (columns === null)
-			columns = this.options['default-fields'];
 
 		return columns;
 	}
