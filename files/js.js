@@ -8,8 +8,6 @@ var menuResizing = false;
 var menuIsOpen = true;
 var sortedBy = [];
 var currentPage = 1;
-var selectedRows = [];
-var holdingRowsSelection = null;
 var searchCounter = 0;
 var pageLoadingHash = '';
 var aidsLoadingHash = '';
@@ -386,10 +384,6 @@ window.addEventListener('keydown', function (event) {
 			break;
 
 	}
-});
-
-window.addEventListener('mouseup', function (event) {
-	releaseRowsSelection();
 });
 
 /*
@@ -2165,46 +2159,6 @@ function loadSubPage(cont_name, p) {
 	} else {
 		return new Promise(resolve => resolve());
 	}
-}
-
-function holdRowsSelection(checkbox) {
-	if (checkbox.getValue(true))
-		holdingRowsSelection = 0;
-	else
-		holdingRowsSelection = 1;
-	checkbox.setValue(holdingRowsSelection);
-}
-
-function releaseRowsSelection() {
-	holdingRowsSelection = null;
-}
-
-function moveBetweenRows(checkbox, keyCode) {
-	var id = checkbox.getAttribute('data-id');
-	var row = document.querySelector('.results-table-row[data-id="' + id + '"]');
-	if (!row)
-		return;
-	var n = row.getAttribute('data-n');
-
-	switch (keyCode) {
-		case 38:
-			n--;
-			break;
-		case 40:
-			n++;
-			break;
-		default:
-			return;
-			break;
-	}
-
-	var nextRow = document.querySelector('.results-table-row[data-n="' + n + '"]');
-	if (!nextRow)
-		return;
-
-	var nextId = nextRow.getAttribute('data-id');
-	var nextCheckbox = document.getElementById('row-checkbox-' + nextId);
-	nextCheckbox.focus();
 }
 
 function callElementCallback() {

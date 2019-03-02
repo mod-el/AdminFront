@@ -1,4 +1,6 @@
 var columnResizing = false;
+var selectedRows = [];
+var holdingRowsSelection = null;
 
 class Table {
 	constructor(id, container, options) {
@@ -125,6 +127,7 @@ class Table {
 			});
 			checkboxCell.addEventListener('mouseup', event => {
 				event.stopPropagation();
+				releaseRowsSelection();
 			});
 			checkboxCell.addEventListener('click', function (event) {
 				event.stopPropagation();
@@ -138,8 +141,7 @@ class Table {
 				});
 			});
 			checkboxCell = checkboxCell.appendChild(document.createElement('div'));
-			checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseup="event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
-			// TODO: gestione dello shift per selezionare checkbox multipli
+			checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
 
 			let deleteCell = innerRow.appendChild(document.createElement('div'));
 			deleteCell.className = 'special-cell';
@@ -329,7 +331,9 @@ document.addEventListener('mousemove', event => {
 	}
 });
 
-document.addEventListener('mouseup', event => {
+window.addEventListener('mouseup', event => {
+	releaseRowsSelection();
+
 	if (columnResizing !== false) {
 		if (columnResizing.endW !== false)
 			visualizers[columnResizing.table].saveColumnWidth(columnResizing.k, columnResizing.endW);
@@ -367,4 +371,44 @@ function autoResizeColumns(table, column) {
 			autoResizeColumns(table, cell.dataset.column);
 		});
 	}
+}
+
+function holdRowsSelection(checkbox) {
+	if (checkbox.getValue(true))
+		holdingRowsSelection = 0;
+	else
+		holdingRowsSelection = 1;
+	checkbox.setValue(holdingRowsSelection);
+}
+
+function releaseRowsSelection() {
+	holdingRowsSelection = null;
+}
+
+function moveBetweenRows(checkbox, keyCode) {
+	var id = checkbox.getAttribute('data-id');
+	var row = document.querySelector('.results-table-row[data-id="' + id + '"]');
+	if (!row)
+		return;
+	var n = row.getAttribute('data-n');
+
+	switch (keyCode) {
+		case 38:
+			n--;
+			break;
+		case 40:
+			n++;
+			break;
+		default:
+			return;
+			break;
+	}
+
+	var nextRow = document.querySelector('.results-table-row[data-n="' + n + '"]');
+	if (!nextRow)
+		return;
+
+	var nextId = nextRow.getAttribute('data-id');
+	var nextCheckbox = document.getElementById('row-checkbox-' + nextId);
+	nextCheckbox.focus();
 }
