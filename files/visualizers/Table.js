@@ -252,7 +252,18 @@ class Table {
 		let fieldset = document.createElement('fieldset');
 		fieldset.className = 'p-3';
 
-		fieldset.innerHTML = '<form action="?" method="post" id="customize-columns-form" onsubmit="visualizers[\'' + this.id + '\'].saveColumns(); return false"><h2>Personalizza colonne</h2><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div><div class="container-fluid py-2" id="customize-columns-cont" data-draggable-cont></div><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div></form>';
+		fieldset.innerHTML = `<form action="?" method="post" id="customize-columns-form" onsubmit="visualizers['` + this.id + `'].saveColumns(); return false">
+			<h2>Personalizza colonne</h2>
+			<div class="py-1 text-center">
+				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
+				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="visualizers['` + this.id + `'].restoreDefaultColumns()"/>
+			</div>
+			<div class="container-fluid py-2" id="customize-columns-cont" data-draggable-cont></div>
+			<div class="py-1 text-center">
+				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
+				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="visualizers['` + this.id + `'].restoreDefaultColumns()"/>
+			</div>
+		</form>`;
 
 		let cont = fieldset.querySelector('#customize-columns-cont');
 
@@ -306,6 +317,13 @@ class Table {
 		});
 
 		localStorage.setItem('columns-' + this.id, JSON.stringify(columns));
+		zkPopupClose();
+
+		return search();
+	}
+
+	restoreDefaultColumns() {
+		localStorage.removeItem('columns-' + this.id);
 		zkPopupClose();
 
 		return search();

@@ -1355,7 +1355,18 @@ function manageFilters() {
 	fieldset.className = 'p-3';
 	fieldset.style.width = '1000px';
 
-	fieldset.innerHTML = '<form action="#" method="post" id="pick-filters-form" onsubmit="saveFilters(); return false"><h2>Seleziona i filtri:</h2><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div><div class="container-fluid py-2" id="pick-filters-cont"></div><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div></form>';
+	fieldset.innerHTML = `<form action="#" method="post" id="pick-filters-form" onsubmit="saveFilters(); return false">
+			<h2>Seleziona i filtri:</h2>
+			<div class="py-1 text-center">
+				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
+				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="if(confirm('Questo reimposterà i filtri al loro stato iniziale, sicuro?')) filtersLayoutReset()"/>
+			</div>
+			<div class="container-fluid py-2" id="pick-filters-cont"></div>
+			<div class="py-1 text-center">
+				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
+				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="if(confirm('Questo reimposterà i filtri al loro stato iniziale, sicuro?')) filtersLayoutReset()"/>
+			</div>
+		</form>`;
 
 	let cont = fieldset.querySelector('#pick-filters-cont');
 
@@ -1475,7 +1486,8 @@ function filtersLayoutReset() {
 	let request = currentAdminPage.split('/');
 	localStorage.removeItem('filters-' + request[0]);
 	rebuildFilters();
-	search();
+	zkPopupClose();
+	return search();
 }
 
 function getSearchFieldsFromStorage() {
@@ -1498,7 +1510,16 @@ function manageSearchFields() {
 	let fieldset = document.createElement('fieldset');
 	fieldset.className = 'p-3';
 
-	fieldset.innerHTML = '<form action="?" method="post" id="pick-search-fields-form" onsubmit="saveSearchFields(); return false"><h2>Cerca nei seguenti campi:</h2><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div><div class="container-fluid py-2" id="pick-search-fields-cont"></div><div class="py-1 text-center"><input type="submit" value="Salva preferenza"/></div></form>';
+	fieldset.innerHTML = `<form action="?" method="post" id="pick-search-fields-form" onsubmit="saveSearchFields(); return false">
+			<h2>Cerca nei seguenti campi:</h2>
+			<div class="py-1 text-center">
+				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
+			</div>
+			<div class="container-fluid py-2" id="pick-search-fields-cont"></div>
+			<div class="py-1 text-center">
+				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
+			</div>
+		</form>`;
 
 	let cont = fieldset.querySelector('#pick-search-fields-cont');
 
