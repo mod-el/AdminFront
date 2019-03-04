@@ -155,6 +155,15 @@ $config = ' . var_export($config, true) . ';
 				$this->model->error('The passwords do not match');
 			} else {
 				if ($this->saveConfig('init', $data)) {
+					$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `admin_user_customizations` (
+					  `id` INT NOT NULL AUTO_INCREMENT,
+					  `path` VARCHAR(255) NOT NULL,
+					  `user` INT NOT NULL,
+					  `key` VARCHAR(255) NOT NULL,
+					  `value` TEXT NOT NULL,
+					  PRIMARY KEY (`id`));
+					');
+
 					if (isset($data['make-users-table'])) {
 						$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `' . $data['table'] . '` (
 						  `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -270,6 +279,22 @@ ADD COLUMN `password` VARCHAR(250) NOT NULL AFTER `old_password`;');
 				}
 			}
 		}
+		return true;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function postUpdate_0_5_0()
+	{
+		$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `admin_user_customizations` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `path` VARCHAR(255) NOT NULL,
+  `user` INT NOT NULL,
+  `key` VARCHAR(255) NOT NULL,
+  `value` TEXT NOT NULL,
+  PRIMARY KEY (`id`));
+');
 		return true;
 	}
 }

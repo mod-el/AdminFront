@@ -1,7 +1,9 @@
 <?php namespace Model\AdminFront\Controllers;
 
+use Model\Admin\Auth;
 use Model\Core\Autoloader;
 use Model\Core\Controller;
+use Model\Core\Exception;
 use Model\Core\Module;
 
 class AdminController extends Controller
@@ -29,7 +31,7 @@ class AdminController extends Controller
 		$this->model->viewOptions['template-module'] = $this->templateModuleName;
 	}
 
-	public function index()
+	public function index() // TODO: probabilmente da eliminare per la gran parte
 	{
 		$request = $this->model->_AdminFront->request;
 
@@ -325,5 +327,85 @@ class AdminController extends Controller
 				$this->model->viewOptions['template'] = 'shell';
 			}
 		}
+	}
+
+	public function get()
+	{
+		switch ($this->model->getRequest(1)) {
+			case 'get-user-customization':
+				try {
+					if (!isset($_GET['k']))
+						die('Wrong data');
+
+					$token = $this->getAuth();
+					$check = $this->model->_Db->select('admin_user_customizations', [
+						'path' => $token['path'],
+						'user' => $token['id'],
+						'key' => $_GET['k'],
+					]);
+
+					return [
+						'data' => $check ? $check['value'] : null,
+					];
+				} catch (\Exception $e) {
+					return [
+						'error' => getErr($e),
+					];
+				}
+				break;
+			default:
+				return $this->index();
+				break;
+		}
+	}
+
+	public function post()
+	{
+		try {
+			switch ($this->model->getRequest(1)) {
+				case 'save-user-customization':
+					if (!isset($_GET['k'], $_POST['v']))
+						die('Wrong data');
+
+					$token = $this->getAuth();
+					$this->model->_Db->insert('admin_user_customizations', [
+						'path' => $token['path'],
+						'user' => $token['id'],
+						'key' => $_GET['k'],
+						'value' => $_POST['v'],
+					]);
+
+					return 'ok';
+					break;
+				case 'delete-user-customization':
+					if (!isset($_GET['k']))
+						die('Wrong data');
+
+					$token = $this->getAuth();
+					$this->model->_Db->delete('admin_user_customizations', [
+						'path' => $token['path'],
+						'user' => $token['id'],
+						'key' => $_GET['k'],
+					]);
+
+					return 'ok';
+					break;
+				default:
+					return $this->index();
+					break;
+			}
+		} catch (\Exception $e) {
+			die(getErr($e));
+		}
+	}
+
+	private function getAuth(): array
+	{
+		$auth = new Auth($this->model);
+		$token = $auth->getToken();
+		if (!$token)
+			$this->model->error('Invalid auth token', ['code' => 401]);
+
+		return $token;
 	}
 }

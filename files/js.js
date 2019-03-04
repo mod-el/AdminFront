@@ -15,6 +15,8 @@ var aidsLoadingHash = '';
 var isInLoginPage = false;
 var adminApiToken = null;
 
+var userCustomizationsCache = {};
+
 var visualizerClasses = {};
 var visualizers = {};
 
@@ -742,131 +744,126 @@ function rebuildFilters() {
 	let secondaryForm = _('filtersFormCont');
 	secondaryForm.innerHTML = '<div class="flex-fields-wrap"></div>';
 
-	let filters = getFiltersFromPageDetails();
+	return getFiltersFromPageDetails().then(filters => {
+		let forms = {
+			'primary': form,
+			'secondary': secondaryForm
+		};
 
-	let forms = {
-		'primary': form,
-		'secondary': secondaryForm
-	};
+		Object.keys(filters).forEach(formName => {
+			filters[formName].forEach(filter => {
+				let div = document.createElement('div');
 
-	Object.keys(filters).forEach(formName => {
-		filters[formName].forEach(filter => {
-			let div = document.createElement('div');
+				let label = '';
+				if (typeof filter.options['label'] !== 'undefined') {
+					label = filter.options['label'];
+					if (filter.options['attributes']['data-filter-type'] !== '=')
+						label += ' (' + filter.options['attributes']['data-filter-type'] + ')';
+				}
 
-			let label = '';
-			if (typeof filter.options['label'] !== 'undefined') {
-				label = filter.options['label'];
-				if (filter.options['attributes']['data-filter-type'] !== '=')
-					label += ' (' + filter.options['attributes']['data-filter-type'] + ')';
-			}
+				if (formName === 'secondary') {
+					div.innerHTML = label + '<br/>';
+				} else {
+					if (typeof filter.options['attributes']['placeholder'] === 'undefined')
+						filter.options['attributes']['placeholder'] = label;
+				}
 
-			if (formName === 'secondary') {
-				div.innerHTML = label + '<br/>';
-			} else {
-				if (typeof filter.options['attributes']['placeholder'] === 'undefined')
-					filter.options['attributes']['placeholder'] = label;
-			}
+				let field = filter.render();
+				switch (field.nodeName.toLowerCase()) {
+					case 'input':
+					case 'textarea':
+						switch (field.type.toLowerCase()) {
+							case 'checkbox':
+							case 'radio':
+							case 'hidden':
+							case 'date':
+								field.addEventListener('change', function () {
+									search();
+								});
+								break;
+							default:
+								field.addEventListener('keyup', function (event) {
+									if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
+										return false;
 
-			let field = filter.render();
-			switch (field.nodeName.toLowerCase()) {
-				case 'input':
-				case 'textarea':
-					switch (field.type.toLowerCase()) {
-						case 'checkbox':
-						case 'radio':
-						case 'hidden':
-						case 'date':
-							field.addEventListener('change', function () {
-								search();
-							});
-							break;
-						default:
-							field.addEventListener('keyup', function (event) {
-								if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
-									return false;
+									searchCounter++;
+									setTimeout((function (c) {
+										return function () {
+											if (c === searchCounter)
+												search();
+										}
+									})(searchCounter), 400);
+								});
+								break;
+						}
+						break;
+					default:
+						field.addEventListener('change', function () {
+							search();
+						});
+						break;
+				}
 
-								searchCounter++;
-								setTimeout((function (c) {
-									return function () {
-										if (c === searchCounter)
-											search();
-									}
-								})(searchCounter), 400);
-							});
-							break;
-					}
-					break;
-				default:
-					field.addEventListener('change', function () {
-						search();
-					});
-					break;
-			}
-
-			div.appendChild(field);
-			forms[formName].firstChild.appendChild(div);
+				div.appendChild(field);
+				forms[formName].firstChild.appendChild(div);
+			});
 		});
-	});
 
-	resize();
+		resize();
+	});
 }
 
 function getFiltersFromPageDetails() {
-	let filtersArrangement = getFiltersListFromStorage();
-	let filtersValues = getFiltersValuesFromStorage();
+	return getFiltersListFromStorage().then(filtersArrangement => {
+		let filtersValues = getFiltersValuesFromStorage();
 
-	let filters = {
-		'primary': [],
-		'secondary': []
-	};
+		let filters = {
+			'primary': [],
+			'secondary': []
+		};
 
-	let idx = 0;
-	Object.keys(filtersArrangement).forEach(form => {
-		filtersArrangement[form].forEach(filterOptions => {
-			if (typeof currentPageDetails['filters'][filterOptions.filter] === 'undefined')
-				return;
+		let idx = 0;
+		Object.keys(filtersArrangement).forEach(form => {
+			filtersArrangement[form].forEach(filterOptions => {
+				if (typeof currentPageDetails['filters'][filterOptions.filter] === 'undefined')
+					return;
 
-			let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
-			if (typeof fieldOptions['attributes'] === 'undefined')
-				fieldOptions['attributes'] = {};
-			fieldOptions['attributes']['data-filter'] = filterOptions.filter;
-			fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
+				let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
+				if (typeof fieldOptions['attributes'] === 'undefined')
+					fieldOptions['attributes'] = {};
+				fieldOptions['attributes']['data-filter'] = filterOptions.filter;
+				fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
 
-			let defaultValue = '';
-			if (typeof fieldOptions.default !== 'undefined')
-				defaultValue = fieldOptions.default;
+				let defaultValue = '';
+				if (typeof fieldOptions.default !== 'undefined')
+					defaultValue = fieldOptions.default;
 
-			let value = defaultValue;
-			if (filtersValues && typeof filtersValues[filterOptions.filter + '-' + filterOptions.type] !== 'undefined')
-				value = filtersValues[filterOptions.filter + '-' + filterOptions.type];
+				let value = defaultValue;
+				if (filtersValues && typeof filtersValues[filterOptions.filter + '-' + filterOptions.type] !== 'undefined')
+					value = filtersValues[filterOptions.filter + '-' + filterOptions.type];
 
-			fieldOptions['value'] = value;
-			fieldOptions['attributes']['data-default'] = defaultValue;
+				fieldOptions['value'] = value;
+				fieldOptions['attributes']['data-default'] = defaultValue;
 
-			let filter = new Field('filter-' + idx, fieldOptions);
-			filters[form].push(filter);
-			idx++;
+				let filter = new Field('filter-' + idx, fieldOptions);
+				filters[form].push(filter);
+				idx++;
+			});
 		});
-	});
 
-	return filters;
+		return filters;
+	});
 }
 
 function getFiltersListFromStorage() {
 	let request = currentAdminPage.split('/');
-	let filters = localStorage.getItem('filters-' + request[0]);
-	try {
-		if (filters)
-			filters = JSON.parse(filters);
-	} catch (e) {
-		filters = null;
-	}
-
-	if (filters !== null) {
-		return filters;
-	} else {
-		return currentPageDetails['default-filters']
-	}
+	return getUserCustomization('filters-' + request[0]).then(filters => {
+		if (filters !== null) {
+			return filters;
+		} else {
+			return currentPageDetails['default-filters']
+		}
+	});
 }
 
 function getFiltersValuesFromStorage() {
@@ -1330,7 +1327,7 @@ function search() {
 		_('breadcrumbs').style.display = 'block'; // TODO: temporary
 		_('breadcrumbs').innerHTML = '<a>Home</a>';
 
-		_('results-table-count').innerHTML = '<div>'+response.tot + ' risultati presenti</div><span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>';
+		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div><span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>';
 		visualizers[request[0]].render(response.list);
 
 		_('main-loading').style.display = 'none';
@@ -1418,17 +1415,22 @@ function manageFilters() {
 		cont.appendChild(row);
 	});
 
-	zkPopup(fieldset.outerHTML).then(() => {
-		let filters = getFiltersListFromStorage();
-		Object.keys(filters).forEach(form => {
-			filters[form].forEach(filter => {
-				let typeRadio = _('filter-' + filter.filter + '-type-' + filter.type);
-				if (typeRadio)
-					typeRadio.checked = true;
+	Promise.all([
+		zkPopup('<img src="' + PATH + 'model/Output/files/loading.gif" alt="" />'),
+		getFiltersListFromStorage()
+	]).then(data => {
+		let filters = data[1];
+		zkPopup(fieldset.outerHTML).then(() => {
+			Object.keys(filters).forEach(form => {
+				filters[form].forEach(filter => {
+					let typeRadio = _('filter-' + filter.filter + '-type-' + filter.type);
+					if (typeRadio)
+						typeRadio.checked = true;
 
-				let positionRadio = _('filter-' + filter.filter + '-form-' + form);
-				if (positionRadio)
-					positionRadio.checked = true;
+					let positionRadio = _('filter-' + filter.filter + '-form-' + form);
+					if (positionRadio)
+						positionRadio.checked = true;
+				});
 			});
 		});
 	});
@@ -1476,18 +1478,20 @@ function saveFilters() {
 		}
 	});
 
-	localStorage.setItem('filters-' + request[0], JSON.stringify(filters));
-	zkPopupClose();
-	rebuildFilters();
-	search();
+	_('popup-real').loading();
+	return saveUserCustomization('filters-' + request[0], filters).then(() => {
+		zkPopupClose();
+		return rebuildFilters();
+	}).then(search);
 }
 
 function filtersLayoutReset() {
 	let request = currentAdminPage.split('/');
-	localStorage.removeItem('filters-' + request[0]);
-	rebuildFilters();
-	zkPopupClose();
-	return search();
+	_('popup-real').loading();
+	return deleteUserCustomization('filters-' + request[0]).then(r => {
+		zkPopupClose();
+		return rebuildFilters();
+	}).then(search);
 }
 
 function getSearchFieldsFromStorage() {
@@ -2232,4 +2236,69 @@ function getAdminCookiePath() {
 	} else {
 		return adminPrefix;
 	}
+}
+
+async function getUserCustomization(k) {
+	if (typeof userCustomizationsCache[k] !== 'undefined')
+		return userCustomizationsCache[k];
+
+	return ajax(PATH + 'admin/get-user-customization', {
+		'k': k
+	}, {}, {
+		'headers': {
+			'Authorization': 'Bearer ' + adminApiToken
+		}
+	}).then(r => {
+		if (typeof r !== 'object')
+			throw r;
+		if (typeof r.error !== 'undefined')
+			throw r.error;
+		if (typeof r.data === 'undefined')
+			throw 'Unknown error';
+		if (r.data === null)
+			return null;
+
+		try {
+			return JSON.parse(r.data);
+		} catch (e) {
+			return null;
+		}
+	}).then(v => {
+		userCustomizationsCache[k] = v;
+		return v;
+	});
+}
+
+async function saveUserCustomization(k, v) {
+	return ajax(PATH + 'admin/save-user-customization', {
+		'k': k
+	}, {
+		'v': JSON.stringify(v),
+	}, {
+		'headers': {
+			'Authorization': 'Bearer ' + adminApiToken
+		}
+	}).then(r => {
+		if (r !== 'ok')
+			throw r;
+
+		userCustomizationsCache[k] = v;
+	});
+}
+
+async function deleteUserCustomization(k) {
+	return ajax(PATH + 'admin/delete-user-customization', {
+		'k': k
+	}, {}, {
+		'method': 'POST',
+		'headers': {
+			'Authorization': 'Bearer ' + adminApiToken
+		}
+	}).then(r => {
+		if (r !== 'ok')
+			throw r;
+
+		if (typeof userCustomizationsCache[k] !== 'undefined')
+			delete userCustomizationsCache[k];
+	});
 }
