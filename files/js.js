@@ -16,6 +16,7 @@ var isInLoginPage = false;
 var adminApiToken = null;
 
 var userCustomizationsCache = {};
+var userCustomizationsBuffer = {};
 
 var visualizerClasses = {};
 var visualizers = {};
@@ -731,7 +732,7 @@ function unloadRuntimeCss(file) {
 	}
 }
 
-function rebuildFilters() {
+async function rebuildFilters() {
 	let form = _('topForm');
 	if (!form) {
 		form = document.createElement('form');
@@ -744,126 +745,124 @@ function rebuildFilters() {
 	let secondaryForm = _('filtersFormCont');
 	secondaryForm.innerHTML = '<div class="flex-fields-wrap"></div>';
 
-	return getFiltersFromPageDetails().then(filters => {
-		let forms = {
-			'primary': form,
-			'secondary': secondaryForm
-		};
+	let filters = await getFiltersFromPageDetails();
 
-		Object.keys(filters).forEach(formName => {
-			filters[formName].forEach(filter => {
-				let div = document.createElement('div');
+	let forms = {
+		'primary': form,
+		'secondary': secondaryForm
+	};
 
-				let label = '';
-				if (typeof filter.options['label'] !== 'undefined') {
-					label = filter.options['label'];
-					if (filter.options['attributes']['data-filter-type'] !== '=')
-						label += ' (' + filter.options['attributes']['data-filter-type'] + ')';
-				}
+	Object.keys(filters).forEach(formName => {
+		filters[formName].forEach(filter => {
+			let div = document.createElement('div');
 
-				if (formName === 'secondary') {
-					div.innerHTML = label + '<br/>';
-				} else {
-					if (typeof filter.options['attributes']['placeholder'] === 'undefined')
-						filter.options['attributes']['placeholder'] = label;
-				}
+			let label = '';
+			if (typeof filter.options['label'] !== 'undefined') {
+				label = filter.options['label'];
+				if (filter.options['attributes']['data-filter-type'] !== '=')
+					label += ' (' + filter.options['attributes']['data-filter-type'] + ')';
+			}
 
-				let field = filter.render();
-				switch (field.nodeName.toLowerCase()) {
-					case 'input':
-					case 'textarea':
-						switch (field.type.toLowerCase()) {
-							case 'checkbox':
-							case 'radio':
-							case 'hidden':
-							case 'date':
-								field.addEventListener('change', function () {
-									search();
-								});
-								break;
-							default:
-								field.addEventListener('keyup', function (event) {
-									if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
-										return false;
+			if (formName === 'secondary') {
+				div.innerHTML = label + '<br/>';
+			} else {
+				if (typeof filter.options['attributes']['placeholder'] === 'undefined')
+					filter.options['attributes']['placeholder'] = label;
+			}
 
-									searchCounter++;
-									setTimeout((function (c) {
-										return function () {
-											if (c === searchCounter)
-												search();
-										}
-									})(searchCounter), 400);
-								});
-								break;
-						}
-						break;
-					default:
-						field.addEventListener('change', function () {
-							search();
-						});
-						break;
-				}
+			let field = filter.render();
+			switch (field.nodeName.toLowerCase()) {
+				case 'input':
+				case 'textarea':
+					switch (field.type.toLowerCase()) {
+						case 'checkbox':
+						case 'radio':
+						case 'hidden':
+						case 'date':
+							field.addEventListener('change', function () {
+								search();
+							});
+							break;
+						default:
+							field.addEventListener('keyup', function (event) {
+								if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
+									return false;
 
-				div.appendChild(field);
-				forms[formName].firstChild.appendChild(div);
-			});
+								searchCounter++;
+								setTimeout((function (c) {
+									return function () {
+										if (c === searchCounter)
+											search();
+									}
+								})(searchCounter), 400);
+							});
+							break;
+					}
+					break;
+				default:
+					field.addEventListener('change', function () {
+						search();
+					});
+					break;
+			}
+
+			div.appendChild(field);
+			forms[formName].firstChild.appendChild(div);
 		});
-
-		resize();
 	});
+
+	resize();
 }
 
-function getFiltersFromPageDetails() {
-	return getFiltersListFromStorage().then(filtersArrangement => {
-		let filtersValues = getFiltersValuesFromStorage();
+async function getFiltersFromPageDetails() {
+	let filtersArrangement = await getFiltersListFromStorage();
+	let filtersValues = getFiltersValuesFromStorage();
 
-		let filters = {
-			'primary': [],
-			'secondary': []
-		};
+	let filters = {
+		'primary': [],
+		'secondary': []
+	};
 
-		let idx = 0;
-		Object.keys(filtersArrangement).forEach(form => {
-			filtersArrangement[form].forEach(filterOptions => {
-				if (typeof currentPageDetails['filters'][filterOptions.filter] === 'undefined')
-					return;
+	let idx = 0;
+	Object.keys(filtersArrangement).forEach(form => {
+		filtersArrangement[form].forEach(filterOptions => {
+			if (typeof currentPageDetails['filters'][filterOptions.filter] === 'undefined')
+				return;
 
-				let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
-				if (typeof fieldOptions['attributes'] === 'undefined')
-					fieldOptions['attributes'] = {};
-				fieldOptions['attributes']['data-filter'] = filterOptions.filter;
-				fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
+			let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
+			if (typeof fieldOptions['attributes'] === 'undefined')
+				fieldOptions['attributes'] = {};
+			fieldOptions['attributes']['data-filter'] = filterOptions.filter;
+			fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
 
-				let defaultValue = '';
-				if (typeof fieldOptions.default !== 'undefined')
-					defaultValue = fieldOptions.default;
+			let defaultValue = '';
+			if (typeof fieldOptions.default !== 'undefined')
+				defaultValue = fieldOptions.default;
 
-				let value = defaultValue;
-				if (filtersValues && typeof filtersValues[filterOptions.filter + '-' + filterOptions.type] !== 'undefined')
-					value = filtersValues[filterOptions.filter + '-' + filterOptions.type];
+			let value = defaultValue;
+			if (filtersValues && typeof filtersValues[filterOptions.filter + '-' + filterOptions.type] !== 'undefined')
+				value = filtersValues[filterOptions.filter + '-' + filterOptions.type];
 
-				fieldOptions['value'] = value;
-				fieldOptions['attributes']['data-default'] = defaultValue;
+			fieldOptions['value'] = value;
+			fieldOptions['attributes']['data-default'] = defaultValue;
 
-				let filter = new Field('filter-' + idx, fieldOptions);
-				filters[form].push(filter);
-				idx++;
-			});
+			let filter = new Field('filter-' + idx, fieldOptions);
+			filters[form].push(filter);
+			idx++;
 		});
-
-		return filters;
 	});
+
+	return filters;
 }
 
-function getFiltersListFromStorage() {
+async function getFiltersListFromStorage() {
 	let request = currentAdminPage.split('/');
-	return getUserCustomization('filters-' + request[0]).then(filters => {
-		if (filters !== null) {
-			return filters;
-		} else {
-			return currentPageDetails['default-filters']
-		}
-	});
+	let filters = await getUserCustomization('filters-' + request[0]);
+	if (filters !== null) {
+		return filters;
+	} else {
+		return currentPageDetails['default-filters']
+	}
 }
 
 function getFiltersValuesFromStorage() {
@@ -1271,7 +1270,7 @@ function switchFiltersForm(origin) {
 	}
 }
 
-function search() {
+async function search() {
 	let request = currentAdminPage.split('/');
 
 	let filters = [];
@@ -1305,7 +1304,7 @@ function search() {
 		'filters': filters
 	};
 
-	let searchFields = getSearchFieldsFromStorage();
+	let searchFields = await getSearchFieldsFromStorage();
 	if (searchFields.length > 0)
 		payload['search-fields'] = searchFields;
 
@@ -1319,7 +1318,7 @@ function search() {
 
 	visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), currentPageDetails);
 
-	let columns = visualizers[request[0]].getFieldsToRetrieve();
+	let columns = await visualizers[request[0]].getFieldsToRetrieve();
 	if (columns !== null)
 		payload['fields'] = columns;
 
@@ -1328,11 +1327,10 @@ function search() {
 		_('breadcrumbs').innerHTML = '<a>Home</a>';
 
 		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div><span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>';
-		visualizers[request[0]].render(response.list);
-
-		_('main-loading').style.display = 'none';
-
-		return changedHtml();
+		return visualizers[request[0]].render(response.list).then(() => {
+			_('main-loading').style.display = 'none';
+			return changedHtml();
+		});
 	});
 }
 
@@ -1456,7 +1454,7 @@ function appendRadioToFiltersSelection(selection, type, name, value, label, chec
 	selection.appendChild(labelNode);
 }
 
-function saveFilters() {
+async function saveFilters() {
 	let request = currentAdminPage.split('/');
 
 	let filters = {
@@ -1479,35 +1477,28 @@ function saveFilters() {
 	});
 
 	_('popup-real').loading();
-	return saveUserCustomization('filters-' + request[0], filters).then(() => {
-		zkPopupClose();
-		return rebuildFilters();
-	}).then(search);
+	await saveUserCustomization('filters-' + request[0], filters);
+	zkPopupClose();
+	await rebuildFilters();
+	return search();
 }
 
-function filtersLayoutReset() {
+async function filtersLayoutReset() {
 	let request = currentAdminPage.split('/');
 	_('popup-real').loading();
-	return deleteUserCustomization('filters-' + request[0]).then(r => {
-		zkPopupClose();
-		return rebuildFilters();
-	}).then(search);
+	zkPopupClose();
+	await deleteUserCustomization('filters-' + request[0]);
+	await rebuildFilters();
+	return search();
 }
 
-function getSearchFieldsFromStorage() {
+async function getSearchFieldsFromStorage() {
 	let request = currentAdminPage.split('/');
-	let fields = localStorage.getItem('search-fields-' + request[0]);
-	try {
-		if (fields)
-			fields = JSON.parse(fields);
-	} catch (e) {
-		fields = null;
-	}
-
+	let fields = await getUserCustomization('search-fields-' + request[0]);
 	return fields ? fields : [];
 }
 
-function manageSearchFields() {
+async function manageSearchFields() {
 	if (typeof currentPageDetails.filters === 'undefined')
 		return;
 
@@ -1527,7 +1518,7 @@ function manageSearchFields() {
 
 	let cont = fieldset.querySelector('#pick-search-fields-cont');
 
-	let currentSearchFields = getSearchFieldsFromStorage();
+	let currentSearchFields = await getSearchFieldsFromStorage();
 
 	Object.keys(currentPageDetails.filters).forEach(name => {
 		let filter = currentPageDetails.filters[name];
@@ -1561,7 +1552,7 @@ function manageSearchFields() {
 	zkPopup(fieldset.outerHTML);
 }
 
-function saveSearchFields() {
+async function saveSearchFields() {
 	let request = currentAdminPage.split('/');
 
 	let fields = [];
@@ -1570,9 +1561,9 @@ function saveSearchFields() {
 			fields.push(check.getAttribute('data-managesearchfields'));
 	});
 
-	localStorage.setItem('search-fields-' + request[0], JSON.stringify(fields));
+	await saveUserCustomization('search-fields-' + request[0], fields);
 	zkPopupClose();
-	search();
+	return search();
 }
 
 function loadElement(page, id, get, history_push) {
@@ -2270,19 +2261,35 @@ async function getUserCustomization(k) {
 }
 
 async function saveUserCustomization(k, v) {
-	return ajax(PATH + 'admin/save-user-customization', {
-		'k': k
-	}, {
-		'v': JSON.stringify(v),
-	}, {
-		'headers': {
-			'Authorization': 'Bearer ' + adminApiToken
-		}
-	}).then(r => {
-		if (r !== 'ok')
-			throw r;
+	return new Promise(resolve => {
+		let oldValue = null;
+		if (typeof userCustomizationsCache[k] !== 'undefined')
+			oldValue = userCustomizationsCache[k];
 
 		userCustomizationsCache[k] = v;
+		userCustomizationsBuffer[k] = v;
+
+		setTimeout((function (k, v, oldValue, resolve) {
+			return function () {
+				if (userCustomizationsBuffer[k] !== v)
+					return;
+
+				delete userCustomizationsBuffer[k];
+				return ajax(PATH + 'admin/save-user-customization', {
+					'k': k
+				}, {
+					'v': JSON.stringify(v),
+				}, {
+					'headers': {
+						'Authorization': 'Bearer ' + adminApiToken
+					}
+				}).then(r => {
+					if (r !== 'ok')
+						throw r;
+					resolve();
+				});
+			};
+		})(k, v, oldValue, resolve), 300);
 	});
 }
 

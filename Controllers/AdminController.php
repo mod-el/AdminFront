@@ -368,10 +368,11 @@ class AdminController extends Controller
 						die('Wrong data');
 
 					$token = $this->getAuth();
-					$this->model->_Db->insert('admin_user_customizations', [
+					$this->model->_Db->updateOrInsert('admin_user_customizations', [
 						'path' => $token['path'],
 						'user' => $token['id'],
 						'key' => $_GET['k'],
+					], [
 						'value' => $_POST['v'],
 					]);
 

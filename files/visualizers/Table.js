@@ -10,7 +10,7 @@ class Table {
 	}
 
 	// Standard visualizers method
-	render(list) {
+	async render(list) {
 		let head = document.createElement('div');
 		head.className = 'table-head';
 		head.setAttribute('data-table', this.id);
@@ -25,8 +25,8 @@ class Table {
 		let deleteTd = subHead.appendChild(document.createElement('div')); // TODO: renderlo visibile solo se c'è almeno una X
 		deleteTd.className = 'special-cell';
 
-		let columns = this.getColumns();
-		let widths = this.getWidths();
+		let columns = await this.getColumns();
+		let widths = await this.getWidths();
 
 		columns.forEach(fieldName => {
 			let field = this.options['fields'][fieldName];
@@ -197,33 +197,26 @@ class Table {
 	}
 
 	// Standard visualizers method
-	getFieldsToRetrieve() {
-		return this.getColumnsFromStorage();
+	async getFieldsToRetrieve() {
+		return getUserCustomization('columns-' + this.id);
 	}
 
-	getWidths() {
-		let widths = {};
-
-		if (localStorage.getItem('widths-' + this.id)) {
-			try {
-				widths = JSON.parse(localStorage.getItem('widths-' + this.id));
-			} catch (e) {
-				widths = {};
-			}
-		}
-
-		return widths;
+	async getWidths() {
+		let widths = await getUserCustomization('widths-' + this.id);
+		if (widths)
+			return widths;
+		else
+			return {};
 	}
 
-	saveColumnWidth(column, w) {
-		let widths = this.getWidths();
+	async saveColumnWidth(column, w) {
+		let widths = await this.getWidths();
 		widths[column] = w;
-
-		localStorage.setItem('widths-' + this.id, JSON.stringify(widths));
+		return saveUserCustomization('widths-' + this.id, widths);
 	}
 
-	getColumns() {
-		let columns = this.getColumnsFromStorage();
+	async getColumns() {
+		let columns = await getUserCustomization('columns-' + this.id);
 
 		if (columns === null)
 			columns = this.options['default-fields'];
@@ -231,21 +224,7 @@ class Table {
 		return columns;
 	}
 
-	getColumnsFromStorage() {
-		let columns = null;
-
-		if (localStorage.getItem('columns-' + this.id)) {
-			try {
-				columns = JSON.parse(localStorage.getItem('columns-' + this.id));
-			} catch (e) {
-				columns = null;
-			}
-		}
-
-		return columns;
-	}
-
-	customizeColumns() {
+	async customizeColumns() {
 		if (typeof this.options['fields'] === 'undefined')
 			return;
 
@@ -267,7 +246,7 @@ class Table {
 
 		let cont = fieldset.querySelector('#customize-columns-cont');
 
-		let currentColumns = this.getColumns();
+		let currentColumns = await this.getColumns();
 
 		currentColumns.forEach(name => {
 			let field = this.options['fields'][name];
@@ -281,7 +260,7 @@ class Table {
 			this.renderColumnChoiceForCustomize(cont, name, field, false);
 		});
 
-		zkPopup(fieldset.outerHTML);
+		return zkPopup(fieldset.outerHTML);
 	}
 
 	renderColumnChoiceForCustomize(cont, name, column, checked) {
@@ -309,23 +288,21 @@ class Table {
 		cont.appendChild(row);
 	}
 
-	saveColumns() {
+	async saveColumns() {
 		let columns = [];
 		document.querySelectorAll('[data-customize-column]').forEach(column => {
 			if (column.checked)
 				columns.push(column.getAttribute('data-customize-column'));
 		});
 
-		localStorage.setItem('columns-' + this.id, JSON.stringify(columns));
 		zkPopupClose();
-
+		await saveUserCustomization('columns-' + this.id, columns);
 		return search();
 	}
 
-	restoreDefaultColumns() {
-		localStorage.removeItem('columns-' + this.id);
+	async restoreDefaultColumns() {
 		zkPopupClose();
-
+		await deleteUserCustomization('columns-' + this.id);
 		return search();
 	}
 }
