@@ -302,6 +302,7 @@ window.onpopstate = function (event) {
 			} else {
 				if (typeof s['p'] !== 'undefined')
 					get['p'] = s['p'];
+
 				loadAdminPage(s['request'], get, false, false);
 			}
 		}
@@ -551,19 +552,11 @@ function clearMainPage() {
 /*
  Moves between admin pages, moving the left menu and taking care of the browser history
  */
-function loadAdminPage(request, get, history_push) {
+function loadAdminPage(request, get = {}, history_push = true) {
 	if (!checkBeforePageChange())
 		return false;
 
-	if (typeof get === 'undefined')
-		get = {};
-	if (typeof history_push === 'undefined')
-		history_push = true;
-
 	request = request.split('/');
-
-	if (request.length === 0)
-		return false;
 
 	visualizers = {};
 
@@ -648,29 +641,12 @@ function loadAdminPage(request, get, history_push) {
 
 				let full_url = request.join('/');
 
-				let state = {'request': request.join('/')};
-
-				let filtersValues = getFiltersValuesFromStorage();
-				state['filters'] = filtersValues;
-
 				if (typeof get['p'] !== 'undefined') {
 					currentPage = parseInt(get['p']);
 					if (isNaN(currentPage) || currentPage < 1)
 						currentPage = 1;
 				} else {
 					currentPage = 1;
-				}
-
-				state['p'] = currentPage;
-
-				if (history_push) {
-					if (history_push === 'replace') {
-						if (history.replaceState)
-							history.replaceState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
-					} else {
-						if (history.pushState)
-							history.pushState(state, '', adminPrefix + full_url + '?' + queryStringFromObject(get));
-					}
 				}
 
 				clearMainPage();
@@ -687,7 +663,7 @@ function loadAdminPage(request, get, history_push) {
 
 				// ==== First search ====
 
-				return search();
+				return search(currentPage, history_push);
 				break;
 		}
 	});
@@ -1232,7 +1208,7 @@ function switchFiltersForm(origin) {
 	}
 }
 
-async function search() {
+async function search(page = 1, history_push = true) {
 	let request = currentAdminPage.split('/');
 
 	let filters = [];
@@ -1263,7 +1239,8 @@ async function search() {
 
 	let payload = {
 		'search': searchValue,
-		'filters': filters
+		'filters': filters,
+		'page': page
 	};
 
 	let searchFields = await getSearchFieldsFromStorage();
@@ -1288,6 +1265,22 @@ async function search() {
 	let columns = await visualizers[request[0]].getFieldsToRetrieve();
 	if (columns !== null)
 		payload['fields'] = columns;
+
+	let state = {
+		'request': request.join('/'),
+		'filters': filtersValues,
+		'p': page
+	};
+
+	if (history_push) {
+		if (typeof history_push === 'string' && history_push === 'replace') {
+			if (history.replaceState)
+				history.replaceState(state, '', adminPrefix + request.join('/') + '?p=' + page);
+		} else {
+			if (history.pushState)
+				history.pushState(state, '', adminPrefix + request.join('/') + '?p=' + page);
+		}
+	}
 
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
 		_('breadcrumbs').style.display = 'block'; // TODO: temporary
