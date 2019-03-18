@@ -1261,7 +1261,7 @@ async function search(page = 1, history_push = true) {
 			_('main-loading').style.display = 'none';
 			return changedHtml();
 		});
-	});
+	}).catch(error => alert(error));
 }
 
 function filtersReset() {
