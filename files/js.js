@@ -309,10 +309,7 @@ window.onpopstate = function (event) {
 	}
 };
 
-function adminApiRequest(request, payload) {
-	if (typeof payload === 'undefined')
-		payload = {};
-
+function adminApiRequest(request, payload = {}) {
 	let headers = {
 		'Accept': 'application/json',
 		'Content-Type': 'application/json'
@@ -363,12 +360,11 @@ window.addEventListener('beforeunload', function (event) {
 		return true;
 
 	var message = 'There are unsaved data, are you sure?';
-	if (typeof event === 'undefined') {
+	if (typeof event === 'undefined')
 		event = window.event;
-	}
-	if (event) {
+	if (event)
 		event.returnValue = message;
-	}
+
 	return message;
 });
 
@@ -393,7 +389,7 @@ window.addEventListener('keydown', function (event) {
 /*
  Resizes page dynamic components, called on page open and at every resize
  */
-function resize(menu) {
+function resize(menu = true) {
 	if (!_('main-grid') || !_('main-menu'))
 		return;
 
@@ -401,9 +397,6 @@ function resize(menu) {
 	_('main-grid').style.height = 'calc(100% - ' + (hHeight + 4) + 'px)';
 	var tHeight = _('toolbar').offsetHeight;
 	_('main-page').style.height = 'calc(100% - ' + tHeight + 'px)';
-
-	if (typeof menu === 'undefined')
-		menu = true;
 
 	if (menu) {
 		var hideMenu = _('main-menu').getAttribute('data-hide');
@@ -505,16 +498,9 @@ function startMenuResize() {
 /*
  Loads a page using fetch; fills the main div with the content when the response comes, and additionally returns a Promise
  */
-function loadPage(url, get, post, deleteContent) {
+function loadPage(url, get = {}, post = {}, deleteContent = true) {
 	if (!checkBeforePageChange())
 		return false;
-
-	if (typeof get === 'undefined')
-		get = {};
-	if (typeof post === 'undefined')
-		post = {};
-	if (typeof deleteContent === 'undefined')
-		deleteContent = true;
 
 	get['ajax'] = '';
 
@@ -894,12 +880,9 @@ function addPageAction(name, action) {
 /*
  Loads the page aids, like breadcrumbs and toolbar buttons
  */
-function loadPageAids(request, get) {
+function loadPageAids(request, get = {}) {
 	if (!_('toolbar'))
 		return new Promise(resolve => resolve());
-
-	if (typeof get === 'undefined')
-		get = {};
 
 	if (sId !== null)
 		get['sId'] = sId;
@@ -1065,20 +1048,7 @@ document.addEventListener('mouseup', event => {
 	}
 });
 
-function reloadResultsTable(get, post) {
-	if (typeof get === 'undefined')
-		get = objectFromQueryString();
-	get['sId'] = sId;
-	if (sortedBy)
-		get['sortBy'] = JSON.stringify(sortedBy);
-
-	return loadPage(adminPrefix + (currentAdminPage.split('/')[0]), get, post);
-}
-
-function goToPage(p, history_push) {
-	if (typeof history_push === 'undefined')
-		history_push = true;
-
+function goToPage(p, history_push = true) {
 	let mainContentDiv = _('main-content');
 
 	let moveBy = mainContentDiv.offsetWidth + 50;
@@ -1394,10 +1364,7 @@ function manageFilters() {
 	});
 }
 
-function appendRadioToFiltersSelection(selection, type, name, value, label, checked) {
-	if (typeof checked === 'undefined')
-		checked = false;
-
+function appendRadioToFiltersSelection(selection, type, name, value, label, checked = false) {
 	let radio = document.createElement('input');
 	radio.setAttribute('type', 'radio');
 	radio.setAttribute('name', name + '-' + type);
@@ -1526,12 +1493,7 @@ async function saveSearchFields() {
 	return search();
 }
 
-function loadElement(page, id, get, history_push) {
-	if (typeof get === 'undefined')
-		get = {};
-	if (typeof history_push === 'undefined')
-		history_push = true;
-
+function loadElement(page, id, get = {}, history_push = true) {
 	elementCallback = null;
 	dataCache = {'data': {}, 'children': []};
 
@@ -1880,11 +1842,10 @@ function historyWipe() {
 	rebuildHistoryBox();
 }
 
-function newElement(page, get) {
+function newElement(page, get = {}) {
 	if (typeof page === 'undefined')
 		page = currentAdminPage.split('/')[0];
-	if (typeof get === 'undefined')
-		get = {};
+
 	return loadElement(page, 0, get).then(initializeEmptyForm).then(monitorFields);
 }
 
