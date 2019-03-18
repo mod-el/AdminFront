@@ -3,10 +3,12 @@ var holdingRowsSelection = null;
 
 class Table {
 	// Standard visualizers method
-	constructor(id, container, options) {
+	constructor(id, container, main, options) {
 		this.id = id;
-		this.options = options;
 		this.container = container;
+		this.main = main;
+		this.options = options;
+		this.sortedBy = [];
 	}
 
 	// Standard visualizers method
@@ -54,19 +56,79 @@ class Table {
 				autoResizeColumns(this.id, fieldName);
 			});
 
-			// TODO: sorting
 			let label = div.appendChild(document.createElement('div'));
 			label.addClass('table-head-label');
-			if (field.sortable)
-				label.addClass('sortable');
 			label.innerHTML = field.label;
+
+			if (field.sortable) {
+				label.addClass('sortable');
+
+				let sorted = false;
+				this.sortedBy.some((sortedField, idx) => {
+					if (sortedField.field === fieldName) {
+						sorted = {
+							'dir': sortedField.dir,
+							'idx': idx + 1
+						};
+						return true;
+					}
+					return false;
+				});
+
+				if (sorted) {
+					label.addClass('selected');
+
+					label.innerHTML += sorted.dir === 'ASC' ? ' &darr;' : ' &uarr;';
+					label.innerHTML += '&sup' + sorted.idx + ';';
+				}
+
+				label.addEventListener('click', event => {
+					if (event.altKey) {
+						this.sortedBy.some((s, idx) => {
+							if (s['field'] === fieldName) {
+								this.sortedBy.splice(idx, 1);
+								return true;
+							}
+							return false;
+						});
+					} else if (event.ctrlKey) {
+						if (!this.sortedBy.some((s, idx) => {
+							if (s['field'] === fieldName) {
+								this.sortedBy[idx]['dir'] = this.sortedBy[idx]['dir'] === 'ASC' ? 'DESC' : 'ASC';
+								return true;
+							}
+							return false;
+						})) {
+							this.sortedBy.push({
+								'field': fieldName,
+								'dir': 'ASC'
+							});
+						}
+					} else {
+						if (this.sortedBy.length === 1 && this.sortedBy[0]['field'] === fieldName) {
+							this.sortedBy[0]['dir'] = this.sortedBy[0]['dir'] === 'ASC' ? 'DESC' : 'ASC';
+						} else {
+							this.sortedBy = [
+								{
+									'field': fieldName,
+									'dir': 'ASC'
+								}
+							];
+						}
+					}
+
+					this.reload();
+				});
+			}
 		});
 
 		this.container.appendChild(head);
 
 		/**************************/
 
-		let draggable = this.options['custom-order']; // TODO: solo se non è stato applicato un sort manuale
+		let draggable = this.options['custom-order'];
+		if (this.sortedBy.length > 0)
+			draggable = false;
 
 		let body = document.createElement('div');
 		body.className = 'results-table';
@@ -199,6 +261,25 @@ class Table {
 	// Standard visualizers method
 	async getFieldsToRetrieve() {
 		return getUserCustomization('columns-' + this.id);
+	}
+
+	// Standard visualizers method
+	async reload() {
+		if (this.main) {
+			search();
+		} else {
+			// TODO: sublist reloading
+		}
+	}
+
+	// Standard visualizers method
+	getSorting() {
+		return this.sortedBy;
+	}
+
+	// Standard visualizers method
+	setSorting(sorting) {
+		this.sortedBy = sorting;
 	}
 
 	async getWidths() {

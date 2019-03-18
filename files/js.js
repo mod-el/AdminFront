@@ -6,7 +6,6 @@ var runtimeLoadedJs = [];
 var runtimeLoadedCss = [];
 var menuResizing = false;
 var menuIsOpen = true;
-var sortedBy = [];
 var selectedRows = [];
 var currentPage = 1;
 var searchCounter = 0;
@@ -1090,43 +1089,6 @@ document.addEventListener('mouseup', event => {
 	}
 });
 
-function changeSorting(event, column) {
-	if (event.altKey) {
-		sortedBy.some(function (s, idx) {
-			if (s[0] === column) {
-				sortedBy.splice(idx, 1);
-				return true;
-			}
-			return false;
-		});
-	} else if (event.ctrlKey) {
-		if (!sortedBy.some(function (s, idx) {
-			if (s[0] === column) {
-				sortedBy[idx][1] = sortedBy[idx][1] === 'ASC' ? 'DESC' : 'ASC';
-				return true;
-			}
-			return false;
-		})) {
-			sortedBy.push([
-				column,
-				'ASC'
-			]);
-		}
-	} else {
-		if (sortedBy.length === 1 && sortedBy[0][0] === column) {
-			sortedBy[0][1] = sortedBy[0][1] === 'ASC' ? 'DESC' : 'ASC';
-		} else {
-			sortedBy = [
-				[
-					column,
-					'ASC'
-				]
-			];
-		}
-	}
-	reloadResultsTable();
-}
-
 function reloadResultsTable(get, post) {
 	if (typeof get === 'undefined')
 		get = objectFromQueryString();
@@ -1316,7 +1278,12 @@ async function search() {
 		</div>
 		<div id="main-visualizer-cont"></div>`;
 
-	visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), currentPageDetails);
+	let sortedBy = [];
+	if (typeof visualizers[request[0]] !== 'undefined')
+		sortedBy = visualizers[request[0]].getSorting();
+	visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), true, currentPageDetails);
+	visualizers[request[0]].setSorting(sortedBy);
+	payload['sort-by'] = sortedBy;
 
 	let columns = await visualizers[request[0]].getFieldsToRetrieve();
 	if (columns !== null)
