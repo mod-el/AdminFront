@@ -590,7 +590,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto] (fare breadcrumbs e paginazione; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Lanciare una richiesta search [fatto] (fare breadcrumbs, paginazione e "tutti su una pagina"; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 		// Elaborare e mostrare i risultati
 
 		if (sessionStorage.getItem('current-page') !== request[0])
@@ -1069,7 +1069,7 @@ document.addEventListener('mouseup', event => {
 	}
 });
 
-function goToPage(p, history_push = true) {
+async function goToPage(p, history_push = true) {
 	let mainContentDiv = _('main-content');
 
 	let moveBy = mainContentDiv.offsetWidth + 50;
@@ -1077,18 +1077,10 @@ function goToPage(p, history_push = true) {
 		moveBy *= -1;
 
 	let get = objectFromQueryString();
-	get['sId'] = sId;
 	if (typeof get['goTo'] !== 'undefined')
 		delete get['goTo'];
 
 	get['p'] = p;
-
-	if (history_push && history.pushState)
-		history.pushState({
-			'request': currentAdminPage,
-			'sId': sId,
-			'p': p
-		}, '', adminPrefix + currentAdminPage + '?' + queryStringFromObject(get));
 
 	let pageMove = new Promise(resolve => {
 		if (p !== currentPage) {
@@ -1103,7 +1095,8 @@ function goToPage(p, history_push = true) {
 		_('main-loading').style.display = 'block';
 		return true;
 	});
-	let pageLoad = loadPage(adminPrefix + currentAdminPage, get, false, false);
+
+	let pageLoad = search(p, null, history_push);
 
 	return Promise.all([pageMove, pageLoad]).then(() => {
 		_('main-content').style.display = 'block';
@@ -1279,6 +1272,9 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	}
 
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
+		let pagination = 'FARE PAGINAZIONE'; // TODO: paginazione, con funzione già pronta goToPage
+		_('results-table-pages').innerHTML = pagination;
+
 		_('breadcrumbs').style.display = 'block'; // TODO: temporary
 		_('breadcrumbs').innerHTML = '<a>Home</a>';
 
