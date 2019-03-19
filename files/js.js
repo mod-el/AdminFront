@@ -285,8 +285,17 @@ if ('serviceWorker' in navigator) {
 window.onpopstate = function (event) {
 	var s = event.state;
 	if (typeof s['request'] !== 'undefined') {
-		if (s['request'] === currentAdminPage && typeof s['p'] !== 'undefined') {
-			goToPage(s['p'], false);
+		if (s['request'] === currentAdminPage) {
+			if (typeof s['filters'] === 'undefined')
+				s['filters'] = {};
+
+			fillFiltersValues(s['filters']).then(() => {
+				if (typeof s['p'] !== 'undefined' && s['p'] !== currentPage) {
+					goToPage(s['p'], false);
+				} else {
+					search(currentPage, s['sort-by'], false);
+				}
+			});
 		} else {
 			let request = s['request'].split('/');
 
@@ -581,8 +590,8 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto] (ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
-		// Elaborare e mostrare i risultati (memo: memorizzare nel replace/pushState anche i filtri e il sortby)
+		// Lanciare una richiesta search [fatto] (fare breadcrumbs e paginazione; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Elaborare e mostrare i risultati
 
 		if (sessionStorage.getItem('current-page') !== request[0])
 			sessionStorage.removeItem('filters-values');
@@ -649,7 +658,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 				// ==== First search ====
 
-				return search(currentPage, history_push);
+				return search(currentPage, null, history_push);
 				break;
 		}
 	});
@@ -836,6 +845,18 @@ function getFiltersValuesFromStorage() {
 	}
 
 	return filtersValues;
+}
+
+async function fillFiltersValues(values) {
+	let promises = [];
+	document.querySelectorAll('[data-filter]').forEach(el => {
+		let k = el.getAttribute('data-filter') + '-' + el.getAttribute('data-filter-type');
+		if (typeof values[k] !== 'undefined')
+			promises.push(el.setValue(values[k], false));
+		else
+			promises.push(el.setValue(null, false));
+	});
+	return Promise.all(promises);
 }
 
 function checkBeforePageChange() {
@@ -1178,7 +1199,7 @@ function switchFiltersForm(origin) {
 	}
 }
 
-async function search(page = 1, history_push = true) {
+async function search(page = 1, sortedBy = null, history_push = true) {
 	let request = currentAdminPage.split('/');
 
 	let filters = [];
@@ -1225,9 +1246,13 @@ async function search(page = 1, history_push = true) {
 		</div>
 		<div id="main-visualizer-cont"></div>`;
 
-	let sortedBy = [];
-	if (typeof visualizers[request[0]] !== 'undefined')
-		sortedBy = visualizers[request[0]].getSorting();
+	if (sortedBy === null) {
+		if (typeof visualizers[request[0]] !== 'undefined')
+			sortedBy = visualizers[request[0]].getSorting();
+		else
+			sortedBy = [];
+	}
+
 	visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), true, currentPageDetails);
 	visualizers[request[0]].setSorting(sortedBy);
 	payload['sort-by'] = sortedBy;
@@ -1239,7 +1264,8 @@ async function search(page = 1, history_push = true) {
 	let state = {
 		'request': request.join('/'),
 		'filters': filtersValues,
-		'p': page
+		'p': page,
+		'sort-by': sortedBy
 	};
 
 	if (history_push) {
