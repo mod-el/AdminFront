@@ -1148,9 +1148,15 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
 		_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
-		let breadcrumbs = getBreadcrumbs(request[0]);
 		_('breadcrumbs').style.display = 'block';
-		_('breadcrumbs').innerHTML = breadcrumbs.join(' -&gt; ');
+		_('breadcrumbs').innerHTML = '';
+
+		let breadcrumbs = getBreadcrumbs(request[0]);
+		breadcrumbs.forEach((link, idx) => {
+			if (idx !== 0)
+				_('breadcrumbs').appendChild(document.createTextNode(' -> '));
+			_('breadcrumbs').appendChild(link);
+		});
 
 		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
 		if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0) {
@@ -1210,15 +1216,25 @@ function getPaginationHtml(tot_pages, current) {
 }
 
 function getBreadcrumbs(page) {
-	let defaultBreadcrumbs = ['<a href="' + adminPrefix + '" onclick="loadAdminPage(\'\'); return false">Home</a>'];
+	let breadcrumbsRoot = document.createElement('a');
+	breadcrumbsRoot.setAttribute('href', adminPrefix);
+	breadcrumbsRoot.addEventListener('click', function (event) {
+		event.preventDefault();
+		loadAdminPage('');
+		return false;
+	});
+	breadcrumbsRoot.innerHTML = 'Home';
+
+	let defaultBreadcrumbs = [breadcrumbsRoot];
 	let breadcrumbs = searchPageForBreadcrumbs(page, mainMenu, defaultBreadcrumbs);
 	return breadcrumbs ? breadcrumbs : defaultBreadcrumbs;
 }
 
-function searchPageForBreadcrumbs(page, pages, breadcrumbs) {
+function searchPageForBreadcrumbs(page, pages, breadcrumbs, parentIdx) {
 	let found = false;
 	pages.some((menuPage, idx) => {
-		let pageData = getLinkFromPage(menuPage, idx);
+		let fullIdx = typeof parentIdx === 'undefined' ? idx : parentIdx + '-' + idx;
+		let pageData = getLinkFromPage(menuPage, fullIdx);
 
 		let a = document.createElement('a');
 		a.innerHTML = menuPage.name;
@@ -1227,14 +1243,14 @@ function searchPageForBreadcrumbs(page, pages, breadcrumbs) {
 			a.addEventListener('click', pageData.click);
 
 		let temp = [...breadcrumbs];
-		temp.push(a.outerHTML);
+		temp.push(a);
 
 		if (menuPage.path === page) {
 			found = temp;
 			return true;
 		} else {
 			if (menuPage.sub.length > 0) {
-				found = searchPageForBreadcrumbs(page, menuPage.sub, temp);
+				found = searchPageForBreadcrumbs(page, menuPage.sub, temp, fullIdx);
 				if (found)
 					return true;
 			}
