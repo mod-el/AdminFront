@@ -358,7 +358,7 @@ class AdminFront extends Module
 	/**
 	 * Sends a JSON with the page aids for the current page
 	 */
-	public function pageAids()
+	public function pageAids() // TODO: to be removed
 	{
 		$request = array_filter([
 			$this->model->_AdminFront->request[0],

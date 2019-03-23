@@ -1,3 +1,4 @@
+var mainMenu = null;
 var sId = null;
 var firstLoad = true;
 var currentAdminPage = false;
@@ -10,7 +11,6 @@ var selectedRows = [];
 var currentPage = 1;
 var searchCounter = 0;
 var pageLoadingHash = '';
-var aidsLoadingHash = '';
 var isInLoginPage = false;
 var adminApiToken = null;
 
@@ -106,15 +106,11 @@ function adminInit() {
 		if (!r)
 			return false;
 
-		let menuRequest = adminApiRequest('pages').then(r => buildMenu(r));
-
-		return Promise.all([
-			menuRequest
-		]);
-	}).then(r => {
-		if (!r)
-			return;
-
+		return adminApiRequest('pages').then(r => {
+			mainMenu = r;
+			return buildMenu(r);
+		});
+	}).then(() => {
 		let request = currentAdminPage.split('/');
 
 		let get = objectFromQueryString();
@@ -167,7 +163,7 @@ function adminInit() {
 				}
 			});
 		});
-	});
+	}).catch(err => alert(err));
 }
 
 function checkUserToken() {
@@ -402,13 +398,13 @@ function resize(menu = true) {
 	if (!_('main-grid') || !_('main-menu'))
 		return;
 
-	var hHeight = _('header').offsetHeight;
+	let hHeight = _('header').offsetHeight;
 	_('main-grid').style.height = 'calc(100% - ' + (hHeight + 4) + 'px)';
-	var tHeight = _('toolbar').offsetHeight;
+	let tHeight = _('toolbar').offsetHeight;
 	_('main-page').style.height = 'calc(100% - ' + tHeight + 'px)';
 
 	if (menu) {
-		var hideMenu = _('main-menu').getAttribute('data-hide');
+		let hideMenu = _('main-menu').getAttribute('data-hide');
 		switch (hideMenu) {
 			case 'always':
 				if ((lastPosition = localStorage.getItem('sidenav-open-menu')) !== null) {
@@ -429,25 +425,25 @@ function resize(menu = true) {
 		}
 	}
 
-	var table = _('results-table');
+	let table = _('results-table');
 	if (table) {
-		var sub_h = _('breadcrumbs').offsetHeight + _('#main-content > div:first-of-type').offsetHeight + _('table-headings').offsetHeight + 10;
+		let sub_h = _('breadcrumbs').offsetHeight + _('#main-content > div:first-of-type').offsetHeight + _('table-headings').offsetHeight + 10;
 		table.style.height = (_('main-page').offsetHeight - sub_h) + 'px';
 	}
 
-	var topForm = _('topForm');
+	let topForm = _('topForm');
 	if (topForm) {
 		if (window.innerWidth < 800) {
-			var filtersFormCont = _('filtersFormCont');
+			let filtersFormCont = _('filtersFormCont');
 			if (topForm.parentNode !== filtersFormCont.parentNode)
 				filtersFormCont.parentNode.insertBefore(topForm, filtersFormCont);
 			topForm.style.width = '100%';
 		} else {
-			var toolbar = _('toolbar');
+			let toolbar = _('toolbar');
 			if (topForm.parentNode !== toolbar)
 				toolbar.appendChild(topForm);
 
-			var w = toolbar.clientWidth - 12;
+			let w = toolbar.clientWidth - 12;
 			toolbar.querySelectorAll('.toolbar-button').forEach(function (button) {
 				w -= button.offsetWidth;
 			});
@@ -590,7 +586,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto] (fare breadcrumbs; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Lanciare una richiesta search [fatto] (fare breadcrumbs, dashboard, totali a fondo pagina; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 		// Elaborare e mostrare i risultati
 
 		if (sessionStorage.getItem('current-page') !== request[0])
@@ -900,148 +896,6 @@ function addPageAction(name, action) {
 	_('toolbar').appendChild(button);
 }
 
-/*
- Loads the page aids, like breadcrumbs and toolbar buttons
- */
-function loadPageAids(request, get = {}) {
-	if (!_('toolbar'))
-		return new Promise(resolve => resolve());
-
-	if (sId !== null)
-		get['sId'] = sId;
-	if (typeof request[1] !== 'undefined')
-		get['action'] = request[1];
-	if (typeof request[2] !== 'undefined')
-		get['id'] = request[2];
-
-	_('toolbar').innerHTML = '';
-	_('breadcrumbs').innerHTML = '';
-	if (form = _('filtersFormCont'))
-		form.innerHTML = '';
-
-	if (typeof request[0] === 'undefined' || !request[0]) {
-		_('toolbar').style.display = 'none';
-		return new Promise(resolve => resolve());
-	}
-
-	aidsLoadingHash = request.join(',') + JSON.stringify(get);
-
-	get['ajax'] = '';
-	return ajax(adminPrefix + request[0] + '/pageAids', get).then((function (hash) {
-		return function (aids) {
-			if (typeof aids !== 'object')
-				return false;
-			if (aidsLoadingHash !== hash)
-				return false;
-
-			sId = aids.sId;
-
-			if (history.replaceState) {
-				let url = document.location.href.replace(document.location.search, '');
-				if (url.substr(-1) === '?')
-					url = url.substr(0, -1);
-
-				let queryString = objectFromQueryString();
-				queryString['sId'] = sId;
-
-				history.replaceState({
-					'request': currentAdminPage,
-					'sId': sId,
-					'p': currentPage
-				}, '', url + '?' + queryStringFromObject(queryString));
-			}
-
-			let toolbar = _('toolbar');
-
-			if (aids.actions.length === 0) {
-				toolbar.style.display = 'none';
-			} else {
-				toolbar.style.display = 'block';
-
-				aids.actions.forEach(function (act) {
-					var button = document.createElement('a');
-					button.className = 'toolbar-button';
-					button.id = 'toolbar-button-' + act.id;
-					button.href = act.url;
-					button.setAttribute('onclick', act.action);
-					if (act.icon)
-						button.innerHTML = '<img src="' + act.icon + '" alt="" onload="resize()" /> ';
-					if (act['fa-icon'])
-						button.innerHTML = '<i class="' + act['fa-icon'] + '" aria-hidden="true"></i> ';
-					button.innerHTML += act.text;
-					toolbar.appendChild(button);
-				});
-			}
-
-			if (aids.breadcrumbs) {
-				_('breadcrumbs').style.display = 'block';
-				_('breadcrumbs').innerHTML = aids.breadcrumbs;
-			} else {
-				_('breadcrumbs').style.display = 'none';
-			}
-
-			if (topForm = _('topForm'))
-				topForm.parentNode.removeChild(topForm);
-			if (lightboxForm = _('filtersFormCont'))
-				lightboxForm.innerHTML = '';
-
-			if (typeof aids.topForm !== 'undefined') {
-				let form = document.createElement('form');
-				form.id = 'topForm';
-				form.setAttribute('onsubmit', 'return false');
-				form.innerHTML = aids.topForm;
-				toolbar.appendChild(form);
-			}
-
-			if (typeof aids.filtersForm !== 'undefined') {
-				if (lightboxForm)
-					lightboxForm.innerHTML += aids.filtersForm;
-			}
-
-			resize();
-
-			document.querySelectorAll('[data-filter]').forEach(function (el) {
-				switch (el.nodeName.toLowerCase()) {
-					case 'input':
-					case 'textarea':
-						switch (el.type.toLowerCase()) {
-							case 'checkbox':
-							case 'radio':
-							case 'hidden':
-							case 'date':
-								el.addEventListener('change', function () {
-									search();
-								});
-								break;
-							default:
-								el.addEventListener('keyup', function (event) {
-									if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
-										return false;
-
-									searchCounter++;
-									setTimeout((function (c) {
-										return function () {
-											if (c === searchCounter)
-												search();
-										}
-									})(searchCounter), 400);
-								});
-								break;
-						}
-						break;
-					default:
-						el.addEventListener('change', function () {
-							search();
-						});
-						break;
-				}
-			});
-
-			return aids;
-		}
-	})(aidsLoadingHash));
-}
-
 document.addEventListener('mousemove', event => {
 	let coords = getMouseCoords(event);
 	if (menuResizing !== false) {
@@ -1294,8 +1148,9 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
 		_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
-		_('breadcrumbs').style.display = 'block'; // TODO: temporary
-		_('breadcrumbs').innerHTML = '<a>Home</a>';
+		let breadcrumbs = getBreadcrumbs(request[0]);
+		_('breadcrumbs').style.display = 'block';
+		_('breadcrumbs').innerHTML = breadcrumbs.join(' -&gt; ');
 
 		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
 		if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0) {
@@ -1354,6 +1209,44 @@ function getPaginationHtml(tot_pages, current) {
 	return html.join(' ');
 }
 
+function getBreadcrumbs(page) {
+	let defaultBreadcrumbs = ['<a href="' + adminPrefix + '" onclick="loadAdminPage(\'\'); return false">Home</a>'];
+	let breadcrumbs = searchPageForBreadcrumbs(page, mainMenu, defaultBreadcrumbs);
+	return breadcrumbs ? breadcrumbs : defaultBreadcrumbs;
+}
+
+function searchPageForBreadcrumbs(page, pages, breadcrumbs) {
+	let found = false;
+	pages.some((menuPage, idx) => {
+		let pageData = getLinkFromPage(menuPage, idx);
+
+		let a = document.createElement('a');
+		a.innerHTML = menuPage.name;
+		a.setAttribute('href', pageData.link);
+		if (pageData.click)
+			a.addEventListener('click', pageData.click);
+
+		let temp = [...breadcrumbs];
+		temp.push(a.outerHTML);
+
+		if (menuPage.path === page) {
+			found = temp;
+			return true;
+		} else {
+			if (menuPage.sub.length > 0) {
+				found = searchPageForBreadcrumbs(page, menuPage.sub, temp);
+				if (found)
+					return true;
+			}
+		}
+		return false;
+	});
+
+	if (found)
+		return found;
+	else
+		return false;
+}
 
 function filtersReset() {
 	let promises = [];
