@@ -590,7 +590,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto] (fare breadcrumbs e "tutti su una pagina"; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Lanciare una richiesta search [fatto] (fare breadcrumbs; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 		// Elaborare e mostrare i risultati
 
 		if (sessionStorage.getItem('current-page') !== request[0])
@@ -636,7 +636,9 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 				let full_url = request.join('/');
 
-				if (typeof get['p'] !== 'undefined') {
+				if (typeof get['nopag'] !== 'undefined') {
+					currentPage = null;
+				} else if (typeof get['p'] !== 'undefined') {
 					currentPage = parseInt(get['p']);
 					if (isNaN(currentPage) || currentPage < 1)
 						currentPage = 1;
@@ -1114,6 +1116,10 @@ async function goToPage(p, sortBy, history_push = true) {
 	});
 }
 
+async function allInOnePage() {
+	return search(null);
+}
+
 var lightboxOldParent = false;
 
 function toolsLightbox(id, options) {
@@ -1223,9 +1229,14 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 
 	let payload = {
 		'search': searchValue,
-		'filters': filters,
-		'page': page
+		'filters': filters
 	};
+
+	if (page === null) {
+		payload['per-page'] = 0;
+	} else {
+		payload['page'] = page;
+	}
 
 	let searchFields = await getSearchFieldsFromStorage();
 	if (searchFields.length > 0)
@@ -1233,7 +1244,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 
 	_('main-content').innerHTML = `<div class="px-3 no-overflow">
 			<div id="results-table-count">
-				<div>Loading...</div>
+				<div><img src="` + PATH + `model/Output/files/loading.gif" alt="" /></div>
 			</div>
 			<div id="results-table-pages"></div>
 		</div>
@@ -1262,12 +1273,19 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 			'sort-by': sortedBy
 		};
 
+		let get;
+		if (page === null) {
+			get = 'nopag=1';
+		} else {
+			get = 'p=' + page;
+		}
+
 		if (typeof history_push === 'string' && history_push === 'replace') {
 			if (history.replaceState)
-				history.replaceState(state, '', adminPrefix + request.join('/') + '?p=' + page);
+				history.replaceState(state, '', adminPrefix + request.join('/') + '?' + get);
 		} else {
 			if (history.pushState)
-				history.pushState(state, '', adminPrefix + request.join('/') + '?p=' + page);
+				history.pushState(state, '', adminPrefix + request.join('/') + '?' + get);
 		}
 	}
 
@@ -1279,7 +1297,13 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 		_('breadcrumbs').style.display = 'block'; // TODO: temporary
 		_('breadcrumbs').innerHTML = '<a>Home</a>';
 
-		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div><span class="nowrap">[<a href="?nopag=1" onclick="allInOnePage(); return false"> tutti su una pagina </a>]</span>';
+		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
+		if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0) {
+			_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?p=1" onclick="goToPage(1); return false"> ritorna alla paginazione </a>]</span>';
+		} else {
+			_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
+		}
+
 		return visualizers[request[0]].render(response.list).then(() => {
 			_('main-loading').style.display = 'none';
 			return changedHtml();
@@ -1310,6 +1334,9 @@ function getPaginationHtml(tot_pages, current) {
 		pages.push({'text': '&gt;', 'p': current + 1, 'current': false, 'special': true});
 		pages.push({'text': 'Fine', 'p': tot_pages, 'current': false, 'special': true});
 	}
+
+	if (pages.length === 1)
+		return '';
 
 	let html = [];
 	pages.forEach(p => {
@@ -2049,13 +2076,6 @@ function inPageMessage(text, className) {
 	div.className = className;
 	div.innerHTML = text;
 	_('main-content').insertBefore(div, _('main-content').firstChild);
-}
-
-function allInOnePage() {
-	return loadAdminPage(currentAdminPage.split('/')[0], {
-		'sId': sId,
-		'nopag': 1
-	});
 }
 
 function setLoadingBar(percentage) {
