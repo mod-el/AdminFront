@@ -291,7 +291,7 @@ window.onpopstate = function (event) {
 
 			fillFiltersValues(s['filters']).then(() => {
 				if (typeof s['p'] !== 'undefined' && s['p'] !== currentPage) {
-					goToPage(s['p'], false);
+					goToPage(s['p'], s['sort-by'], false);
 				} else {
 					search(currentPage, s['sort-by'], false);
 				}
@@ -590,7 +590,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto] (fare breadcrumbs, paginazione e "tutti su una pagina"; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Lanciare una richiesta search [fatto] (fare breadcrumbs e "tutti su una pagina"; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 		// Elaborare e mostrare i risultati
 
 		if (sessionStorage.getItem('current-page') !== request[0])
@@ -1069,7 +1069,7 @@ document.addEventListener('mouseup', event => {
 	}
 });
 
-async function goToPage(p, history_push = true) {
+async function goToPage(p, sortBy, history_push = true) {
 	let mainContentDiv = _('main-content');
 
 	let moveBy = mainContentDiv.offsetWidth + 50;
@@ -1096,7 +1096,7 @@ async function goToPage(p, history_push = true) {
 		return true;
 	});
 
-	let pageLoad = search(p, null, history_push);
+	let pageLoad = search(p, sortBy, history_push);
 
 	return Promise.all([pageMove, pageLoad]).then(() => {
 		_('main-content').style.display = 'block';
@@ -1254,14 +1254,14 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	if (columns !== null)
 		payload['fields'] = columns;
 
-	let state = {
-		'request': request.join('/'),
-		'filters': filtersValues,
-		'p': page,
-		'sort-by': sortedBy
-	};
-
 	if (history_push) {
+		let state = {
+			'request': request.join('/'),
+			'filters': filtersValues,
+			'p': page,
+			'sort-by': sortedBy
+		};
+
 		if (typeof history_push === 'string' && history_push === 'replace') {
 			if (history.replaceState)
 				history.replaceState(state, '', adminPrefix + request.join('/') + '?p=' + page);
@@ -1271,9 +1271,10 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 		}
 	}
 
+	currentPage = page;
+
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
-		let pagination = 'FARE PAGINAZIONE'; // TODO: paginazione, con funzione già pronta goToPage
-		_('results-table-pages').innerHTML = pagination;
+		_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
 		_('breadcrumbs').style.display = 'block'; // TODO: temporary
 		_('breadcrumbs').innerHTML = '<a>Home</a>';
@@ -1285,6 +1286,47 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 		});
 	}).catch(error => alert(error));
 }
+
+function getPaginationHtml(tot_pages, current) {
+	let start = current - 9;
+	if (start < 1)
+		start = 1;
+	let end = current + 9;
+	if (end > tot_pages)
+		end = tot_pages;
+
+	let pages = [];
+
+	if (current > 1) {
+		pages.push({'text': 'Inizio', 'p': 1, 'current': false, 'special': true});
+		pages.push({'text': '&lt;', 'p': current - 1, 'current': false, 'special': true});
+	}
+
+	for (let p = start; p <= end; p++) {
+		pages.push({'text': p, 'p': p, 'current': p === current, 'special': false});
+	}
+
+	if (current < tot_pages) {
+		pages.push({'text': '&gt;', 'p': current + 1, 'current': false, 'special': true});
+		pages.push({'text': 'Fine', 'p': tot_pages, 'current': false, 'special': true});
+	}
+
+	let html = [];
+	pages.forEach(p => {
+		if (p.current) {
+			html.push('<span class="zkpag-on">' + p.text + '</span>');
+		} else {
+			let className = 'zkpag-off';
+			if (p.special)
+				className = 'zkpag-special';
+
+			html.push('<a href="?p=' + p.p + '" onclick="goToPage(' + p.p + '); return false" class="' + className + '">' + p.text + '</a>');
+		}
+	});
+
+	return html.join(' ');
+}
+
 
 function filtersReset() {
 	let promises = [];
