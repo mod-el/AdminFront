@@ -76,63 +76,7 @@
 			<td><input name="stringaLogin2" value="<?= entities($config['stringaLogin2']) ?>"/></td>
 		</tr>
 	</table>
-	<?php
-	if (empty($config['url'])) {
-		?>
-		<hr/>
-		<table>
-			<tr>
-				<td>
-					Path<br/> <input type="text" name="path" value="admin"/>
-				</td>
-				<td>
-					Users Table<br/> <input type="text" name="table" value="admin_users"/>
-				</td>
-			</tr>
-			<tr>
-				<td class="label"></td>
-				<td class="field">
-					<input type="checkbox" name="make-users-table" id="utenti" checked/>
-					<label for="utenti">Create users table</label>
-				</td>
-			</tr>
 
-			<tr>
-				<td class="label"></td>
-				<td class="field">
-					<input type="checkbox" name="make-account" id="account" checked/>
-					<label for="account">Create first account</label>
-				</td>
-			</tr>
-
-			<?php
-			$defaults = [
-				'username' => 'admin',
-				'password' => 'admin',
-			];
-			?>
-			<tr>
-				<td class="label">Username</td>
-				<td class="field">
-					<input type="text" name="username" value="<?= $defaults['username'] ?>"/>
-				</td>
-			</tr>
-			<tr>
-				<td class="label">Password</td>
-				<td class="field">
-					<input type="password" name="password" value="<?= $defaults['password'] ?>"/>
-				</td>
-			</tr>
-			<tr>
-				<td class="label">Repeat password</td>
-				<td class="field">
-					<input type="password" name="repassword" value="<?= $defaults['password'] ?>"/>
-				</td>
-			</tr>
-		</table>
-		<?php
-	}
-	?>
 	<p style="padding: 10px 0; text-align: center">
 		<input type="submit" value="Send"/>
 	</p>
