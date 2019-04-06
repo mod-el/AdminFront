@@ -82,19 +82,20 @@ class AdminFront extends Module
 	public function getController(array $request, string $rule): ?array
 	{
 		$config = $this->retrieveConfig();
+		$paths = $this->model->_Admin->getAdminPaths();
 
 		if (substr($rule, 0, 2) === 'sw') {
-			$this->url = $config['url'][substr($rule, 2)]['path'];
+			$this->url = $paths[substr($rule, 2)]['path'];
 
 			return [
 				'controller' => 'AdminServiceWorker',
 			];
 		}
 
-		if (!isset($config['url'][$rule]) or (!empty($config['url'][$rule]['path']) and strpos(implode('/', $request), $config['url'][$rule]['path']) !== 0))
+		if (!isset($paths[$rule]) or (!empty($paths[$rule]['path']) and strpos(implode('/', $request), $paths[$rule]['path']) !== 0))
 			return null;
 
-		$this->url = $config['url'][$rule]['path'];
+		$this->url = $paths[$rule]['path'];
 
 		$realRequest = $this->getAdminRequest($request, $this->url);
 		if ($realRequest === false)
