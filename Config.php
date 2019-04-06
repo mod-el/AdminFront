@@ -150,28 +150,8 @@ $config = ' . var_export($config, true) . ';
 		if ($data === null)
 			return false;
 
-		if (isset($data['template'])) {
-			if (isset($data['make-account']) and $data['password'] != $data['repassword']) {
-				$this->model->error('The passwords do not match');
-			} else {
-				if ($this->saveConfig('init', $data)) {
-					if (isset($data['make-users-table'])) {
-						$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `' . $data['table'] . '` (
-						  `id` int(11) NOT NULL AUTO_INCREMENT,
-						  `username` varchar(250) NOT NULL,
-						  `password` varchar(250) NOT NULL,
-						  PRIMARY KEY (`id`)
-						) ENGINE=InnoDB DEFAULT CHARSET=utf8;');
-					}
-					if (isset($data['make-account']))
-						$this->model->_Db->query('INSERT INTO `' . $data['table'] . '`(username,password) VALUES(' . $this->model->_Db->quote($data['username']) . ',' . $this->model->_Db->quote(password_hash($data['password'], PASSWORD_DEFAULT)) . ')');
-
-					return true;
-				} else {
-					$this->model->error('Error while saving config data');
-				}
-			}
-		}
+		if (isset($data['template']))
+			return $this->saveConfig('init', $data);
 
 		return false;
 	}
