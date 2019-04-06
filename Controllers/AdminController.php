@@ -171,6 +171,7 @@ class AdminController extends Controller
 							if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
 								array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
 
+							$this->model->viewOptions['warnings'] = $this->model->_Admin->page->warnings($this->model->element);
 							if (isset($_GET['duplicated']))
 								$this->model->viewOptions['messages'] = ['Succesfully duplicated!'];
 						}
