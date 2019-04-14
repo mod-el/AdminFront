@@ -320,7 +320,7 @@ function adminApiRequest(request, payload = {}) {
 		'Content-Type': 'application/json'
 	};
 	if (adminApiToken !== null)
-		headers['Authorization'] = 'Bearer ' + adminApiToken;
+		headers['X-Access-Token'] = adminApiToken;
 
 	return ajax(adminApiPath + request, {}, payload, {
 		'fullResponse': true,
@@ -1968,7 +1968,7 @@ async function save() {
 				historyWipe();
 
 				return loadElement(request[0], r.id, {}, history_push).then(() => {
-					inPageMessage('Salvataggio correttamente effettuato.', 'success');
+					inPageMessage('Salvataggio correttamente effettuato.', 'green-message');
 					return r.id;
 				});
 			} else if (typeof r.err !== 'undefined') {
@@ -1982,9 +1982,8 @@ async function save() {
 
 function inPageMessage(text, className) {
 	let div = document.createElement('div');
-	div.className = 'alert alert-' + className + ' alert-dismissible fade show';
-	div.setAttribute('role', 'alert');
-	div.innerHTML = text + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+	div.className = className;
+	div.innerHTML = text;
 	_('main-content').insertBefore(div, _('main-content').firstChild);
 }
 
