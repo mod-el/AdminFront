@@ -91,7 +91,7 @@ function saveFormList() {
 			}
 			if (r.status === 'ok') {
 				return reloadResultsTable().then(() => {
-					inPageMessage('Salvataggio correttamente effettuato.', 'green-message');
+					inPageMessage('Salvataggio correttamente effettuato.', 'success');
 				});
 			} else if (typeof r.err !== 'undefined') {
 				alert(r.err);
