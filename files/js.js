@@ -2152,7 +2152,7 @@ async function getUserCustomization(k) {
 		'k': k
 	}, {}, {
 		'headers': {
-			'Authorization': 'Bearer ' + adminApiToken
+			'X-Access-Token': adminApiToken
 		}
 	}).then(r => {
 		if (typeof r !== 'object')
@@ -2196,7 +2196,7 @@ async function saveUserCustomization(k, v) {
 					'v': JSON.stringify(v),
 				}, {
 					'headers': {
-						'Authorization': 'Bearer ' + adminApiToken
+						'X-Access-Token': adminApiToken
 					}
 				}).then(r => {
 					if (r !== 'ok')
@@ -2214,7 +2214,7 @@ async function deleteUserCustomization(k) {
 	}, {}, {
 		'method': 'POST',
 		'headers': {
-			'Authorization': 'Bearer ' + adminApiToken
+			'X-Access-Token': adminApiToken
 		}
 	}).then(r => {
 		if (r !== 'ok')
