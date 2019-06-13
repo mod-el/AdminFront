@@ -139,18 +139,16 @@ function adminRowDragged(element, target) {
 function selectRow(id, enable) {
 	let k = selectedRows.indexOf(id);
 	if (k !== -1) {
-		if (!enable) {
+		if (!enable)
 			selectedRows.splice(k, 1);
-		}
 	} else {
-		if (enable) {
+		if (enable)
 			selectedRows.push(id);
-		}
 	}
 }
 
-function selectAllRows(enable) {
-	_('results-table').querySelectorAll('[id^="row-checkbox-"]').forEach(function (checkbox) {
+function selectAllRows(id, enable) {
+	_('.results-table[data-table="' + id + '"]').querySelectorAll('[id^="row-checkbox-"]').forEach(checkbox => {
 		checkbox.setValue(enable);
 	});
 }

@@ -22,7 +22,7 @@ class Table {
 		let checkboxTd = subHead.appendChild(document.createElement('div'));
 		checkboxTd.className = 'special-cell';
 		checkboxTd.style.padding = '0 5px';
-		checkboxTd.innerHTML = '<input type="checkbox" onchange="if(this.checked) selectAllRows(1); else selectAllRows(0)"/>';
+		checkboxTd.innerHTML = '<input type="checkbox" onchange="if(this.checked) selectAllRows(\''+this.id+'\', 1); else selectAllRows(\''+this.id+'\', 0)"/>';
 
 		let deleteTd = subHead.appendChild(document.createElement('div')); // TODO: renderlo visibile solo se c'è almeno una X
 		deleteTd.className = 'special-cell';

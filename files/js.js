@@ -173,8 +173,7 @@ function checkUserToken() {
 	unloadLoginPage();
 
 	return adminApiRequest('user/auth').then(r => {
-		if (_('header-username').innerHTML.trim() === '')
-			document.location.reload();
+		_('header-username').innerHTML = r.username;
 		model_notifications_user = r.id;
 		return r;
 	}).catch(err => {
