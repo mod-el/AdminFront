@@ -12,7 +12,7 @@ class Table {
 	}
 
 	// Standard visualizers method
-	async render(list) {
+	async render(list, totals) {
 		let head = document.createElement('div');
 		head.className = 'table-head';
 		head.setAttribute('data-table', this.id);
@@ -22,7 +22,7 @@ class Table {
 		let checkboxTd = subHead.appendChild(document.createElement('div'));
 		checkboxTd.className = 'special-cell';
 		checkboxTd.style.padding = '0 5px';
-		checkboxTd.innerHTML = '<input type="checkbox" onchange="if(this.checked) selectAllRows(\''+this.id+'\', 1); else selectAllRows(\''+this.id+'\', 0)"/>';
+		checkboxTd.innerHTML = '<input type="checkbox" onchange="if(this.checked) selectAllRows(\'' + this.id + '\', 1); else selectAllRows(\'' + this.id + '\', 0)"/>';
 
 		let deleteTd = subHead.appendChild(document.createElement('div')); // TODO: renderlo visibile solo se c'è almeno una X
 		deleteTd.className = 'special-cell';
@@ -206,6 +206,11 @@ class Table {
 			checkboxCell = checkboxCell.appendChild(document.createElement('div'));
 			checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
 
+			if (this.main) {
+				if (selectedRows.indexOf(item.id) !== -1)
+					checkboxCell.querySelector('input').checked = true;
+			}
+
 			let deleteCell = innerRow.appendChild(document.createElement('div'));
 			deleteCell.className = 'special-cell';
 			deleteCell.addEventListener('mousedown', event => {
@@ -254,6 +259,50 @@ class Table {
 
 			rowCount++;
 		});
+
+		if (Object.keys(totals).length > 0) {
+			let row = bodyMain.appendChild(document.createElement('div'));
+			row.className = 'results-table-row-cont';
+
+			let innerRow = row.appendChild(document.createElement('div'));
+			innerRow.className = 'results-table-row';
+
+			let textDivCont = innerRow.appendChild(document.createElement('div'));
+			textDivCont.style.width = '60px';
+
+			let textDiv = textDivCont.appendChild(document.createElement('div'));
+			textDiv.className = 'bold text-right';
+			textDiv.innerHTML = 'Totali:';
+
+			let firstFound = false;
+
+			columns.forEach(fieldName => {
+				let field = this.options['fields'][fieldName];
+
+				let width = 150;
+				if (typeof widths[fieldName] !== 'undefined')
+					width = widths[fieldName];
+
+				if (typeof totals[fieldName] !== 'undefined' || firstFound) {
+					let div = innerRow.appendChild(document.createElement('div'));
+					div.style.width = width + 'px';
+					div.setAttribute('data-column', fieldName);
+
+					let innerDiv = div.appendChild(document.createElement('div'));
+
+					firstFound = true;
+
+					if (typeof totals[fieldName] !== 'undefined') {
+						if (field.price)
+							innerDiv.innerHTML = makePrice(totals[fieldName]);
+						else
+							innerDiv.innerHTML = entities(totals[fieldName]);
+					}
+				} else if (!firstFound) {
+					textDivCont.style.width = (parseInt(textDivCont.style.width) + width) + 'px';
+				}
+			});
+		}
 
 		this.container.appendChild(body);
 	}

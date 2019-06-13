@@ -425,7 +425,7 @@ function resize(menu = true) {
 		}
 	}
 
-	let table = _('results-table');
+	let table = _('.results-table');
 	if (table) {
 		let sub_h = _('breadcrumbs').offsetHeight + _('#main-content > div:first-of-type').offsetHeight + _('table-headings').offsetHeight + 10;
 		table.style.height = (_('main-page').offsetHeight - sub_h) + 'px';
@@ -526,8 +526,6 @@ function loadPage(url, get = {}, post = {}, deleteContent = true) {
 				resetAllInstantSearches();
 
 			resize();
-			if (_('results-table'))
-				tableEvents();
 			return changedHtml().then(() => {
 				return response;
 			});
@@ -566,7 +564,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 				resolve();
 			});
 		}
-	}).then(() => {
+	}).then(async () => {
 		let loadingPromises = [];
 
 		runtimeLoadedCss.forEach(file => {
@@ -586,7 +584,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
 		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto] (fare breadcrumbs, dashboard, totali a fondo pagina; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Lanciare una richiesta search [fatto] (fare breadcrumbs, dashboard; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 		// Elaborare e mostrare i risultati
 
 		if (sessionStorage.getItem('current-page') !== request[0])
@@ -612,7 +610,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 					'action': 'switchFiltersForm(this)',
 				});
 
-				rebuildFilters();
+				await rebuildFilters();
 
 				// ==== Load visualizer files ====
 
@@ -1165,7 +1163,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 			_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
 		}
 
-		return visualizers[request[0]].render(response.list).then(() => {
+		return visualizers[request[0]].render(response.list, response.totals).then(() => {
 			_('main-loading').style.display = 'none';
 			return changedHtml();
 		});
@@ -2223,4 +2221,16 @@ async function deleteUserCustomization(k) {
 		if (typeof userCustomizationsCache[k] !== 'undefined')
 			delete userCustomizationsCache[k];
 	});
+}
+
+function selectRow(id, enable) {
+	id = parseInt(id);
+	let k = selectedRows.indexOf(id);
+	if (k !== -1) {
+		if (!enable)
+			selectedRows.splice(k, 1);
+	} else {
+		if (enable)
+			selectedRows.push(id);
+	}
 }

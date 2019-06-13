@@ -1,34 +1,3 @@
-function tableEvents() {
-	let table = _('results-table');
-
-	/*table.addEventListener('scroll', function () {
-		let intest = _('table-headings');
-		if (this.scrollLeft > (intest.scrollWidth - intest.clientWidth))
-			this.scrollLeft = intest.scrollWidth - intest.clientWidth;
-		intest.scrollLeft = this.scrollLeft;
-	});*/
-
-	table.querySelectorAll('[id^="row-checkbox-"]').forEach(function (checkbox) {
-		if (selectedRows.indexOf(checkbox.dataset.id) !== -1)
-			checkbox.setValue(1, false);
-	});
-
-	/*table.querySelectorAll('.results-table-row').forEach(function (row) {
-		if (!row.parentNode.parentNode.hasAttribute('data-draggable-cont')) {
-			row.addEventListener('click', function (event) {
-				if (event.button === 0) {
-					adminRowClicked(row);
-				}
-			});
-		}
-	});*/
-
-	if (_('sortedBy'))
-		sortedBy = JSON.parse(_('sortedBy').getValue(true));
-	if (_('currentPage'))
-		currentPage = _('currentPage').getValue(true);
-}
-
 function instantSave(id, f, field) {
 	field.style.opacity = 0.2;
 	let v = field.getValue(true);
@@ -132,18 +101,6 @@ function adminRowDragged(element, target) {
 				reloadResultsTable();
 			}
 		});
-	}
-}
-
-
-function selectRow(id, enable) {
-	let k = selectedRows.indexOf(id);
-	if (k !== -1) {
-		if (!enable)
-			selectedRows.splice(k, 1);
-	} else {
-		if (enable)
-			selectedRows.push(id);
 	}
 }
 
