@@ -580,11 +580,11 @@ function loadAdminPage(request, get = {}, history_push = true) {
 		});
 
 		// TODO: rimuovere scritte sottostanti quando saranno fatte
-		// Se custom, caricare direttamente il template, altrimenti:
-
-		// Impostare i filtri iniziali (in base ai default O a quanto memorizzato nel browser) [fatto]
-		// Caricare js e css dell'apposito visualizer [fatto]
-		// Lanciare una richiesta search [fatto] (fare breadcrumbs, dashboard; ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+		// Se custom, caricare direttamente il template;
+		// Se custom, vedere come sistemare l'history del browser (che al momento viene updatata al search)
+		// Dashboard;
+		// Azioni custom nella toolbar (sia per pagine normali che custom)
+		// Ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 		// Elaborare e mostrare i risultati
 
 		if (sessionStorage.getItem('current-page') !== request[0])
@@ -621,15 +621,23 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		return Promise.all(loadingPromises);
 	}).then(() => {
+		currentAdminPage = request.join('/');
+		selectedRows = [];
+
+		selectFromMainMenu(request);
+
+		if (window.innerWidth < 800)
+			closeMenu();
+
+		clearMainPage();
+		historyWipe();
+
 		switch (currentPageDetails.type) {
 			case 'Custom':
 
 				break;
 			default:
-				// ==== Set variables ====
-
-				let full_url = request.join('/');
-
+				// ==== Set page variable ====
 				if (typeof get['nopag'] !== 'undefined') {
 					currentPage = null;
 				} else if (typeof get['p'] !== 'undefined') {
@@ -640,20 +648,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 					currentPage = 1;
 				}
 
-				clearMainPage();
-
-				selectFromMainMenu(request);
-
-				if (window.innerWidth < 800)
-					closeMenu();
-
-				selectedRows = [];
-				currentAdminPage = full_url;
-
-				historyWipe();
-
 				// ==== First search ====
-
 				return search(currentPage, null, history_push);
 				break;
 		}
