@@ -1526,16 +1526,18 @@ function loadElementData(page, id) {
 	return adminApiRequest('page/' + page + '/data/' + id);
 }
 
-function fillAdminForm(data) {
+function fillAdminForm(data, form = null) {
 	if (typeof data === 'undefined') {
 		data = dataCache;
 	} else {
 		dataCache = data;
 	}
 
-	if (!(form = _('adminForm'))) {
+	if (form === null)
+		form = _('adminForm');
+
+	if (!form)
 		throw 'Can\'t find main form';
-	}
 
 	return form.fill(data.data, false, 'filled').then(() => {
 		let promises = [];
