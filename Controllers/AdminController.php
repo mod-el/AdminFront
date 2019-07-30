@@ -108,23 +108,13 @@ class AdminController extends Controller
 							if (isset($_GET['csv'])) {
 								switch ($_GET['csv']) {
 									case 'popup':
-									case 'popup2':
 										include INCLUDE_PATH . 'model/AdminFront/templates/csv-popup.php';
 										break;
-									default:
-										$options['perPage'] = $_POST['rows-number'];
-										$options['p'] = $_GET['csv'];
-										$list = $this->model->_Admin->getList($options);
-										$csvBridge = new \Model\Csv\AdminBridge($this->model);
-
-										header('Content-Type: application/csv');
-										header('Content-Disposition: attachment; filename=list.csv');
-
-										$title = 'export';
-										if (isset($request[0]))
-											$title = $request[0];
+									case 'popup2':
+										include INCLUDE_PATH . 'model/AdminFront/templates/csv-popup.php';
 
 										$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
+										$title = $request[0] ?? 'export';
 										if (!is_dir($dir))
 											mkdir($dir, 0777, true);
 
@@ -135,6 +125,19 @@ class AdminController extends Controller
 												unlink($f);
 											}
 										}
+										break;
+									default:
+										$options['perPage'] = $_POST['rows-number'];
+										$options['p'] = $_GET['csv'];
+										$list = $this->model->_Admin->getList($options);
+										$csvBridge = new \Model\Csv\AdminBridge($this->model);
+
+										header('Content-Type: application/csv');
+										header('Content-Disposition: attachment; filename=list.csv');
+
+										$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
+										$title = $request[0] ?? 'export';
+
 										$n = 1;
 										while (file_exists($dir . DIRECTORY_SEPARATOR . $title . '-' . $n . '.csv'))
 											$n++;
