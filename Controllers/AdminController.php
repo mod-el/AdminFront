@@ -106,18 +106,53 @@ class AdminController extends Controller
 							$this->model->inject('visualizer', $visualizer);
 
 							if (isset($_GET['csv'])) {
-								$options['perPage'] = 0;
-								$options['p'] = 1;
-								$list = $this->model->_Admin->getList($options);
-								$csvBridge = new \Model\Csv\AdminBridge($this->model);
+								switch ($_GET['csv']) {
+									case 'popup':
+									case 'popup2':
+										include INCLUDE_PATH . 'model/AdminFront/templates/csv-popup.php';
+										break;
+									default:
+										$options['perPage'] = $_POST['rows-number'];
+										$options['p'] = $_GET['csv'];
+										$list = $this->model->_Admin->getList($options);
+										$csvBridge = new \Model\Csv\AdminBridge($this->model);
 
-								header('Content-Type: application/csv');
-								header('Content-Disposition: attachment; filename=list.csv');
+										header('Content-Type: application/csv');
+										header('Content-Disposition: attachment; filename=list.csv');
 
-								$csvBridge->export($list, $visualizer, [
-									'delimiter' => ';',
-									'charset' => 'ISO-8859-1',
-								]);
+										$title = 'export';
+										if (isset($request[0]))
+											$title = $request[0];
+
+										$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
+										if (!is_dir($dir))
+											mkdir($dir, 0777, true);
+
+										$files = glob($dir . DIRECTORY_SEPARATOR . '*');
+										foreach ($files as $f) {
+											$finfo = pathinfo($f);
+											if (stripos($finfo['filename'], $title) === 0) {
+												unlink($f);
+											}
+										}
+										$n = 1;
+										while (file_exists($dir . DIRECTORY_SEPARATOR . $title . '-' . $n . '.csv'))
+											$n++;
+
+										$filePath = 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv' . DIRECTORY_SEPARATOR . $title . '-' . $n . '.csv';
+
+										$csvBridge->export($list, $visualizer, [
+											'target' => INCLUDE_PATH . $filePath,
+											'delimiter' => ';',
+											'charset' => 'ISO-8859-1',
+										]);
+
+										return [
+											'name' => $title . '-' . $n,
+											'link' => PATH . 'model/AdminFront/data/temp-csv/' . $title . '-' . $n . '.csv',
+										];
+										break;
+								}
 								die();
 							}
 

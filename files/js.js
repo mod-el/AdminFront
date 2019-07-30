@@ -1730,3 +1730,20 @@ function getAdminCookiePath() {
 		return adminPrefix;
 	}
 }
+
+function checkForCsvExport(sId, rowsNumber) {
+	var div = document.querySelector('[data-csvpage][data-csvexecuted="0"]');
+	if (div) {
+		div.loading();
+		ajax(currentAdminPage, {'sId': sId, 'csv': div.getAttribute('data-csvpage')}, {'rows-number': rowsNumber}).then(r => {
+			if (typeof r === 'object') {
+				div.innerHTML = '[<a href="' + r.link + '" target="_blank"> ' + r.name + ' </a>]';
+				div.setAttribute('data-csvexecuted', '1');
+				checkForCsvExport(sId, rowsNumber);
+			} else {
+				div.innerHTML = 'Errore.';
+				alert(r);
+			}
+		});
+	}
+}

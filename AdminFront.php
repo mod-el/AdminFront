@@ -448,7 +448,7 @@ class AdminFront extends Module
 					'text' => 'CSV',
 					'fa-icon' => 'fab fa-wpforms',
 					'url' => '#',
-					'action' => 'window.open(\'' . $this->getUrlPrefix() . implode('/', $request) . '?sId=\'+sId+\'&csv\'); return false',
+					'action' => 'zkPopup({\'url\':\'' . $this->getUrlPrefix() . implode('/', $request) . '\',\'get\':{\'sId\': sId, \'csv\':\'popup\'}}); return false',
 				];
 			}
 		}
