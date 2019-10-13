@@ -16,7 +16,7 @@ class AdminServiceWorkerController extends Controller
 		require(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'cache-key.php');
 		if ($this->model->isLoaded('Multilang'))
 			$cacheKey .= $this->model->_Multilang->lang;
-		require(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'sw.js');
+		require(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'js' . DIRECTORY_SEPARATOR . 'sw.js');
 		die();
 	}
 }

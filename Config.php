@@ -49,7 +49,7 @@ class Config extends Module_Config
 				foreach ($iconFormats as $format) {
 					$iconPath = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'WebAppManifest' . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . $iconsFolder . DIRECTORY_SEPARATOR . $format . '.png';
 					if (!file_exists($iconPath))
-						copy(__DIR__ . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . $format . '.png', $iconPath);
+						copy(__DIR__ . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . $format . '.png', $iconPath);
 				}
 			}
 		}
