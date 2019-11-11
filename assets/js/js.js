@@ -614,8 +614,8 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 				// ==== Load visualizer files ====
 
-				loadingPromises.push(loadRuntimeJs(PATH + 'model/AdminFront/files/visualizers/' + currentPageDetails.type + '.js'));
-				loadRuntimeCss(PATH + 'model/AdminFront/files/visualizers/' + currentPageDetails.type + '.css');
+				loadingPromises.push(loadRuntimeJs(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.js'));
+				loadRuntimeCss(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.css');
 				break;
 		}
 
