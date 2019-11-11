@@ -244,14 +244,14 @@ function deleteRows(ids) {
 		}
 	}
 
-	_('#toolbar-button-delete img').src = absolute_path + 'model/Output/files/loading.gif';
+	_('#toolbar-button-delete img').src = PATHBASE + 'model/Output/files/loading.gif';
 
 	var request = currentAdminPage.split('/');
 	return ajax(adminPrefix + request[0] + '/delete', 'id=' + encodeURIComponent(ids.join(',')) + '&ajax', 'c_id=' + c_id).then(function (r) {
 		if (typeof r !== 'object')
 			r = {'err': r};
 
-		_('#toolbar-button-delete img').src = absolute_path + 'model/AdminTemplateEditt/assets/img/toolbar/delete.png';
+		_('#toolbar-button-delete img').src = PATHBASE + 'model/AdminTemplateEditt/assets/img/toolbar/delete.png';
 
 		if (typeof r.err !== 'undefined') {
 			alert(r.err);
