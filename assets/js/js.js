@@ -1850,7 +1850,7 @@ function toolbarButtonLoading(button) {
 		img = _('#toolbar-button-custom-' + button + ' img');
 	if (img) {
 		img.setAttribute('data-old-path', img.src);
-		img.src = absolute_path + 'model/Output/files/loading.gif';
+		img.src = PATHBASE + 'model/Output/files/loading.gif';
 	}
 
 	let icon = _('#toolbar-button-' + button + ' i');
