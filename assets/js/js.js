@@ -931,7 +931,7 @@ async function goToPage(p, sortBy, history_push = true) {
 
 	get['p'] = p;
 
-	let pageMove = new Promise(resolve => {
+	new Promise(resolve => {
 		if (p !== currentPage) {
 			mainContentDiv.style.left = moveBy + 'px';
 
@@ -942,12 +942,9 @@ async function goToPage(p, sortBy, history_push = true) {
 	}).then(() => {
 		_('main-content').style.display = 'none';
 		_('main-loading').style.display = 'block';
-		return true;
-	});
 
-	let pageLoad = search(p, sortBy, history_push);
-
-	return Promise.all([pageMove, pageLoad]).then(() => {
+		return search(p, sortBy, history_push);
+	}).then(() => {
 		_('main-content').style.display = 'block';
 		_('main-loading').style.display = 'none';
 
