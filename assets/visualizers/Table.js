@@ -181,7 +181,12 @@ class Table {
 			innerRow.setAttribute('data-n', rowCount.toString());
 			innerRow.setAttribute('data-id', item.id);
 			innerRow.setAttribute('data-clickable', clickable);
-			// TODO: "onclick" personalizzato; colore di sfondo; colore testo
+			// TODO: "onclick" personalizzato
+
+			if (typeof item.background !== 'undefined')
+				innerRow.style.background = item.background;
+			if (typeof item.color !== 'undefined')
+				innerRow.style.color = item.color;
 
 			let checkboxCell = innerRow.appendChild(document.createElement('div'));
 			checkboxCell.className = 'special-cell';
@@ -232,7 +237,7 @@ class Table {
 					width = widths[fieldName];
 
 				let div = innerRow.appendChild(document.createElement('div'));
-				// TODO: colore sfondo e colore testo
+				// TODO: colore sfondo e colore testo per singola colonna
 				div.style.width = width + 'px';
 				div.setAttribute('data-column', fieldName);
 				div.setAttribute('title', item.data[fieldName].text);
