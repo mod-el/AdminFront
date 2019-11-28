@@ -226,7 +226,7 @@ class Table {
 			});
 			deleteCell = deleteCell.appendChild(document.createElement('div'));
 			if (item.permissions['D']) {
-				deleteCell.innerHTML = '<a href="#" onclick="event.stopPropagation(); deleteRows([\'' + item.id + '\']); return false"><img src="' + PATHBASE + 'model/AdminTemplateEditt/files/img/delete.png" alt="" style="vertical-align: middle"/></a>';
+				deleteCell.innerHTML = '<a href="#" onclick="event.stopPropagation(); deleteRows([\'' + item.id + '\']); return false"><img src="' + PATHBASE + 'model/AdminTemplateEditt/assets/img/delete.png" alt="" style="vertical-align: middle"/></a>';
 			}
 
 			columns.forEach(fieldName => {
