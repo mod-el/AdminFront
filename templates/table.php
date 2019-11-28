@@ -102,7 +102,7 @@
 								<?php
 								if ($this->canUser('D', $el['element'])) {
 									?>
-									<a href="#" onclick="event.stopPropagation(); deleteRows(['<?= $id ?>']); return false"><img src="<?= PATH ?>model/AdminTemplateEditt/files/img/delete.png" alt="" style="vertical-align: middle"/></a>
+									<a href="#" onclick="event.stopPropagation(); deleteRows(['<?= $id ?>']); return false"><img src="<?= PATH ?>model/AdminTemplateEditt/assets/img/delete.png" alt="" style="vertical-align: middle"/></a>
 									<?php
 								}
 								?>
@@ -223,7 +223,7 @@
 			?>
 			<div class="special-cell" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
 				<div>
-					<a href="#" onclick="event.stopPropagation(); deleteRows(['[n]']); return false"><img src="<?= PATH ?>model/AdminTemplateEditt/files/img/delete.png" alt="" style="vertical-align: middle"/></a>
+					<a href="#" onclick="event.stopPropagation(); deleteRows(['[n]']); return false"><img src="<?= PATH ?>model/AdminTemplateEditt/assets/img/delete.png" alt="" style="vertical-align: middle"/></a>
 				</div>
 			</div>
 			<?php
