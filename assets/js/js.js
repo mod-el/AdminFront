@@ -583,7 +583,6 @@ function loadAdminPage(request, get = {}, history_push = true) {
 		// Se custom, caricare direttamente il template;
 		// Se custom, vedere come sistemare l'history del browser (che al momento viene updatata al search)
 		// Dashboard;
-		// Azioni custom nella toolbar (sia per pagine normali che custom)
 		// Ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 		// Elaborare e mostrare i risultati
 
@@ -593,16 +592,24 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 		let toolbar = _('toolbar');
 		toolbar.style.display = 'none';
+		toolbar.innerHTML = '';
 
 		switch (currentPageDetails.type) {
 			case 'Custom':
+				// ==== Custom actions ====
 
+				if (Object.keys(currentPageDetails.actions).length > 0) {
+					toolbar.style.display = 'block';
+
+					Object.keys(currentPageDetails.actions).forEach(action => {
+						addPageAction(action, currentPageDetails.actions[action]);
+					});
+				}
 				break;
 			default:
 				toolbar.style.display = 'block';
-				toolbar.innerHTML = '';
 
-				// ==== Actions ====
+				// ==== Basic actions ====
 
 				if (currentPageDetails.privileges.C) {
 					addPageAction('new', {
@@ -616,6 +623,12 @@ function loadAdminPage(request, get = {}, history_push = true) {
 					'fa-icon': 'fas fa-filter',
 					'text': 'Filtri',
 					'action': 'switchFiltersForm(this)',
+				});
+
+				// ==== Custom actions ====
+
+				Object.keys(currentPageDetails.actions).forEach(action => {
+					addPageAction(action, currentPageDetails.actions[action]);
 				});
 
 				// ==== Build filters ====
@@ -879,21 +892,23 @@ function addPageAction(name, action) {
 	button.className = 'toolbar-button';
 	button.id = 'toolbar-button-' + name;
 
-	if (typeof action.url !== 'undefined' && action.url)
+	if (action.url)
 		button.href = action.url;
 	else
 		button.href = '#';
 
-	if (typeof action.action !== 'undefined' && action.action)
+	if (action.action)
 		button.setAttribute('onclick', action.action + '; return false');
+	else if (!action.url)
+		button.setAttribute('onclick', 'return false');
 
-	if (typeof action.icon !== 'undefined' && action.icon)
+	if (action.icon)
 		button.innerHTML = '<img src="' + action.icon + '" alt="" onload="resize()" /> ';
 
-	if (typeof action['fa-icon'] !== 'undefined' && action['fa-icon'])
+	if (action['fa-icon'])
 		button.innerHTML = '<i class="' + action['fa-icon'] + '" aria-hidden="true"></i> ';
 
-	if (typeof action.text !== 'undefined' && action.text)
+	if (action.text)
 		button.innerHTML += action.text;
 
 	_('toolbar').appendChild(button);
