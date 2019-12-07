@@ -76,40 +76,6 @@ function instantSave(id, f, field) {
 	});
 }
 
-function adminRowClicked(row) {
-	if (row.dataset.clickable === '1') {
-		if (row.dataset.onclick) {
-			eval('var custom_function = function(){ ' + row.dataset.onclick + ' }');
-			custom_function.call(row);
-		} else {
-			loadElement(currentAdminPage.split('/')[0], row.dataset.id);
-		}
-	}
-}
-
-function adminRowDragged(element, target) {
-	if (element.idx === target.idx) {
-		let row = document.querySelector('.results-table-row[data-id="' + element.id + '"]');
-		adminRowClicked(row);
-	} else {
-		showLoadingMask();
-		ajax(adminPrefix + currentAdminPage.split('/')[0] + '/changeOrder/' + encodeURIComponent(element.id), 'to=' + target.idx + '&ajax', 'c_id=' + c_id).then(r => {
-			hideLoadingMask();
-
-			if (r !== 'ok') {
-				alert(r);
-				reloadResultsTable();
-			}
-		});
-	}
-}
-
-function selectAllRows(id, enable) {
-	_('.results-table[data-table="' + id + '"]').querySelectorAll('[id^="row-checkbox-"]').forEach(checkbox => {
-		checkbox.setValue(enable);
-	});
-}
-
 function deleteRows(ids) {
 	let usingChecks = false;
 	if (typeof ids === 'undefined') {

@@ -602,13 +602,23 @@ function loadAdminPage(request, get = {}, history_push = true) {
 				toolbar.style.display = 'block';
 				toolbar.innerHTML = '';
 
-				// ==== Filters ====
+				// ==== Actions ====
+
+				if (currentPageDetails.privileges.C) {
+					addPageAction('new', {
+						'fa-icon': 'far fa-plus-square',
+						'text': 'Nuovo',
+						'action': 'newElement()',
+					});
+				}
 
 				addPageAction('filters', {
 					'fa-icon': 'fas fa-filter',
 					'text': 'Filtri',
 					'action': 'switchFiltersForm(this)',
 				});
+
+				// ==== Build filters ====
 
 				await rebuildFilters();
 
@@ -1481,6 +1491,30 @@ async function saveSearchFields() {
 	await saveUserCustomization('search-fields-' + request[0], fields);
 	zkPopupClose();
 	return search();
+}
+
+function adminRowClicked(row) {
+	let innerRow = row.firstElementChild;
+	if (innerRow.dataset.onclick) {
+		eval('var custom_function = function(){ ' + innerRow.dataset.onclick + ' }');
+		custom_function.call(innerRow);
+	} else {
+		loadElement(currentAdminPage.split('/')[0], innerRow.dataset.id);
+	}
+}
+
+function adminRowDragged(id, elementIdx, targetIdx) {
+	if (elementIdx !== targetIdx) { // TODO: vecchio codice, sistemare
+		/*showLoadingMask();
+		ajax(adminPrefix + currentAdminPage.split('/')[0] + '/changeOrder/' + encodeURIComponent(elementId), 'to=' + targetIdx + '&ajax', 'c_id=' + c_id).then(r => {
+			hideLoadingMask();
+
+			if (r !== 'ok') {
+				alert(r);
+				reloadResultsTable();
+			}
+		});*/
+	}
 }
 
 function loadElement(page, id, get = {}, history_push = true) {

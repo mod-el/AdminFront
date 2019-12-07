@@ -145,7 +145,7 @@ class Table {
 		let bodyMain = body.appendChild(document.createElement('div'));
 		if (draggable) {
 			bodyMain.setAttribute('data-draggable-cont', '');
-			bodyMain.setAttribute('data-draggable-callback', 'adminRowDragged(element, target)');
+			bodyMain.setAttribute('data-draggable-callback', 'adminRowDragged(element.id, element.idx, target.idx)');
 		}
 
 		let rowCount = 0;
@@ -179,7 +179,8 @@ class Table {
 			innerRow.className = 'results-table-row';
 			innerRow.setAttribute('data-n', rowCount.toString());
 			innerRow.setAttribute('data-id', item.id);
-			// TODO: "onclick" personalizzato
+			if (typeof item.onclick !== 'undefined')
+				innerRow.setAttribute('data-onclick', item.onclick);
 
 			if (typeof item.background !== 'undefined')
 				innerRow.style.background = item.background;
@@ -566,4 +567,10 @@ function moveBetweenRows(checkbox, keyCode) {
 	var nextId = nextRow.getAttribute('data-id');
 	var nextCheckbox = document.getElementById('row-checkbox-' + nextId);
 	nextCheckbox.focus();
+}
+
+function selectAllRows(id, enable) {
+	_('.results-table[data-table="' + id + '"]').querySelectorAll('[id^="row-checkbox-"]').forEach(checkbox => {
+		checkbox.setValue(enable);
+	});
 }
