@@ -237,10 +237,14 @@ class Table {
 					width = widths[fieldName];
 
 				let div = innerRow.appendChild(document.createElement('div'));
-				// TODO: colore sfondo e colore testo per singola colonna
 				div.style.width = width + 'px';
 				div.setAttribute('data-column', fieldName);
 				div.setAttribute('title', item.data[fieldName].text);
+
+				if (typeof item.data[fieldName].background !== 'undefined')
+					div.style.background = item.data[fieldName].background;
+				if (typeof item.data[fieldName].color !== 'undefined')
+					div.style.color = item.data[fieldName].color;
 
 				// TODO: gestione editable
 				if (!clickable) {
