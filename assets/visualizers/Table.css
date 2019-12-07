@@ -175,3 +175,9 @@ div:nth-child(odd) > .results-table-row {
 	margin-top: 7px;
 	height: auto;
 }
+
+@media print {
+	.dont-print {
+		display: none !important;
+	}
+}

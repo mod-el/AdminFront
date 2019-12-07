@@ -42,6 +42,9 @@ class Table {
 			div.setAttribute('data-column', fieldName);
 			div.style.width = width + 'px';
 
+			if (!field.print)
+				div.addClass('dont-print');
+
 			let resize = div.appendChild(document.createElement('div'));
 			resize.className = 'table-head-resize';
 			resize.setAttribute('data-context-menu', "{'Ottimizza':function(){ autoResizeColumns('" + this.id + "', '" + fieldName + "'); }, 'Ottimizza colonne':function(){ autoResizeColumns('" + this.id + "'); }, 'Personalizza colonne':function(){ visualizers['" + this.id + "'].customizeColumns(); }}");
@@ -147,10 +150,6 @@ class Table {
 
 		let rowCount = 0;
 		list.forEach(item => {
-			let clickable = '1';
-			if (!item.id || !item.permissions['R'])
-				clickable = '0';
-
 			let row = bodyMain.appendChild(document.createElement('div'));
 			row.className = 'results-table-row-cont';
 			if (draggable) {
@@ -180,7 +179,6 @@ class Table {
 			innerRow.className = 'results-table-row';
 			innerRow.setAttribute('data-n', rowCount.toString());
 			innerRow.setAttribute('data-id', item.id);
-			innerRow.setAttribute('data-clickable', clickable);
 			// TODO: "onclick" personalizzato
 
 			if (typeof item.background !== 'undefined')
@@ -241,10 +239,19 @@ class Table {
 				div.setAttribute('data-column', fieldName);
 				div.setAttribute('title', item.data[fieldName].text);
 
+				if (!this.options['fields'][fieldName].print)
+					div.addClass('dont-print');
+
 				if (typeof item.data[fieldName].background !== 'undefined')
 					div.style.background = item.data[fieldName].background;
 				if (typeof item.data[fieldName].color !== 'undefined')
 					div.style.color = item.data[fieldName].color;
+
+				let clickable = true;
+				if (!item.id || !item.permissions['R'])
+					clickable = false;
+				if (typeof item.data[fieldName].clickable !== 'undefined' && !item.data[fieldName].clickable)
+					clickable = false;
 
 				// TODO: gestione editable
 				if (!clickable) {
