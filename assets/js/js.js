@@ -114,17 +114,7 @@ function adminInit() {
 		let request = currentAdminPage.split('/');
 
 		let get = objectFromQueryString();
-
-		if (request.length >= 2 && request[1] === 'edit') {
-			// TODO: da rivedere
-			/*if (request.length >= 3) {
-				loadElement(request[0], request[2], get, false);
-			} else {
-				newElement(request[0], get);
-			}*/
-		} else {
-			loadAdminPage(currentAdminPage, get, 'replace');
-		}
+		loadAdminPage(currentAdminPage, get, 'replace');
 
 		document.addEventListener('notifications', function (event) {
 			let notifications;
@@ -303,7 +293,7 @@ window.onpopstate = function (event) {
 				sessionStorage.setItem('filters-values', JSON.stringify(s['filters']));
 
 			if (request[1] === 'edit') {
-				loadElement(request[0], request[2], get, false);
+				loadAdminElement(request[0], request[2], get, false); // TODO: da rivedere
 			} else {
 				if (typeof s['p'] !== 'undefined')
 					get['p'] = s['p'];
@@ -579,101 +569,134 @@ function loadAdminPage(request, get = {}, history_push = true) {
 			loadRuntimeCss(file);
 		});
 
-		// TODO: rimuovere scritte sottostanti quando saranno fatte
-		// Se custom, caricare direttamente il template;
-		// Se custom, vedere come sistemare l'history del browser (che al momento viene updatata al search)
-		// Dashboard;
-		// Ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
-		// Elaborare e mostrare i risultati
-
-		if (sessionStorage.getItem('current-page') !== request[0])
-			sessionStorage.removeItem('filters-values');
-		sessionStorage.setItem('current-page', request[0]);
-
 		let toolbar = _('toolbar');
 		toolbar.style.display = 'none';
 		toolbar.innerHTML = '';
 
-		switch (currentPageDetails.type) {
-			case 'Custom':
-				// ==== Custom actions ====
+		if (typeof request[1] !== 'undefined') {
+			currentAdminPage = request.join('/');
+			selectFromMainMenu(request);
 
-				if (Object.keys(currentPageDetails.actions).length > 0) {
+			if (window.innerWidth < 800)
+				closeMenu();
+
+			clearMainPage();
+			historyWipe();
+
+			switch (request[1]) {
+				case 'edit':
 					toolbar.style.display = 'block';
+
+					// ==== Basic actions ====
+
+					if (currentPageDetails.privileges.C) { // TODO: vedere se mantenere qui o spostare insieme alla costruzione del resto della toolbar del dettaglio
+						addPageAction('new', {
+							'fa-icon': 'far fa-plus-square',
+							'text': 'Nuovo',
+							'action': 'newElement()',
+						});
+					}
+
+					let id = 0;
+					if (typeof request[2] !== 'undefined')
+						id = request[2];
+
+					return loadAdminElement(id, get, history_push);
+					break;
+			}
+		} else {
+			// TODO: rimuovere scritte sottostanti quando saranno fatte
+			// Se custom, caricare direttamente il template;
+			// Se custom, vedere come sistemare l'history del browser (che al momento viene updatata al search)
+			// Dashboard;
+			// Ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
+			// Ad esempio: tasto print, eliminazione multipla righe
+
+			if (sessionStorage.getItem('current-page') !== request[0])
+				sessionStorage.removeItem('filters-values');
+			sessionStorage.setItem('current-page', request[0]);
+
+			switch (currentPageDetails.type) {
+				case 'Custom':
+					// ==== Custom actions ====
+
+					if (Object.keys(currentPageDetails.actions).length > 0) {
+						toolbar.style.display = 'block';
+
+						Object.keys(currentPageDetails.actions).forEach(action => {
+							addPageAction(action, currentPageDetails.actions[action]);
+						});
+					}
+					break;
+				default:
+					toolbar.style.display = 'block';
+
+					// ==== Basic actions ====
+
+					if (currentPageDetails.privileges.C) {
+						addPageAction('new', {
+							'fa-icon': 'far fa-plus-square',
+							'text': 'Nuovo',
+							'action': 'newElement()',
+						});
+					}
+
+					addPageAction('filters', {
+						'fa-icon': 'fas fa-filter',
+						'text': 'Filtri',
+						'action': 'switchFiltersForm(this)',
+					});
+
+					// ==== Custom actions ====
 
 					Object.keys(currentPageDetails.actions).forEach(action => {
 						addPageAction(action, currentPageDetails.actions[action]);
 					});
+
+					// ==== Build filters ====
+
+					await rebuildFilters();
+
+					// ==== Load visualizer files ====
+
+					loadingPromises.push(loadRuntimeJs(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.js'));
+					loadRuntimeCss(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.css');
+					break;
+			}
+
+			return Promise.all(loadingPromises).then(() => {
+				currentAdminPage = request.join('/');
+				selectedRows = [];
+
+				selectFromMainMenu(request);
+
+				if (window.innerWidth < 800)
+					closeMenu();
+
+				clearMainPage();
+				historyWipe();
+
+				switch (currentPageDetails.type) {
+					case 'Custom':
+
+						break;
+					default:
+						// ==== Set page variable ====
+						if (typeof get['nopag'] !== 'undefined') {
+							currentPage = null;
+						} else if (typeof get['p'] !== 'undefined') {
+							currentPage = parseInt(get['p']);
+							if (isNaN(currentPage) || currentPage < 1)
+								currentPage = 1;
+						} else {
+							currentPage = 1;
+						}
+
+						// ==== First search ====
+						return search(currentPage, null, history_push);
+						break;
 				}
-				break;
-			default:
-				toolbar.style.display = 'block';
-
-				// ==== Basic actions ====
-
-				if (currentPageDetails.privileges.C) {
-					addPageAction('new', {
-						'fa-icon': 'far fa-plus-square',
-						'text': 'Nuovo',
-						'action': 'newElement()',
-					});
-				}
-
-				addPageAction('filters', {
-					'fa-icon': 'fas fa-filter',
-					'text': 'Filtri',
-					'action': 'switchFiltersForm(this)',
-				});
-
-				// ==== Custom actions ====
-
-				Object.keys(currentPageDetails.actions).forEach(action => {
-					addPageAction(action, currentPageDetails.actions[action]);
-				});
-
-				// ==== Build filters ====
-
-				await rebuildFilters();
-
-				// ==== Load visualizer files ====
-
-				loadingPromises.push(loadRuntimeJs(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.js'));
-				loadRuntimeCss(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.css');
-				break;
-		}
-
-		return Promise.all(loadingPromises);
-	}).then(() => {
-		currentAdminPage = request.join('/');
-		selectedRows = [];
-
-		selectFromMainMenu(request);
-
-		if (window.innerWidth < 800)
-			closeMenu();
-
-		clearMainPage();
-		historyWipe();
-
-		switch (currentPageDetails.type) {
-			case 'Custom':
-
-				break;
-			default:
-				// ==== Set page variable ====
-				if (typeof get['nopag'] !== 'undefined') {
-					currentPage = null;
-				} else if (typeof get['p'] !== 'undefined') {
-					currentPage = parseInt(get['p']);
-					if (isNaN(currentPage) || currentPage < 1)
-						currentPage = 1;
-				} else {
-					currentPage = 1;
-				}
-
-				// ==== First search ====
-				return search(currentPage, null, history_push);
-				break;
+			});
 		}
 	});
 }
@@ -1514,7 +1537,7 @@ function adminRowClicked(row) {
 		eval('var custom_function = function(){ ' + innerRow.dataset.onclick + ' }');
 		custom_function.call(innerRow);
 	} else {
-		loadElement(currentAdminPage.split('/')[0], innerRow.dataset.id);
+		loadAdminElement(innerRow.dataset.id);
 	}
 }
 
@@ -1532,8 +1555,11 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 	}
 }
 
-function loadElement(page, id, get = {}, history_push = true) {
-	elementCallback = null;
+function loadAdminElement(id, get = {}, history_push = true) {
+	
+
+	// TODO: vecchio codice, refactorizzare
+	/*elementCallback = null;
 	dataCache = {'data': {}, 'children': []};
 
 	let promise;
@@ -1565,7 +1591,7 @@ function loadElement(page, id, get = {}, history_push = true) {
 			}
 			return false;
 		});
-	}).catch(reportAdminError);
+	}).catch(reportAdminError);*/
 }
 
 function loadElementData(page, id) {
@@ -1883,11 +1909,8 @@ function historyWipe() {
 	rebuildHistoryBox();
 }
 
-function newElement(page, get = {}) {
-	if (typeof page === 'undefined')
-		page = currentAdminPage.split('/')[0];
-
-	return loadElement(page, 0, get).then(initializeEmptyForm).then(monitorFields);
+function newElement(get = {}) {
+	return loadAdminElement(0, get).then(initializeEmptyForm).then(monitorFields);
 }
 
 function toolbarButtonLoading(button) {
@@ -2008,7 +2031,7 @@ async function save() {
 			if (r.status === 'ok') {
 				historyWipe();
 
-				return loadElement(request[0], r.id, {}, history_push).then(() => {
+				return loadAdminElement(r.id, {}, history_push).then(() => {
 					inPageMessage('Salvataggio correttamente effettuato.', 'success');
 					return r.id;
 				});
