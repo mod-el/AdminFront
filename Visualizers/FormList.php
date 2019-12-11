@@ -39,7 +39,7 @@ class FormList extends DataVisualizer
 		], $options);
 		$options = array_merge($this->options, $options);
 
-		$addPrivilege = $this->canUser('C');
+		$addPrivilege = $options['name'] === 'list'? $this->canUser('C') : true;
 
 		$addButton = '';
 		if ($addPrivilege and $options['add-button'] and !$options['print']) {
@@ -63,7 +63,7 @@ class FormList extends DataVisualizer
 		$dummyForm = $this->getRowForm($options['dummy'], $options);
 
 		if ($options['type'] === 'row') {
-			$deletePrivilege = $this->canUser('D');
+			$deletePrivilege = $options['name'] === 'list'? $this->canUser('D') : true;
 
 			echo '<div class="rob-field-cont">';
 			if ($deletePrivilege and !$options['print']) {
@@ -118,7 +118,7 @@ class FormList extends DataVisualizer
 
 	protected function renderRow(Element $el, Form $form, array $options)
 	{
-		$deletePrivilege = $this->canUser('D', $el);
+		$deletePrivilege = $options['name'] === 'list'? $this->canUser('D', $el) : true;
 
 		if (($options['type'] === 'inner-template' or $options['type'] === 'outer-template') and $options['template'] === null)
 			$options['template'] = $options['name'];
