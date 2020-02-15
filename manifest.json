@@ -1,7 +1,7 @@
 {
 	"name": "AdminFront",
 	"description": "Front mask for Admin module",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"dependencies": {
 		"Core": ">=2.9.0",
 		"Admin": ">=1.2.0",
