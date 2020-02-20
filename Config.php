@@ -40,7 +40,7 @@ class Config extends Module_Config
 				if ($currentManifest)
 					$manifestData = array_merge($manifestData, $currentManifest);
 
-				$manifestData['start_url'] = PATH . $rule;
+				$manifestData['start_url'] = $rule;
 
 				$this->model->_WebAppManifest->setManifest($rule . 'manifest.json', $manifestData);
 
