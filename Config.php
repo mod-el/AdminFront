@@ -212,6 +212,9 @@ $config = ' . var_export($config, true) . ';
 	 */
 	public function checkAndInsertWords(array $words): bool
 	{
+		if ($this->model->moduleExists('Multilang') and !$this->model->isLoaded('Multilang'))
+			$this->model->load('Multilang');
+
 		$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php';
 
 		$dictionary = [];
