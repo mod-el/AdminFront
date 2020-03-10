@@ -14,13 +14,11 @@ function tableEvents() {
 	});
 
 	table.querySelectorAll('.results-table-row').forEach(function (row) {
-		if (!row.parentNode.parentNode.hasAttribute('data-draggable-cont')) {
-			row.addEventListener('click', function (event) {
-				if (event.button === 0) {
-					adminRowClicked(row);
-				}
-			});
-		}
+		row.addEventListener('click', function (event) {
+			if (event.button === 0) {
+				adminRowClicked(row);
+			}
+		});
 	});
 
 	if (_('sortedBy'))
@@ -181,10 +179,7 @@ function adminRowClicked(row) {
 }
 
 function adminRowDragged(element, target) {
-	if (element.idx === target.idx) {
-		let row = document.querySelector('.results-table-row[data-id="' + element.id + '"]');
-		adminRowClicked(row);
-	} else {
+	if (element.idx !== target.idx) {
 		showLoadingMask();
 		ajax(adminPrefix + currentAdminPage.split('/')[0] + '/changeOrder/' + encodeURIComponent(element.id), 'to=' + target.idx + '&ajax', 'c_id=' + c_id).then(r => {
 			hideLoadingMask();
