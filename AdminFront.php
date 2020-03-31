@@ -723,6 +723,7 @@ class AdminFront extends Module
 		foreach ($filtersArr as $k => $t) {
 			if (isset($customFilters[$k])) {
 				$datum = $form->add($customFilters[$k]);
+				$datum->options['attributes']['name'] = 'f-' . $k;
 				$datum->options['attributes']['data-filter'] = $k;
 				$datum->options['attributes']['data-filter-type'] = isset($datum->options['admin-type']) ? $datum->options['admin-type'] : 'custom';
 				$datum->options['attributes']['data-default'] = (string)$datum->options['default'];
@@ -749,15 +750,38 @@ class AdminFront extends Module
 					$fieldOptions['attributes']['data-filter-type'] = 'custom';
 				} elseif (isset($this->model->element->settings['fields'][$k])) {
 					$fieldOptions = array_merge($this->model->element->settings['fields'][$k], $fieldOptions);
+
+					if (($this->model->element->settings['fields'][$k]['type'] ?? null) === 'checkbox') {
+						$fieldOptions['type'] = 'select';
+						$fieldOptions['options'] = [
+							'' => '',
+							0 => 'No',
+							1 => 'Sì',
+						];
+					}
 				}
 
-				if ($t === 'range') {
-					// TODO: implemente range filter type
-				} else {
-					$datum = $form->add($k, $fieldOptions);
-					if (isset($values[$k]))
-						$datum->setValue($values[$k]);
+				switch ($t) {
+					case 'empty':
+						$fieldOptions['type'] = 'select';
+						$fieldOptions['options'] = [
+							'' => '',
+							0 => 'Non vuoto',
+							1 => 'Vuoto',
+						];
+						break;
+					case 'range':
+						// TODO: implemente range filter type
+						break;
 				}
+
+				$datum = $form->add($k, $fieldOptions);
+
+				if ($t !== '=')
+					$datum->options['label'] = $datum->getLabel() . ' (' . $t . ')';
+
+				if (isset($values[$k]))
+					$datum->setValue($values[$k]);
 			}
 		}
 

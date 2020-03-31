@@ -40,7 +40,7 @@ class Config extends Module_Config
 				if ($currentManifest)
 					$manifestData = array_merge($manifestData, $currentManifest);
 
-				$manifestData['start_url'] = PATH . $rule;
+				$manifestData['start_url'] = $rule;
 
 				$this->model->_WebAppManifest->setManifest($rule . 'manifest.json', $manifestData);
 
@@ -225,6 +225,9 @@ $config = ' . var_export($config, true) . ';
 	 */
 	public function checkAndInsertWords(array $words): bool
 	{
+		if ($this->model->moduleExists('Multilang') and !$this->model->isLoaded('Multilang'))
+			$this->model->load('Multilang');
+
 		$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php';
 
 		$dictionary = [];
