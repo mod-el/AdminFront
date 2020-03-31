@@ -1468,7 +1468,7 @@ async function save() {
 
 		let savingValues = {};
 		for (let k in changedValues) {
-			if (form[k].getAttribute('data-multilang') && typeof savingValues[k] === 'undefined') {
+			if (typeof form[k] !== 'undefined' && form[k].getAttribute('data-multilang') && typeof savingValues[k] === 'undefined') {
 				if (typeof savingValues[form[k].getAttribute('data-multilang')] === 'undefined')
 					savingValues[form[k].getAttribute('data-multilang')] = {};
 				savingValues[form[k].getAttribute('data-multilang')][form[k].getAttribute('data-lang')] = changedValues[k];
