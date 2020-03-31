@@ -723,6 +723,7 @@ class AdminFront extends Module
 		foreach ($filtersArr as $k => $t) {
 			if (isset($customFilters[$k])) {
 				$datum = $form->add($customFilters[$k]);
+				$datum->options['attributes']['name'] = 'f-' . $k;
 				$datum->options['attributes']['data-filter'] = $k;
 				$datum->options['attributes']['data-filter-type'] = isset($datum->options['admin-type']) ? $datum->options['admin-type'] : 'custom';
 				$datum->options['attributes']['data-default'] = (string)$datum->options['default'];
