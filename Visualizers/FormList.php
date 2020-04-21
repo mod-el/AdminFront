@@ -124,7 +124,7 @@ class FormList extends DataVisualizer
 			$options['template'] = $options['name'];
 
 		if ($options['template']) {
-			if ($options['template']{0} === DIRECTORY_SEPARATOR and file_exists($options['template'])) {
+			if ($options['template'][0] === DIRECTORY_SEPARATOR and file_exists($options['template'])) {
 				$template_path = $options['template'];
 			} else {
 				$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
