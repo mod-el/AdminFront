@@ -434,7 +434,7 @@ class Table extends DataVisualizer
 		if (!$bg)
 			return false;
 
-		if ($bg{0} !== '#' or (strlen($bg) !== 7 and strlen($bg) !== 4)) {
+		if ($bg[0] !== '#' or (strlen($bg) !== 7 and strlen($bg) !== 4)) {
 			$colors = [
 				'black' => '#000000',
 				'white' => '#FFFFFF',
