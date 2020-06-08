@@ -127,6 +127,8 @@ class AdminController extends Controller
 										}
 										break;
 									default:
+										$this->model->_Log->disableAutoLog();
+
 										$options['perPage'] = $_POST['rows-number'];
 										$options['p'] = $_GET['csv'];
 										$list = $this->model->_Admin->getList($options);
