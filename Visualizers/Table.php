@@ -187,6 +187,7 @@ class Table extends DataVisualizer
 				'print' => true,
 				'total' => false,
 				'price' => false,
+				'visible' => true,
 			), $column);
 
 			if (is_string($column['display']) and !$column['field'] and $column['display'])
