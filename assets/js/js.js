@@ -641,7 +641,10 @@ function loadPageAids(request, get) {
 					button.className = 'toolbar-button';
 					button.id = 'toolbar-button-' + act.id;
 					button.href = act.url;
-					button.setAttribute('onclick', act.action);
+					if ((act.url === '#' || !act.url) && !act.action)
+						act.action = 'return false';
+					if (act.action)
+						button.setAttribute('onclick', act.action);
 					if (act.icon)
 						button.innerHTML = '<img src="' + act.icon + '" alt="" onload="resize()" /> ';
 					if (act['fa-icon'])
