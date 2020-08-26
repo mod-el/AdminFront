@@ -641,8 +641,13 @@ function loadPageAids(request, get) {
 					button.className = 'toolbar-button';
 					button.id = 'toolbar-button-' + act.id;
 					button.href = act.url;
-					if ((act.url === '#' || !act.url) && !act.action)
-						act.action = 'return false';
+					if (act.url === '#' || !act.url) {
+						if (!act.action)
+							act.action = 'return false';
+					} else {
+						button.setAttribute('target', '_blank');
+					}
+
 					if (act.action)
 						button.setAttribute('onclick', act.action);
 					if (act.icon)
