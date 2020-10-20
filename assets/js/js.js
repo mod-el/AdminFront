@@ -107,7 +107,7 @@ function adminInit() {
 			return false;
 
 		let get = objectFromQueryString();
-		loadAdminPage(currentAdminPage, get, 'replace');
+		loadAdminPage(currentAdminPage, get, 'replace', true);
 
 		document.addEventListener('notifications', function (event) {
 			let notifications;
@@ -265,14 +265,10 @@ window.onpopstate = function (event) {
 			if (typeof s['filters'] !== 'undefined')
 				sessionStorage.setItem('filters-values', JSON.stringify(s['filters']));
 
-			if (request[1] === 'edit') {
-				loadAdminElement(request[0], request[2], get, false); // TODO: da rivedere
-			} else {
-				if (typeof s['p'] !== 'undefined')
-					get['p'] = s['p'];
+			if (typeof s['p'] !== 'undefined')
+				get['p'] = s['p'];
 
-				loadAdminPage(s['request'], get, false, false);
-			}
+			loadAdminPage(s['request'], get, false, true);
 		}
 	}
 };
@@ -373,7 +369,7 @@ function loadPage(url, get = {}, post = {}, deleteContent = true) {
 			if (hash !== pageLoadingHash)
 				return false;
 
-			_('main-loading').style.display = 'none';
+			_('main-loading').addClass('d-none');
 			_('main-content').jsFill(response);
 
 			if (window.resetAllInstantSearches)
@@ -388,14 +384,14 @@ function loadPage(url, get = {}, post = {}, deleteContent = true) {
 }
 
 function clearMainPage() {
-	_('main-loading').style.display = 'block';
+	_('main-loading').removeClass('d-none');
 	_('main-content').innerHTML = '';
 }
 
 /*
  Moves between admin pages, moving the left menu and taking care of the browser history
  */
-function loadAdminPage(request, get = {}, history_push = true) {
+async function loadAdminPage(request, get = {}, history_push = true, loadFullDetails = false) {
 	if (!checkBeforePageChange())
 		return false;
 
@@ -447,6 +443,11 @@ function loadAdminPage(request, get = {}, history_push = true) {
 			clearMainPage();
 			historyWipe();
 
+			if (history_push) {
+				let replace = (typeof history_push === 'string' && history_push === 'replace');
+				historyPush(request, queryStringFromObject(get), replace);
+			}
+
 			switch (request[1]) {
 				case 'edit':
 					toolbar.removeClass('d-none');
@@ -461,18 +462,21 @@ function loadAdminPage(request, get = {}, history_push = true) {
 						});
 					}
 
-					let id = 0;
-					if (typeof request[2] !== 'undefined')
-						id = request[2];
+					if (loadFullDetails) {
+						let id = 0;
+						if (typeof request[2] !== 'undefined')
+							id = request[2];
 
-					return loadAdminElement(id, get, history_push);
+						return loadAdminElement(id, get, false);
+					} else {
+						return loadPage(adminPrefix + 'template/' + request[0]);
+					}
 					break;
 			}
 		} else {
 			// TODO: rimuovere scritte sottostanti quando saranno fatte
 			// Se custom, caricare direttamente il template;
 			// Se custom, vedere come sistemare l'history del browser (che al momento viene updatata al search)
-			// Dashboard;
 			// Ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 			// Ad esempio: tasto print, eliminazione multipla righe
 
@@ -542,6 +546,11 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 				switch (currentPageDetails.type) {
 					case 'Custom':
+						if (history_push) {
+							let replace = (typeof history_push === 'string' && history_push === 'replace');
+							historyPush(request, queryStringFromObject(get), replace);
+						}
+
 						return loadPage(adminPrefix + request.join('/'));
 						break;
 					default:
@@ -824,12 +833,12 @@ async function goToPage(p, sortBy, history_push = true) {
 		}
 	}).then(() => {
 		_('main-content').style.display = 'none';
-		_('main-loading').style.display = 'block';
+		_('main-loading').removeClass('d-none');
 
 		return search(p, sortBy, history_push);
 	}).then(() => {
 		_('main-content').style.display = 'block';
-		_('main-loading').style.display = 'none';
+		_('main-loading').addClass('d-none');
 
 		mainContentDiv.className = 'no-transition';
 		mainContentDiv.style.left = (moveBy * -1) + 'px';
@@ -905,6 +914,18 @@ function toolsLightbox(id, options) {
 	changedHtml();
 }
 
+function historyPush(request, get = '', replace = false, state = {}) {
+	state.request = request.join('/');
+
+	if (replace) {
+		if (history.replaceState)
+			history.replaceState(state, '', adminPrefix + request.join('/') + '?' + get);
+	} else {
+		if (history.pushState)
+			history.pushState(state, '', adminPrefix + request.join('/') + '?' + get);
+	}
+}
+
 async function search(page = 1, sortedBy = null, history_push = true) {
 	let request = currentAdminPage.split('/');
 
@@ -973,13 +994,6 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 		payload['fields'] = columns;
 
 	if (history_push) {
-		let state = {
-			'request': request.join('/'),
-			'filters': filtersValues,
-			'p': page,
-			'sort-by': sortedBy
-		};
-
 		let get;
 		if (page === null) {
 			get = 'nopag=1';
@@ -987,13 +1001,12 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 			get = 'p=' + page;
 		}
 
-		if (typeof history_push === 'string' && history_push === 'replace') {
-			if (history.replaceState)
-				history.replaceState(state, '', adminPrefix + request.join('/') + '?' + get);
-		} else {
-			if (history.pushState)
-				history.pushState(state, '', adminPrefix + request.join('/') + '?' + get);
-		}
+		let replace = (typeof history_push === 'string' && history_push === 'replace');
+		historyPush(request, get, replace, {
+			'filters': filtersValues,
+			'p': page,
+			'sort-by': sortedBy
+		});
 	}
 
 	currentPage = page;
@@ -1019,7 +1032,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 		}
 
 		return visualizers[request[0]].render(response.list, response.totals).then(() => {
-			_('main-loading').style.display = 'none';
+			_('main-loading').addClass('d-none');
 			return changedHtml();
 		});
 	}).catch(error => alert(error));
@@ -1371,27 +1384,29 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 }
 
 function loadAdminElement(id, get = {}, history_push = true) {
-	// TODO: vecchio codice, refactorizzare
-	/*elementCallback = null;
-	dataCache = {'data': {}, 'children': []};
+	elementCallback = null;
+	// dataCache = {'data': {}, 'children': []}; // TODO: serve ancora?
 
-	let promise;
+	let request = currentAdminPage.split('/');
+
+	let pageSet = loadAdminPage(request[0] + '/edit/' + id, get, history_push, false)/*.then(showLoadingMask)*/;
 
 	if (id) {
-		let formTemplate = loadAdminPage(page + '/edit/' + id, get, false, history_push, false).then(showLoadingMask);
-		let formData = loadElementData(page, id);
+		// let formData = loadElementData(page, id);
 
-		promise = Promise.all([formTemplate, formData]).then(responses => {
+		/*promise = Promise.all([formTemplate, formData]).then(responses => {
 			return checkSubPages().then(() => {
 				hideLoadingMask();
 				return fillAdminForm(responses[1]);
 			});
-		});
+		});*/
 	} else {
-		promise = loadAdminPage(page + '/edit', get, false, history_push, false).then(checkSubPages);
+		// promise = loadAdminPage(page + '/edit', get, false, history_push, false).then(checkSubPages);
 	}
+	formTemplate.then(() => {
+	});
 
-	return promise.then(callElementCallback).then(monitorFields).then(() => {
+	/*return promise.then(callElementCallback).then(monitorFields).then(() => {
 		if (!_('adminForm'))
 			return false;
 
@@ -2005,12 +2020,12 @@ function reportAdminError(err) {
 
 function showLoadingMask() {
 	_('main-loading').addClass('grey');
-	_('main-loading').style.display = 'block';
+	_('main-loading').removeClass('d-none');
 }
 
 function hideLoadingMask() {
 	_('main-loading').removeClass('grey');
-	_('main-loading').style.display = 'none';
+	_('main-loading').addClass('d-none');
 }
 
 function getAdminCookiePath() {

@@ -372,7 +372,13 @@ class AdminController extends Controller
 
 	public function get()
 	{
-		switch ($this->model->getRequest(1)) {
+		$adminUrl = explode('/', $this->model->_AdminFront->url);
+		if (count($adminUrl) === 0)
+			$adminUrl = [];
+
+		$this->model->viewOptions['showLayout'] = false;
+
+		switch ($this->model->getRequest(count($adminUrl))) {
 			case 'get-user-customization':
 				try {
 					if (!isset($_GET['k']))
@@ -394,9 +400,23 @@ class AdminController extends Controller
 					];
 				}
 				break;
-			default:
-				$this->model->viewOptions['showLayout'] = false;
+			case 'template':
+				$this->model->_Admin->setPath($this->model->_AdminFront->url);
+				$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
 
+				$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
+
+				$checkCustomTemplate = Autoloader::searchFile('template', $dir . $this->model->_AdminFront->request[1]);
+				if ($checkCustomTemplate) {
+					$this->model->_Admin->getForm(); // Per poter fare poi $this->model->element->getForm()
+					$this->model->viewOptions['template'] = $dir . $this->model->_AdminFront->request[1];
+					unset($this->model->viewOptions['template-module']);
+				} else {
+					$this->model->viewOptions['template-module'] = 'AdminFront';
+					$this->model->viewOptions['template'] = 'form-template';
+				}
+				break;
+			default:
 				if (isset($_GET['ajax'])) {
 					if ($this->model->moduleExists('Dashboard'))
 						$this->model->viewOptions['template-module'] = 'Dashboard';
