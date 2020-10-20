@@ -150,21 +150,8 @@ $config = ' . var_export($config, true) . ';
 		if ($data === null)
 			return false;
 
-		if (isset($data['template'])) {
-			if ($this->saveConfig('init', $data)) {
-				$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `admin_user_customizations` (
-					  `id` INT NOT NULL AUTO_INCREMENT,
-					  `path` VARCHAR(255) NOT NULL,
-					  `user` INT NOT NULL,
-					  `key` VARCHAR(255) NOT NULL,
-					  `value` TEXT NOT NULL,
-					  PRIMARY KEY (`id`));
-					');
-				return true;
-			} else {
-				$this->model->error('Error while saving config data');
-			}
-		}
+		if (isset($data['template']))
+			return $this->saveConfig('init', $data);
 
 		return false;
 	}
@@ -266,22 +253,6 @@ ADD COLUMN `password` VARCHAR(250) NOT NULL AFTER `old_password`;');
 				}
 			}
 		}
-		return true;
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function postUpdate_0_5_0()
-	{
-		$this->model->_Db->query('CREATE TABLE IF NOT EXISTS `admin_user_customizations` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `path` VARCHAR(255) NOT NULL,
-  `user` INT NOT NULL,
-  `key` VARCHAR(255) NOT NULL,
-  `value` TEXT NOT NULL,
-  PRIMARY KEY (`id`));
-');
 		return true;
 	}
 }
