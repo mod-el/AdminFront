@@ -475,7 +475,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			}
 		} else {
 			// TODO: rimuovere scritte sottostanti quando saranno fatte
-			// Se custom, caricare direttamente il template;
 			// Se custom, vedere come sistemare l'history del browser (che al momento viene updatata al search)
 			// Ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
 			// Ad esempio: tasto print, eliminazione multipla righe
@@ -1389,24 +1388,15 @@ function loadAdminElement(id, get = {}, history_push = true) {
 
 	let request = currentAdminPage.split('/');
 
-	let pageSet = loadAdminPage(request[0] + '/edit/' + id, get, history_push, false)/*.then(showLoadingMask)*/;
+	let templatePromise = loadAdminPage(request[0] + '/edit/' + id, get, history_push, false).then(showLoadingMask);
+	let dataPromise = loadElementData(request[0], id || 0);
 
-	if (id) {
-		// let formData = loadElementData(page, id);
-
-		/*promise = Promise.all([formTemplate, formData]).then(responses => {
-			return checkSubPages().then(() => {
-				hideLoadingMask();
-				return fillAdminForm(responses[1]);
-			});
-		});*/
-	} else {
-		// promise = loadAdminPage(page + '/edit', get, false, history_push, false).then(checkSubPages);
-	}
-	formTemplate.then(() => {
-	});
-
-	/*return promise.then(callElementCallback).then(monitorFields).then(() => {
+	Promise.all([templatePromise, dataPromise]).then(responses => {
+		return checkSubPages().then(() => {
+			hideLoadingMask();
+			return fillAdminForm(responses[1]);
+		});
+	}).then(callElementCallback).then(monitorFields).then(() => {
 		if (!_('adminForm'))
 			return false;
 
@@ -1419,7 +1409,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 			}
 			return false;
 		});
-	}).catch(reportAdminError);*/
+	}).catch(reportAdminError);
 }
 
 function loadElementData(page, id) {

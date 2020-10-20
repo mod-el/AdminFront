@@ -376,8 +376,6 @@ class AdminController extends Controller
 		if (count($adminUrl) === 0)
 			$adminUrl = [];
 
-		$this->model->viewOptions['showLayout'] = false;
-
 		switch ($this->model->getRequest(count($adminUrl))) {
 			case 'get-user-customization':
 				try {
@@ -408,15 +406,27 @@ class AdminController extends Controller
 
 				$checkCustomTemplate = Autoloader::searchFile('template', $dir . $this->model->_AdminFront->request[1]);
 				if ($checkCustomTemplate) {
-					$this->model->_Admin->getForm(); // Per poter fare poi $this->model->element->getForm()
+					$this->model->_Admin->getElement(); // Per poter fare poi $this->model->element->getForm()
 					$this->model->viewOptions['template'] = $dir . $this->model->_AdminFront->request[1];
 					unset($this->model->viewOptions['template-module']);
 				} else {
 					$this->model->viewOptions['template-module'] = 'AdminFront';
 					$this->model->viewOptions['template'] = 'form-template';
 				}
+
+				$this->model->viewOptions['header'] = ['form-header'];
+				$this->model->viewOptions['footer'] = ['form-footer'];
+
+				if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
+					$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+				if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
+					array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
+
+//				$this->model->viewOptions['warnings'] = $this->model->_Admin->page->warnings($this->model->element); // TODO
 				break;
 			default:
+				$this->model->viewOptions['showLayout'] = false;
+
 				if (isset($_GET['ajax'])) {
 					if ($this->model->moduleExists('Dashboard'))
 						$this->model->viewOptions['template-module'] = 'Dashboard';

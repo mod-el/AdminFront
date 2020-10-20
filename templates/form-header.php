@@ -4,4 +4,6 @@
 	<input style="position:absolute;top:-1000px" type="password" name="fakepasswordremembered"/>
 
 	<input type="hidden" name="_model_version" value="1"/>
-	<input type="hidden" name="_mandatory_fields" value="<?= entities(json_encode($this->model->_Admin->options['required'])) ?>"/>
+	<?php /* TODO
+	<input type="hidden" name="_mandatory_fields" value="<?= entities(json_encode($this->model->_Admin->getPageOptions()['required'])) ?>"/>
+ */ ?>
