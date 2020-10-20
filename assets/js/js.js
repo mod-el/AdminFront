@@ -542,7 +542,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 				switch (currentPageDetails.type) {
 					case 'Custom':
-
+						return loadPage(adminPrefix + request.join('/'));
 						break;
 					default:
 						// ==== Set page variable ====
@@ -1371,8 +1371,6 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 }
 
 function loadAdminElement(id, get = {}, history_push = true) {
-
-
 	// TODO: vecchio codice, refactorizzare
 	/*elementCallback = null;
 	dataCache = {'data': {}, 'children': []};

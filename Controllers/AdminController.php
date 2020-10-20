@@ -396,7 +396,19 @@ class AdminController extends Controller
 				break;
 			default:
 				$this->model->viewOptions['showLayout'] = false;
-				$this->model->viewOptions['template'] = 'shell';
+
+				if (isset($_GET['ajax'])) {
+					if ($this->model->moduleExists('Dashboard'))
+						$this->model->viewOptions['template-module'] = 'Dashboard';
+					else
+						$this->model->viewOptions['template-module'] = 'AdminFront';
+
+					$this->model->viewOptions['cacheTemplate'] = false;
+					$this->model->viewOptions['template'] = 'dashboard';
+				} else {
+					$this->model->viewOptions['cacheTemplate'] = true;
+					$this->model->viewOptions['template'] = 'shell';
+				}
 				break;
 		}
 	}
