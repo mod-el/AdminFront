@@ -13,6 +13,8 @@ class Table {
 
 	// Standard visualizers method
 	async render(list, totals) {
+		let renderDeleteCell = list.some(item => item.permissions['D']);
+
 		let head = document.createElement('div');
 		head.className = 'table-head';
 		head.setAttribute('data-table', this.id);
@@ -24,8 +26,10 @@ class Table {
 		checkboxTd.style.padding = '0 5px';
 		checkboxTd.innerHTML = '<input type="checkbox" onchange="if(this.checked) selectAllRows(\'' + this.id + '\', 1); else selectAllRows(\'' + this.id + '\', 0)"/>';
 
-		let deleteTd = subHead.appendChild(document.createElement('div')); // TODO: renderlo visibile solo se c'è almeno una X
-		deleteTd.className = 'special-cell';
+		if (renderDeleteCell) {
+			let deleteTd = subHead.appendChild(document.createElement('div'));
+			deleteTd.className = 'special-cell';
+		}
 
 		let columns = await this.getColumns();
 		let widths = await this.getWidths();
@@ -216,17 +220,18 @@ class Table {
 					checkboxCell.querySelector('input').checked = true;
 			}
 
-			let deleteCell = innerRow.appendChild(document.createElement('div'));
-			deleteCell.className = 'special-cell';
-			deleteCell.addEventListener('mousedown', event => {
-				event.stopPropagation();
-			});
-			deleteCell.addEventListener('click', event => {
-				event.stopPropagation();
-			});
-			deleteCell = deleteCell.appendChild(document.createElement('div'));
-			if (item.permissions['D']) {
-				deleteCell.innerHTML = '<a href="#" onclick="event.stopPropagation(); deleteRows([\'' + item.id + '\']); return false"><img src="' + PATHBASE + 'model/AdminTemplateEditt/assets/img/delete.png" alt="" style="vertical-align: middle"/></a>';
+			if (renderDeleteCell) {
+				let deleteCell = innerRow.appendChild(document.createElement('div'));
+				deleteCell.className = 'special-cell';
+				deleteCell.addEventListener('mousedown', event => {
+					event.stopPropagation();
+				});
+				deleteCell.addEventListener('click', event => {
+					event.stopPropagation();
+				});
+				deleteCell = deleteCell.appendChild(document.createElement('div'));
+				if (item.permissions['D'])
+					deleteCell.innerHTML = '<a href="#" onclick="event.stopPropagation(); deleteRows([\'' + item.id + '\']); return false"><img src="' + PATHBASE + 'model/AdminTemplateEditt/assets/img/delete.png" alt="" style="vertical-align: middle"/></a>';
 			}
 
 			columns.forEach(fieldName => {
