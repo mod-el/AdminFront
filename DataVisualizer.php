@@ -1,5 +1,6 @@
 <?php namespace Model\AdminFront;
 
+use Model\Core\Autoloader;
 use Model\Core\Core;
 use Model\Form\Form;
 use Model\ORM\Element;
@@ -95,6 +96,16 @@ abstract class DataVisualizer
 			$elementData = $this->model->_ORM->getElementData($this->options['element']);
 			if ($elementData and $elementData['order_by'])
 				$excludeColumns[] = $elementData['order_by']['field'];
+
+			$elementClassName = Autoloader::searchFile('Element', $this->options['element']);
+			foreach ($elementClassName::$fields as $field_for_check) {
+				if (($field_for_check['type'] ?? null) === 'file') {
+					if (!empty($field_for_check['name_db']))
+						$excludeColumns[] = $field_for_check['name_db'];
+					if (!empty($field_for_check['ext_db']))
+						$excludeColumns[] = $field_for_check['ext_db'];
+				}
+			}
 		}
 
 		foreach ($tableModel->columns as $k => $col) {

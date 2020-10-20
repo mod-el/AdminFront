@@ -490,14 +490,24 @@ class AdminFront extends Module
 		}
 
 		if (isset($this->model->_Admin->options['actions'])) {
-			foreach ($this->model->_Admin->options['actions'] as $actIdx => $act) {
+			$actions = $this->model->_Admin->options['actions'];
+			if (is_callable($actions))
+				$actions = $actions($this->model->element);
+
+			if (!is_array($actions))
+				$this->model->error('"actions" must be an array');
+
+			foreach ($actions as $actIdx => $act) {
+				if (is_callable($act))
+					$act = $act($this->model->element);
+
 				$act = array_merge([
 					'id' => 'custom-' . $actIdx,
 					'text' => '',
 					'icon' => null,
 					'fa-icon' => null,
 					'url' => '#',
-					'action' => 'return false',
+					'action' => null,
 				], $act);
 
 				if (isset($act['specific'])) {
