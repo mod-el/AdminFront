@@ -33,10 +33,9 @@ class AdminController extends Controller
 
 	public function index() // TODO: probabilmente da eliminare per la gran parte
 	{
-		$request = $this->model->_AdminFront->request;
+		/*$request = $this->model->_AdminFront->request;
 
 		$this->model->viewOptions['cacheTemplate'] = false;
-		$this->model->viewOptions['showLayout'] = false;
 
 		if (isset($request[0])) {
 			if (!isset($request[1]))
@@ -368,7 +367,7 @@ class AdminController extends Controller
 			} else {
 				$this->model->viewOptions['template'] = 'shell';
 			}
-		}
+		}*/
 	}
 
 	public function get()
@@ -396,7 +395,8 @@ class AdminController extends Controller
 				}
 				break;
 			default:
-				return $this->index();
+				$this->model->viewOptions['showLayout'] = false;
+				$this->model->viewOptions['template'] = 'shell';
 				break;
 		}
 	}
@@ -434,7 +434,7 @@ class AdminController extends Controller
 					return 'ok';
 					break;
 				default:
-					return $this->index();
+					throw new \Exception('Unrecognized action');
 					break;
 			}
 		} catch (\Exception $e) {

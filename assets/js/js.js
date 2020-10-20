@@ -5,13 +5,10 @@ var currentAdminPage = false;
 var currentPageDetails = {};
 var runtimeLoadedJs = [];
 var runtimeLoadedCss = [];
-var menuResizing = false;
-var menuIsOpen = true;
 var selectedRows = [];
 var currentPage = 1;
 var searchCounter = 0;
 var pageLoadingHash = '';
-var isInLoginPage = false;
 var adminApiToken = null;
 
 var userCustomizationsCache = {};
@@ -91,27 +88,23 @@ class Field {
 window.addEventListener('DOMContentLoaded', function () {
 	currentAdminPage = document.location.pathname.substr(adminPrefix.length);
 
-	if (_('main-grid') && _('main-content')) {
-		adminApiToken = getCookie('admin-user');
-		adminInit();
-	} else {
-		_('main-loading').style.display = 'none';
-	}
+	adminApiToken = getCookie('admin-user');
+	adminInit();
 });
 
 function adminInit() {
-	_('main-grid').style.display = 'block';
-
 	checkUserToken().then(r => {
 		if (!r)
 			return false;
 
 		return adminApiRequest('pages').then(r => {
 			mainMenu = r;
-			return buildMenu(r);
+			buildMenu(r);
+			return true;
 		});
-	}).then(() => {
-		let request = currentAdminPage.split('/');
+	}).then(r => {
+		if (!r)
+			return false;
 
 		let get = objectFromQueryString();
 		loadAdminPage(currentAdminPage, get, 'replace');
@@ -172,26 +165,6 @@ function checkUserToken() {
 		adminInit();
 		throw err;
 	});
-}
-
-function loadLoginPage() {
-	isInLoginPage = true;
-	_('main-menu').style.display = 'none';
-	_('main-page-cont').style.width = '100%';
-	_('toolbar').style.display = 'none';
-	_('header-right').style.display = 'none';
-	_('header-user-cont').style.display = 'none';
-	buildMenu([]);
-	return loadPage(adminPrefix + 'login');
-}
-
-function unloadLoginPage() {
-	isInLoginPage = false;
-	_('main-menu').style.display = 'inline-block';
-	_('toolbar').style.display = 'block';
-	_('header-right').style.display = 'block';
-	_('header-user-cont').style.display = 'inline-block';
-	openMenu();
 }
 
 async function login() {
@@ -382,115 +355,6 @@ window.addEventListener('keydown', function (event) {
 });
 
 /*
- Resizes page dynamic components, called on page open and at every resize
- */
-function resize(menu = true) {
-	if (!_('main-grid') || !_('main-menu'))
-		return;
-
-	let hHeight = _('header').offsetHeight;
-	_('main-grid').style.height = 'calc(100% - ' + (hHeight + 4) + 'px)';
-	let tHeight = _('toolbar').offsetHeight;
-	_('main-page').style.height = 'calc(100% - ' + tHeight + 'px)';
-
-	if (menu) {
-		let hideMenu = _('main-menu').getAttribute('data-hide');
-		switch (hideMenu) {
-			case 'always':
-				if ((lastPosition = localStorage.getItem('sidenav-open-menu')) !== null) {
-					if (lastPosition === "0")
-						closeMenu();
-					else if (lastPosition === "1")
-						openMenu();
-				}
-				break;
-			case 'mobile':
-				if (window.innerWidth < 800)
-					closeMenu();
-				break;
-			case 'never':
-				if (!menuIsOpen)
-					openMenu();
-				break;
-		}
-	}
-
-	let table = _('.results-table');
-	if (table) {
-		let sub_h = _('breadcrumbs').offsetHeight + _('#main-content > div:first-of-type').offsetHeight + _('table-headings').offsetHeight + 10;
-		table.style.height = (_('main-page').offsetHeight - sub_h) + 'px';
-	}
-
-	let topForm = _('topForm');
-	if (topForm) {
-		if (window.innerWidth < 800) {
-			let filtersFormCont = _('filtersFormCont');
-			if (topForm.parentNode !== filtersFormCont.parentNode)
-				filtersFormCont.parentNode.insertBefore(topForm, filtersFormCont);
-			topForm.style.width = '100%';
-		} else {
-			let toolbar = _('toolbar');
-			if (topForm.parentNode !== toolbar)
-				toolbar.appendChild(topForm);
-
-			let w = toolbar.clientWidth - 12;
-			toolbar.querySelectorAll('.toolbar-button').forEach(function (button) {
-				w -= button.offsetWidth;
-			});
-			topForm.style.width = w + 'px';
-		}
-	}
-}
-
-function switchMenu() {
-	if (menuIsOpen)
-		closeMenu();
-	else
-		openMenu();
-}
-
-function openMenu() {
-	if (isInLoginPage)
-		return;
-
-	_('main-menu').style.width = '40%';
-	_('main-menu').style.maxWidth = maxMenuWidth + 'px';
-	_('main-page-cont').style.width = 'calc(100% - ' + maxMenuWidth + 'px)';
-
-	var hideMenu = _('main-menu').getAttribute('data-hide');
-	if (window.innerWidth >= 800 && hideMenu !== 'always') {
-		_('img-open-menu').style.opacity = 0;
-		_('header').style.paddingLeft = '0';
-	}
-
-	menuIsOpen = true;
-	localStorage.setItem('sidenav-open-menu', "1");
-	setTimeout(function () {
-		resize(false);
-	}, 500);
-}
-
-function closeMenu() {
-	if (isInLoginPage)
-		return;
-
-	_('main-menu').style.width = '0%';
-	_('main-page-cont').style.width = '100%';
-	_('img-open-menu').style.opacity = 1;
-	_('header').style.paddingLeft = '40px';
-	menuIsOpen = false;
-	localStorage.setItem('sidenav-open-menu', "0");
-	setTimeout(function () {
-		resize(false);
-	}, 500);
-}
-
-function startMenuResize() {
-	let coords = getMouseCoords(event);
-	menuResizing = {'startX': coords.x, 'startW': maxMenuWidth, 'endW': false};
-}
-
-/*
  Loads a page using fetch; fills the main div with the content when the response comes, and additionally returns a Promise
  */
 function loadPage(url, get = {}, post = {}, deleteContent = true) {
@@ -570,7 +434,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 		});
 
 		let toolbar = _('toolbar');
-		toolbar.style.display = 'none';
+		toolbar.addClass('d-none');
 		toolbar.innerHTML = '';
 
 		if (typeof request[1] !== 'undefined') {
@@ -585,7 +449,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 
 			switch (request[1]) {
 				case 'edit':
-					toolbar.style.display = 'block';
+					toolbar.removeClass('d-none');
 
 					// ==== Basic actions ====
 
@@ -620,8 +484,8 @@ function loadAdminPage(request, get = {}, history_push = true) {
 				case 'Custom':
 					// ==== Custom actions ====
 
-					if (Object.keys(currentPageDetails.actions).length > 0) {
-						toolbar.style.display = 'block';
+					if (currentPageDetails.actions && Object.keys(currentPageDetails.actions).length > 0) {
+						toolbar.removeClass('d-none');
 
 						Object.keys(currentPageDetails.actions).forEach(action => {
 							addPageAction(action, currentPageDetails.actions[action]);
@@ -629,7 +493,7 @@ function loadAdminPage(request, get = {}, history_push = true) {
 					}
 					break;
 				default:
-					toolbar.style.display = 'block';
+					toolbar.removeClass('d-none');
 
 					// ==== Basic actions ====
 
@@ -937,35 +801,6 @@ function addPageAction(name, action) {
 	_('toolbar').appendChild(button);
 }
 
-document.addEventListener('mousemove', event => {
-	let coords = getMouseCoords(event);
-	if (menuResizing !== false) {
-		let diff = coords.x - menuResizing.startX;
-		let newW = menuResizing.startW + diff;
-		if (newW > window.innerWidth * 0.4)
-			newW = Math.floor(window.innerWidth * 0.4);
-
-		_('main-menu').style.maxWidth = newW + 'px';
-
-		menuResizing.endW = newW;
-	}
-});
-
-document.addEventListener('mouseup', event => {
-	if (menuResizing !== false) {
-		if (menuResizing.endW !== false) {
-			if (menuResizing.endW < 25) {
-				closeMenu();
-			} else {
-				maxMenuWidth = menuResizing.endW;
-				openMenu();
-				setCookie('menu-width', maxMenuWidth, 365 * 10, getAdminCookiePath());
-			}
-		}
-		menuResizing = false;
-	}
-});
-
 async function goToPage(p, sortBy, history_push = true) {
 	let mainContentDiv = _('main-content');
 
@@ -1070,26 +905,6 @@ function toolsLightbox(id, options) {
 	changedHtml();
 }
 
-function switchFiltersForm(origin) {
-	if (_('filtersForm')) {
-		if (window.innerWidth < 800) {
-			toolsLightbox('filtersForm', {
-				'origin': origin,
-				'width': 'calc(100% - 20px)',
-				'left': '10px',
-				'offset-y': 10
-			});
-		} else {
-			toolsLightbox('filtersForm', {
-				'origin': origin,
-				'width': '60%',
-				'left': maxMenuWidth + 'px',
-				'offset-y': 10
-			});
-		}
-	}
-}
-
 async function search(page = 1, sortedBy = null, history_push = true) {
 	let request = currentAdminPage.split('/');
 
@@ -1186,7 +1001,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
 		_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
-		_('breadcrumbs').style.display = 'block';
+		_('breadcrumbs').removeClass('d-none');
 		_('breadcrumbs').innerHTML = '';
 
 		let breadcrumbs = getBreadcrumbs(request[0]);
@@ -1556,7 +1371,7 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 }
 
 function loadAdminElement(id, get = {}, history_push = true) {
-	
+
 
 	// TODO: vecchio codice, refactorizzare
 	/*elementCallback = null;

@@ -104,13 +104,6 @@ class AdminFront extends Module
 		$this->request = $realRequest;
 
 		if (isset($realRequest[0])) {
-			$apiPath = $config['api-path'] ?? 'api';
-			if ($realRequest[0] === $apiPath) {
-				return [
-					'controller' => 'AdminApi',
-				];
-			}
-
 			switch ($realRequest[0]) {
 				case 'login':
 				case 'logout':
