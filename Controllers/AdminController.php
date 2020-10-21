@@ -180,78 +180,6 @@ class AdminController extends Controller
 							}
 						}
 						break;
-					case 'edit':
-						if (!$this->model->_Admin->canUser(($this->model->element and $this->model->element->exists()) ? 'R' : 'C', null, $this->model->element ?: null))
-							$this->model->error('Can\'t read, permission denied.');
-
-						if ($this->model->element) {
-							if (isset($_GET['print'])) {
-								$this->model->_Admin->form->options['print'] = true;
-							} else {
-								if ($this->model->element->exists())
-									$this->model->_Admin->form->reset();
-							}
-
-							$checkCustomTemplate = Autoloader::searchFile('template', $dir . $request[0]);
-							if ($checkCustomTemplate) {
-								$this->model->viewOptions['template'] = $dir . $request[0];
-								unset($this->model->viewOptions['template-module']);
-							} else {
-								$this->model->viewOptions['template'] = 'form-template';
-							}
-
-							$this->model->viewOptions['cache'] = false; // TODO: in the final version, only form-header and form-footer should not be cached
-
-							$this->model->viewOptions['showLayout'] = true;
-							$this->model->viewOptions['template-module-layout'] = 'AdminFront';
-							$this->model->viewOptions['header'] = ['form-header'];
-							$this->model->viewOptions['footer'] = ['form-footer'];
-
-							if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
-								$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
-							if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
-								array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
-
-							$this->model->viewOptions['warnings'] = $this->model->_Admin->page->warnings($this->model->element);
-							if (isset($_GET['duplicated']))
-								$this->model->viewOptions['messages'] = ['Succesfully duplicated!'];
-						}
-
-						if (isset($request[3])) {
-							$this->model->viewOptions['template'] = $dir . $request[0] . DIRECTORY_SEPARATOR . $request[3];
-						}
-						break;
-					case 'save':
-						try {
-							if (!isset($_POST['data']))
-								$this->model->error('Missing technical data.');
-							if (!$this->model->_CSRF->checkCsrf())
-								$this->model->error('Unauthorized. Try refreshing the page.');
-							$data = json_decode($_POST['data'], true);
-							if ($data === null)
-								$this->model->error('Wrong data');
-							if (!$this->model->element)
-								$this->model->error('Element does not exist');
-
-							if (!$this->model->_Admin->canUser($this->model->element->exists() ? 'U' : 'C', null, $this->model->element))
-								$this->model->error('Can\'t save, permission denied.');
-
-							$versionLock = null;
-							if (isset($_POST['version']) and is_numeric($_POST['version']))
-								$versionLock = $_POST['version'];
-							$id = $this->model->_Admin->saveElement($data, $versionLock);
-							if ($id !== false) {
-								$this->model->sendJSON([
-									'status' => 'ok',
-									'id' => $id,
-								]);
-							} else {
-								$this->model->error('Error while saving');
-							}
-						} catch (\Exception $e) {
-							$this->model->sendJSON(['status' => 'err', 'err' => getErr($e)]);
-						}
-						break;
 					case 'changeOrder':
 						try {
 							if (!$this->model->element or !$this->model->element->exists())
@@ -285,24 +213,6 @@ class AdminController extends Controller
 					} else {
 						$this->model->viewOptions['template'] = 'form-template';
 					}
-				}
-			} else {
-				switch ($request[1]) {
-					case 'duplicate':
-						try {
-							if (!$this->model->element or !$this->model->element->exists())
-								$this->model->error('Error: attempting to duplicate a non existing element.');
-
-							$newElement = $this->model->element->duplicate();
-							$this->model->redirect($this->model->_AdminFront->getUrlPrefix() . $request[0] . '/edit/' . $newElement['id'] . '?duplicated');
-						} catch (\Exception $e) {
-							$err = getErr($e);
-							die($err);
-						}
-						break;
-					default:
-						$this->model->viewOptions['template'] = 'shell';
-						break;
 				}
 			}
 

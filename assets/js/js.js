@@ -452,11 +452,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 			switch (request[1]) {
 				case 'edit':
-					let id = 0;
-					if (typeof request[2] !== 'undefined')
-						id = parseInt(request[2]);
-					if (isNaN(id))
-						throw 'Id non valido';
+					let id = getIdFromRequest(request);
 
 					toolbar.removeClass('d-none');
 
@@ -574,6 +570,16 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			});
 		}
 	});
+}
+
+function getIdFromRequest(request) {
+	let id = 0;
+	if (typeof request[2] !== 'undefined')
+		id = parseInt(request[2]);
+	if (isNaN(id))
+		throw 'Id non valido';
+
+	return id;
 }
 
 function loadRuntimeJs(file) {
@@ -1858,37 +1864,32 @@ async function save() {
 			resolve();
 		}, 200);
 	}).then(function () {
-		let url;
 		let request = currentAdminPage.split('/');
-		var history_push;
+		let id = getIdFromRequest(request);
 
-		if (typeof request[2] !== 'undefined') {
-			// I am editing an existing element
-			url = adminPrefix + request[0] + '/save/' + request[2];
-			history_push = false;
-		} else {
-			// I am saving a new element
-			url = adminPrefix + request[0] + '/save';
-			history_push = true;
-		}
+		let payload = {
+			'save': {},
+			'version': null
+		};
 
-		let savingValues = {};
 		for (let k in changedValues) {
-			if (typeof form[k] !== 'undefined' && form[k].getAttribute('data-multilang') && typeof savingValues[k] === 'undefined') {
-				if (typeof savingValues[form[k].getAttribute('data-multilang')] === 'undefined')
-					savingValues[form[k].getAttribute('data-multilang')] = {};
-				savingValues[form[k].getAttribute('data-multilang')][form[k].getAttribute('data-lang')] = changedValues[k];
+			if (typeof form[k] !== 'undefined' && form[k].getAttribute('data-multilang') && typeof payload.save[k] === 'undefined') {
+				if (typeof payload.save[form[k].getAttribute('data-multilang')] === 'undefined')
+					payload.save[form[k].getAttribute('data-multilang')] = {};
+				payload.save[form[k].getAttribute('data-multilang')][form[k].getAttribute('data-lang')] = changedValues[k];
 			} else {
-				savingValues[k] = changedValues[k];
+				payload.save[k] = changedValues[k];
 			}
 		}
 
-		let version_lock = '';
-		if (typeof form['_model_version'] !== 'undefined')
-			version_lock = '&version=' + encodeURIComponent(form['_model_version'].getValue(true));
+		if (Object.keys(payload.save).length === 0)
+			throw 'Nessun dato modificato';
 
-		return ajax(url, 'ajax', 'c_id=' + c_id + '&data=' + encodeURIComponent(JSON.stringify(savingValues)) + version_lock, {
-			'onprogress': function (event) {
+		if (typeof form['_model_version'] !== 'undefined')
+			payload.version = form['_model_version'].getValue(true);
+
+		return adminApiRequest('page/' + request[0] + '/save/' + id, payload, {
+			/*'onprogress': function (event) { // TODO: al momento non supportato in fetch
 				let percentage;
 				if (event.total === 0) {
 					percentage = 0;
@@ -1897,32 +1898,26 @@ async function save() {
 				}
 
 				setLoadingBar(percentage);
-			}
-		}).then(function (r) {
-			setLoadingBar(0);
+			}*/
+		}).then(response => {
+			if (!response.id)
+				throw 'Risposta server errata';
 
-			let request = currentAdminPage.split('/');
-
+			historyWipe();
 			saving = false;
-			toolbarButtonRestore('save');
 
-			if (typeof r !== 'object') {
-				alert(r);
-				return false;
-			}
-			if (r.status === 'ok') {
-				historyWipe();
-
-				return loadAdminElement(r.id, {}, history_push).then(() => {
-					inPageMessage('Salvataggio correttamente effettuato.', 'success');
-					return r.id;
-				});
-			} else if (typeof r.err !== 'undefined') {
-				alert(r.err);
-			} else {
-				alert('Generic error');
-			}
+			return loadAdminElement(response.id, {}, id === 0).then(() => {
+				inPageMessage('Salvataggio correttamente effettuato.', 'success');
+				return response.id;
+			});
 		});
+	}).catch(error => {
+		alert(error);
+	}).finally(() => {
+		setLoadingBar(0);
+
+		saving = false;
+		toolbarButtonRestore('save');
 	});
 }
 
