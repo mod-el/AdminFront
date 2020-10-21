@@ -400,6 +400,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 	visualizers = {};
 	selectFromMainMenu(request);
 
+	clearMainPage();
+
 	return new Promise(resolve => {
 		if (!firstLoad && currentAdminPage.split('/')[0] === request[0]) {
 			resolve();
@@ -440,7 +442,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			if (window.innerWidth < 800)
 				closeMenu();
 
-			clearMainPage();
 			historyWipe();
 
 			if (history_push) {
@@ -1413,12 +1414,32 @@ function loadAdminElement(id, get = {}, history_push = true) {
 						'action': 'save()',
 					});
 				}
+
+				addPageAction('list', {
+					'fa-icon': 'fas fa-list',
+					'text': 'Elenco',
+					'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
+				});
 			} else {
 				if (responses[1].privileges.U) {
 					addPageAction('save', {
 						'fa-icon': 'far fa-save',
 						'text': 'Salva',
 						'action': 'save()',
+					});
+				}
+
+				addPageAction('list', {
+					'fa-icon': 'fas fa-list',
+					'text': 'Elenco',
+					'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
+				});
+
+				if (currentPageDetails.privileges.C) {
+					addPageAction('duplicate', {
+						'fa-icon': 'far fa-clone',
+						'text': 'Duplica',
+						'action': 'duplicate()',
 					});
 				}
 
