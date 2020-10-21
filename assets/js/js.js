@@ -273,7 +273,7 @@ window.onpopstate = function (event) {
 	}
 };
 
-function adminApiRequest(request, payload = {}) {
+function adminApiRequest(request, payload = {}, options = {}) {
 	let headers = {
 		'Accept': 'application/json',
 		'Content-Type': 'application/json'
@@ -284,7 +284,8 @@ function adminApiRequest(request, payload = {}) {
 	return ajax(adminApiPath + request, {}, payload, {
 		'fullResponse': true,
 		'headers': headers,
-		'json': true
+		'json': true,
+		...options
 	}).then(response => {
 		return response.text().then(text => {
 			try {
@@ -1943,8 +1944,20 @@ function duplicate() {
 		return false;
 	}
 
+	toolbarButtonLoading('duplicate');
+
 	let request = currentAdminPage.split('/');
-	window.open(adminPrefix + request[0] + '/duplicate/' + request[2]);
+	return adminApiRequest('page/' + request[0] + '/duplicate/' + request[2], {method: 'POST'}).then(r => {
+		if (r.id) {
+			window.open(adminPrefix + request[0] + '/edit/' + r.id);
+		} else {
+			throw 'Errore sconosciuto';
+		}
+	}).catch(error => {
+		alert(error);
+	}).finally(() => {
+		toolbarButtonRestore('duplicate');
+	});
 }
 
 function checkSubPages() {
@@ -2235,7 +2248,8 @@ function deleteRows(ids) {
 		else
 			loadAdminPage(request[0]);
 	}).catch(error => {
-		toolbarButtonRestore('delete');
 		alert(error);
+	}).finally(() => {
+		toolbarButtonRestore('delete');
 	});
 }
