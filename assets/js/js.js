@@ -460,33 +460,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 					// ==== Basic actions ====
 
-					// TODO
-					if (currentPageDetails.privileges.C) {
-						addPageAction('new', {
-							'fa-icon': 'far fa-plus-square',
-							'text': 'Nuovo',
-							'action': 'newElement()',
-						});
-					}
-
-					if (id === 0) {
-						if (currentPageDetails.privileges.C) {
-							addPageAction('save', {
-								'fa-icon': 'far fa-save',
-								'text': 'Salva',
-								'action': 'save()',
-							});
-						}
-					} else {
-						if (currentPageDetails.privileges.U) {
-							addPageAction('save', {
-								'fa-icon': 'far fa-save',
-								'text': 'Salva',
-								'action': 'save()',
-							});
-						}
-					}
-
 					if (loadFullDetails) {
 						return loadAdminElement(id, get, false);
 					} else {
@@ -1423,6 +1396,42 @@ function loadAdminElement(id, get = {}, history_push = true) {
 		return checkSubPages().then(() => {
 			hideLoadingMask();
 
+			// Check privilegi
+			if (currentPageDetails.privileges.C) {
+				addPageAction('new', {
+					'fa-icon': 'far fa-plus-square',
+					'text': 'Nuovo',
+					'action': 'newElement()',
+				});
+			}
+
+			if (id === 0) {
+				if (currentPageDetails.privileges.C) {
+					addPageAction('save', {
+						'fa-icon': 'far fa-save',
+						'text': 'Salva',
+						'action': 'save()',
+					});
+				}
+			} else {
+				if (responses[1].privileges.U) {
+					addPageAction('save', {
+						'fa-icon': 'far fa-save',
+						'text': 'Salva',
+						'action': 'save()',
+					});
+				}
+
+				if (responses[1].privileges.D) {
+					addPageAction('delete', {
+						'fa-icon': 'far fa-trash-alt',
+						'text': 'Elimina',
+						'action': 'deleteRows(' + JSON.stringify([id]) + ')',
+					});
+				}
+			}
+
+			// Tasti azione custom
 			Object.keys(responses[1].actions).forEach(action => {
 				addPageAction(action, responses[1].actions[action]);
 			});
