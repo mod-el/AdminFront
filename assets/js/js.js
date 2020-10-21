@@ -1378,16 +1378,18 @@ function adminRowClicked(row) {
 }
 
 function adminRowDragged(id, elementIdx, targetIdx) {
-	if (elementIdx !== targetIdx) { // TODO: vecchio codice, sistemare
-		/*showLoadingMask();
-		ajax(adminPrefix + currentAdminPage.split('/')[0] + '/changeOrder/' + encodeURIComponent(elementId), 'to=' + targetIdx + '&ajax', 'c_id=' + c_id).then(r => {
-			hideLoadingMask();
+	if (elementIdx !== targetIdx) {
+		showLoadingMask();
 
-			if (r !== 'ok') {
-				alert(r);
-				reloadResultsTable();
-			}
-		});*/
+		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/change-order/' + id, {to: targetIdx}).then(r => {
+			if (!r.success)
+				throw 'Errore durante il cambio di ordine';
+		}).catch(error => {
+			alert(error);
+			reloadList();
+		}).finally(() => {
+			hideLoadingMask();
+		});
 	}
 }
 
@@ -2239,7 +2241,7 @@ function deleteRows(ids) {
 	let request = currentAdminPage.split('/');
 	return adminApiRequest('page/' + request[0] + '/delete', {ids}).then(r => {
 		if (request.length === 1)
-			document.location.reload();
+			reloadList();
 		else
 			loadAdminPage(request[0]);
 	}).catch(error => {
@@ -2247,4 +2249,9 @@ function deleteRows(ids) {
 	}).finally(() => {
 		toolbarButtonRestore('delete');
 	});
+}
+
+function reloadList() {
+	let request = currentAdminPage.split('/');
+	return search(request[0], null, false);
 }

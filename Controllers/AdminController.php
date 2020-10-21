@@ -180,24 +180,6 @@ class AdminController extends Controller
 							}
 						}
 						break;
-					case 'changeOrder':
-						try {
-							if (!$this->model->element or !$this->model->element->exists())
-								$this->model->error('Error: attempting to change order to a non existing element.');
-
-							$to = $this->model->getInput('to');
-							if (!$to or !is_numeric($to))
-								$this->model->error('Bad parameters');
-
-							if ($this->model->element->changeOrder($to))
-								die('ok');
-							else
-								die('Error');
-						} catch (\Exception $e) {
-							$err = getErr($e);
-							die($err);
-						}
-						break;
 					default:
 						$unknown = true;
 						break;

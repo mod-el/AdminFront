@@ -156,7 +156,6 @@ class Table {
 		list.forEach(item => {
 			let row = bodyMain.appendChild(document.createElement('div'));
 			row.className = 'results-table-row-cont';
-			// TODO: il modulo draggable è stato recentemente cambiato, verificare che ancora funzioni e in caso copiare dall'admin attuale
 			if (draggable) {
 				if (item.id) {
 					row.setAttribute('data-draggable-id', item.id);
@@ -173,12 +172,12 @@ class Table {
 				} else {
 					row.setAttribute('data-draggable-set', '1');
 				}
-			} else {
-				row.addEventListener('click', event => {
-					if (event.button === 0)
-						adminRowClicked(row);
-				});
 			}
+
+			row.addEventListener('click', event => {
+				if (event.button === 0)
+					adminRowClicked(row);
+			});
 
 			let innerRow = row.appendChild(document.createElement('div'));
 			innerRow.className = 'results-table-row';
