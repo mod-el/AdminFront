@@ -398,6 +398,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 	request = request.split('/');
 
 	visualizers = {};
+	selectFromMainMenu(request);
 
 	return new Promise(resolve => {
 		if (!firstLoad && currentAdminPage.split('/')[0] === request[0]) {
@@ -435,7 +436,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 		if (typeof request[1] !== 'undefined') {
 			currentAdminPage = request.join('/');
-			selectFromMainMenu(request);
 
 			if (window.innerWidth < 800)
 				closeMenu();
@@ -1384,14 +1384,14 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 
 function loadAdminElement(id, get = {}, history_push = true) {
 	elementCallback = null;
-	// dataCache = {'data': {}, 'children': []}; // TODO: serve ancora?
+	dataCache = {'data': {}, 'children': []};
 
 	let request = currentAdminPage.split('/');
 
 	let templatePromise = loadAdminPage(request[0] + '/edit/' + id, get, history_push, false).then(showLoadingMask);
 	let dataPromise = loadElementData(request[0], id || 0);
 
-	Promise.all([templatePromise, dataPromise]).then(responses => {
+	return Promise.all([templatePromise, dataPromise]).then(responses => {
 		return checkSubPages().then(() => {
 			hideLoadingMask();
 			return fillAdminForm(responses[1]);
