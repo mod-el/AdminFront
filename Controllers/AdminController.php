@@ -127,7 +127,8 @@ class AdminController extends Controller
 										}
 										break;
 									default:
-										$this->model->_Log->disableAutoLog();
+										if ($this->model->moduleExists('Log'))
+											$this->model->_Log->disableAutoLog();
 										ini_set('max_execution_time', '0');
 
 										$options['perPage'] = $_POST['rows-number'];
