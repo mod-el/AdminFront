@@ -1941,6 +1941,9 @@ function duplicate() {
 		return false;
 	}
 
+	if (!confirm('Stai per duplicare questo elemento, sei sicuro?'))
+		return false;
+
 	toolbarButtonLoading('duplicate');
 
 	let request = currentAdminPage.split('/');
