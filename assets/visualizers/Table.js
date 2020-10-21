@@ -13,7 +13,7 @@ class Table {
 
 	// Standard visualizers method
 	async render(list, totals) {
-		let renderDeleteCell = list.some(item => item.permissions['D']);
+		let renderDeleteCell = list.some(item => item.privileges['D']);
 
 		let head = document.createElement('div');
 		head.className = 'table-head';
@@ -230,7 +230,7 @@ class Table {
 					event.stopPropagation();
 				});
 				deleteCell = deleteCell.appendChild(document.createElement('div'));
-				if (item.permissions['D'])
+				if (item.privileges['D'])
 					deleteCell.innerHTML = '<a href="#" onclick="event.stopPropagation(); deleteRows([\'' + item.id + '\']); return false"><img src="' + PATHBASE + 'model/AdminTemplateEditt/assets/img/delete.png" alt="" style="vertical-align: middle"/></a>';
 			}
 
@@ -255,7 +255,7 @@ class Table {
 					div.style.color = item.data[fieldName].color;
 
 				let clickable = true;
-				if (!item.id || !item.permissions['R'])
+				if (!item.id || !item.privileges['R'])
 					clickable = false;
 				if (typeof item.data[fieldName].clickable !== 'undefined' && !item.data[fieldName].clickable)
 					clickable = false;

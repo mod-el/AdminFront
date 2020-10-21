@@ -450,11 +450,18 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 			switch (request[1]) {
 				case 'edit':
+					let id = 0;
+					if (typeof request[2] !== 'undefined')
+						id = parseInt(request[2]);
+					if (isNaN(id))
+						throw 'Id non valido';
+
 					toolbar.removeClass('d-none');
 
 					// ==== Basic actions ====
 
-					if (currentPageDetails.privileges.C) { // TODO: vedere se mantenere qui o spostare insieme alla costruzione del resto della toolbar del dettaglio
+					// TODO
+					if (currentPageDetails.privileges.C) {
 						addPageAction('new', {
 							'fa-icon': 'far fa-plus-square',
 							'text': 'Nuovo',
@@ -462,11 +469,25 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 						});
 					}
 
-					if (loadFullDetails) {
-						let id = 0;
-						if (typeof request[2] !== 'undefined')
-							id = request[2];
+					if (id === 0) {
+						if (currentPageDetails.privileges.C) {
+							addPageAction('save', {
+								'fa-icon': 'far fa-save',
+								'text': 'Salva',
+								'action': 'save()',
+							});
+						}
+					} else {
+						if (currentPageDetails.privileges.U) {
+							addPageAction('save', {
+								'fa-icon': 'far fa-save',
+								'text': 'Salva',
+								'action': 'save()',
+							});
+						}
+					}
 
+					if (loadFullDetails) {
 						return loadAdminElement(id, get, false);
 					} else {
 						return loadPage(adminPrefix + 'template/' + request[0]);
@@ -475,9 +496,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			}
 		} else {
 			// TODO: rimuovere scritte sottostanti quando saranno fatte
-			// Se custom, vedere come sistemare l'history del browser (che al momento viene updatata al search)
-			// Ripassare dalla richiesta poi per abilitare tutti i parametri restanti)
-			// Ad esempio: tasto print, eliminazione multipla righe
+			// Ripassare dalla richiesta per abilitare tutti i parametri restanti)
+			//      Ad esempio: tasto print, eliminazione multipla righe
 
 			if (sessionStorage.getItem('current-page') !== request[0])
 				sessionStorage.removeItem('filters-values');
@@ -505,6 +525,14 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 							'fa-icon': 'far fa-plus-square',
 							'text': 'Nuovo',
 							'action': 'newElement()',
+						});
+					}
+
+					if (currentPageDetails.privileges.D) {
+						addPageAction('delete', {
+							'fa-icon': 'far fa-trash-alt',
+							'text': 'Elimina',
+							'action': 'deleteRows()',
 						});
 					}
 
@@ -1394,6 +1422,11 @@ function loadAdminElement(id, get = {}, history_push = true) {
 	return Promise.all([templatePromise, dataPromise]).then(responses => {
 		return checkSubPages().then(() => {
 			hideLoadingMask();
+
+			Object.keys(responses[1].actions).forEach(action => {
+				addPageAction(action, responses[1].actions[action]);
+			});
+
 			return fillAdminForm(responses[1]);
 		});
 	}).then(callElementCallback).then(monitorFields).then(() => {
@@ -2134,4 +2167,45 @@ function checkForCsvExport(sId, rowsNumber) {
 			}
 		});
 	}
+}
+
+function deleteRows(ids) {
+	let usingChecks = false;
+	if (typeof ids === 'undefined') {
+		ids = selectedRows;
+		usingChecks = true;
+	}
+	if (ids.length === 0) {
+		alert('Nessuna riga selezionata');
+		return false;
+	}
+
+	if (!confirm('Sicuro di voler eliminare ' + ids.length + ' elementi?'))
+		return false;
+
+	if (usingChecks) {
+		let nChecked = 0;
+		_('main-visualizer-cont').querySelectorAll('[id^="row-checkbox-"]').forEach(function (checkbox) {
+			if (checkbox.checked)
+				nChecked++;
+		});
+
+		if (ids.length > nChecked) {
+			if (!confirm('ATTENZIONE: ci sono righe selezionate anche in altre pagine, saranno eliminate anche quelle. Continuare?'))
+				return false;
+		}
+	}
+
+	toolbarButtonLoading('delete');
+
+	let request = currentAdminPage.split('/');
+	return adminApiRequest('page/' + request[0] + '/delete', {ids}).then(r => {
+		if (request.length === 1)
+			document.location.reload();
+		else
+			loadAdminPage(request[0]);
+	}).catch(error => {
+		toolbarButtonRestore('delete');
+		alert(error);
+	});
 }

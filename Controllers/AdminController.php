@@ -252,25 +252,6 @@ class AdminController extends Controller
 							$this->model->sendJSON(['status' => 'err', 'err' => getErr($e)]);
 						}
 						break;
-					case 'delete':
-						try {
-							if (!$this->model->_CSRF->checkCsrf() or !isset($_GET['id']))
-								$this->model->error('Missing data');
-							$ids = explode(',', $_GET['id']);
-
-							$this->model->_Db->beginTransaction();
-
-							foreach ($ids as $id)
-								$this->model->_Admin->delete($id);
-
-							$this->model->_Db->commit();
-
-							$this->model->sendJSON(['deleted' => $ids]);
-						} catch (\Exception $e) {
-							$this->model->_Db->rollBack();
-							$this->model->sendJSON(['err' => getErr($e)]);
-						}
-						break;
 					case 'changeOrder':
 						try {
 							if (!$this->model->element or !$this->model->element->exists())
