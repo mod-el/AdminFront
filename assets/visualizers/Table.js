@@ -186,9 +186,9 @@ class Table {
 			if (typeof item.onclick !== 'undefined')
 				innerRow.setAttribute('data-onclick', item.onclick);
 
-			if (typeof item.background !== 'undefined')
+			if (item.background)
 				innerRow.style.background = item.background;
-			if (typeof item.color !== 'undefined')
+			if (item.color)
 				innerRow.style.color = item.color;
 
 			let checkboxCell = innerRow.appendChild(document.createElement('div'));
@@ -248,10 +248,22 @@ class Table {
 				if (!this.options['fields'][fieldName].print)
 					div.addClass('dont-print');
 
-				if (typeof item.data[fieldName].background !== 'undefined')
+				if (item.data[fieldName].background)
 					div.style.background = item.data[fieldName].background;
-				if (typeof item.data[fieldName].color !== 'undefined')
+
+				if (item.data[fieldName].color) {
 					div.style.color = item.data[fieldName].color;
+				} else if (!item.color) {
+					let background = null;
+					if (item.background)
+						background = item.background;
+					if (item.data[fieldName].background)
+						background = item.data[fieldName].background
+
+					let autoColor = autoReadableColor(background);
+					if (autoColor)
+						div.style.color = autoColor;
+				}
 
 				let clickable = true;
 				if (!item.id || !item.privileges['R'])
@@ -620,4 +632,65 @@ async function saveEditableField(field, id) {
 	}).finally(() => {
 		field.style.opacity = 1;
 	});
+}
+
+function autoReadableColor(bg) {
+	if (!bg)
+		return null;
+
+	if (bg.charAt(0) !== '#' || (bg.length !== 7 && bg.length !== 4)) {
+		let colorsMap = {
+			'black': '#000000',
+			'white': '#FFFFFF',
+			'red': '#FF0000',
+			'green': '#008000',
+			'blue': '#0000FF',
+			'gray': '#808080',
+			'brown': '#a52a2a',
+			'maroon': '#800000'
+		};
+
+		if (colorsMap.hasOwnProperty(bg))
+			bg = colorsMap[bg];
+		else
+			return null;
+	}
+
+	bg = bg.substr(1);
+
+	let r, g, b;
+
+	switch (bg.length) {
+		case 6:
+			r = bg.substr(0, 2);
+			g = bg.substr(2, 2);
+			b = bg.substr(4, 2);
+			break;
+		case 3:
+			r = bg.substr(0, 1) + bg.substr(0, 1);
+			g = bg.substr(1, 1) + bg.substr(1, 1);
+			b = bg.substr(2, 1) + bg.substr(2, 1);
+			break;
+		default:
+			return null;
+			break;
+	}
+
+	r = parseInt(r, 16);
+	g = parseInt(g, 16);
+	b = parseInt(b, 16);
+
+	if (isNaN(r) || isNaN(g) || isNaN(b))
+		return null;
+
+	let squared_contrast = (
+		(r ** 2 * 0.299) +
+		(g ** 2 * 0.587) +
+		(b ** 2 * 0.114)
+	);
+
+	if (squared_contrast > 130 ** 2)
+		return '#000';
+	else
+		return '#FFF';
 }
