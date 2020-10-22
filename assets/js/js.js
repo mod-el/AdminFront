@@ -1368,12 +1368,11 @@ async function saveSearchFields() {
 }
 
 function adminRowClicked(row) {
-	let innerRow = row.firstElementChild;
-	if (innerRow.dataset.onclick) {
-		eval('var custom_function = function(){ ' + innerRow.dataset.onclick + ' }');
-		custom_function.call(innerRow);
+	if (row.dataset.onclick) {
+		eval('var custom_function = function(){ ' + row.dataset.onclick + ' }');
+		custom_function.call(row);
 	} else {
-		loadAdminElement(innerRow.dataset.id);
+		loadAdminElement(row.dataset.id);
 	}
 }
 

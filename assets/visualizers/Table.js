@@ -156,6 +156,7 @@ class Table {
 		list.forEach(item => {
 			let row = bodyMain.appendChild(document.createElement('div'));
 			row.className = 'results-table-row-cont';
+
 			if (draggable) {
 				if (item.id) {
 					row.setAttribute('data-draggable-id', item.id);
@@ -174,17 +175,17 @@ class Table {
 				}
 			}
 
-			row.addEventListener('click', event => {
-				if (event.button === 0)
-					adminRowClicked(row);
-			});
-
 			let innerRow = row.appendChild(document.createElement('div'));
 			innerRow.className = 'results-table-row';
 			innerRow.setAttribute('data-n', rowCount.toString());
 			innerRow.setAttribute('data-id', item.id);
 			if (typeof item.onclick !== 'undefined')
 				innerRow.setAttribute('data-onclick', item.onclick);
+
+			innerRow.addEventListener('click', event => {
+				if (event.button === 0)
+					adminRowClicked(innerRow);
+			});
 
 			if (item.background)
 				innerRow.style.background = item.background;
