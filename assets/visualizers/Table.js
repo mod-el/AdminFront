@@ -293,8 +293,9 @@ class Table {
 					let fieldClass = new Field(fieldName, {...field.editable, value: item.data[fieldName].value});
 
 					let fieldNode = fieldClass.render();
+					fieldNode.setAttribute('data-editable', item.id);
 					fieldNode.addEventListener('change', function () {
-						saveEditableField(this, item.id);
+						saveEditableField(this);
 					});
 					innerDiv.appendChild(fieldNode);
 				} else if (field.price) {
@@ -605,27 +606,34 @@ function selectAllRows(id, enable) {
 	});
 }
 
-async function saveEditableField(field, id) {
-	field.style.opacity = 0.2;
+async function saveEditableField(field) {
+	let id = field.dataset.editable;
+	if (!id)
+		return false;
+
+	let riga = _('.results-table-row[data-id="' + id + '"]');
+	if (!riga)
+		return false;
 
 	let request = currentAdminPage.split('/');
 	let value = await field.getValue();
 
-	/*let riga = _('.results-table-row[data-id="' + id + '"]');
-	if (!riga)
-		return false;
+	field.style.opacity = 0.2;
 
-	let n = parseInt(riga.getAttribute('data-n')); // TODO
-	if (_('instant-' + (n + 1) + '-' + f)) {
-		_('instant-' + (n + 1) + '-' + f).focus();
-		_('instant-' + (n + 1) + '-' + f).select();
-	}*/
+	let n = parseInt(riga.getAttribute('data-n'));
+	let rigaSuccessiva = _('.results-table-row[data-n="' + (n + 1) + '"]');
 
 	return adminApiRequest('page/' + request[0] + '/save/' + id, {save: {[field.name]: value}}).then(response => {
 		if (!response.id)
 			throw 'Risposta server errata';
 
-		reloadList();
+		reloadList().then(() => {
+			if (rigaSuccessiva) {
+				let idRigaSuccessiva = rigaSuccessiva.dataset.id;
+				_('[data-editable="' + idRigaSuccessiva + '"][name="' + field.name + '"]').focus();
+				_('[data-editable="' + idRigaSuccessiva + '"][name="' + field.name + '"]').select();
+			}
+		});
 	}).catch(error => {
 		field.style.display = 'none';
 		alert(error);
