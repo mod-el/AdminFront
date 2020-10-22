@@ -258,8 +258,11 @@ class Table {
 					clickable = false;
 				if (typeof item.data[fieldName].clickable !== 'undefined' && !item.data[fieldName].clickable)
 					clickable = false;
+				if (field.editable)
+					clickable = false;
+				if (field.editable)
+					div.addClass('editable-cell');
 
-				// TODO: gestione editable
 				if (!clickable) {
 					div.addEventListener('mousedown', event => {
 						event.stopPropagation();
@@ -273,10 +276,20 @@ class Table {
 				}
 
 				let innerDiv = div.appendChild(document.createElement('div'));
-				if (field.price)
+				if (field.editable) {
+					innerDiv.innerHTML = '';
+					let fieldClass = new Field(fieldName, {...field.editable, value: item.data[fieldName].value});
+
+					let fieldNode = fieldClass.render();
+					fieldNode.addEventListener('change', function () {
+						saveEditableField(this, item.id);
+					});
+					innerDiv.appendChild(fieldNode);
+				} else if (field.price) {
 					innerDiv.innerHTML = makePrice(item.data[fieldName].value);
-				else
+				} else {
 					innerDiv.innerHTML = entities(item.data[fieldName].text);
+				}
 			});
 
 			rowCount++;
@@ -337,7 +350,7 @@ class Table {
 	// Standard visualizers method
 	async reload() {
 		if (this.main) {
-			search();
+			search(1, null, false);
 		} else {
 			// TODO: sublist reloading
 		}
@@ -577,5 +590,34 @@ function moveBetweenRows(checkbox, keyCode) {
 function selectAllRows(id, enable) {
 	_('.results-table[data-table="' + id + '"]').querySelectorAll('[id^="row-checkbox-"]').forEach(checkbox => {
 		checkbox.setValue(enable);
+	});
+}
+
+async function saveEditableField(field, id) {
+	field.style.opacity = 0.2;
+
+	let request = currentAdminPage.split('/');
+	let value = await field.getValue();
+
+	/*let riga = _('.results-table-row[data-id="' + id + '"]');
+	if (!riga)
+		return false;
+
+	let n = parseInt(riga.getAttribute('data-n')); // TODO
+	if (_('instant-' + (n + 1) + '-' + f)) {
+		_('instant-' + (n + 1) + '-' + f).focus();
+		_('instant-' + (n + 1) + '-' + f).select();
+	}*/
+
+	return adminApiRequest('page/' + request[0] + '/save/' + id, {save: {[field.name]: value}}).then(response => {
+		if (!response.id)
+			throw 'Risposta server errata';
+
+		reloadList();
+	}).catch(error => {
+		field.style.display = 'none';
+		alert(error);
+	}).finally(() => {
+		field.style.opacity = 1;
 	});
 }
