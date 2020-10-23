@@ -21,67 +21,301 @@ var dataCache = {'data': {}, 'children': []};
 
 var saving = false;
 
-/* Form history monitoring */
-var changedValues = {};
-var changeHistory = [];
-var canceledChanges = [];
+var pageForms = new Map();
+
+class HistoryManager {
+	constructor() {
+		this.changeHistory = [];
+		this.canceledChanges = [];
+	}
+
+	append(form, field, oldValue, newValue) {
+		this.changeHistory.push({form, field, oldValue, newValue});
+		this.canceledChanges = [];
+		this.rebuildBox();
+	}
+
+	stepBack() {
+		if (this.changeHistory.length === 0)
+			return false;
+
+		let el = this.changeHistory.pop();
+		this.canceledChanges.unshift(el);
+
+		if (typeof el.sublist !== 'undefined') {
+			/*switch (el.action) { // TODO
+				case 'new':
+					sublistDeleteRow(el.sublist, el.id, false);
+					break;
+				case 'delete':
+					sublistRestoreRow(el.sublist, el.id);
+					break;
+			}*/
+		} else {
+			let form = pageForms.get(el.form);
+			if (!form)
+				return;
+
+			// if (form[el.field].getAttribute('data-multilang') && form[el.field].getAttribute('data-lang')) // TODO
+			// 	switchFieldLang(form[el.field].getAttribute('data-multilang'), form[el.field].getAttribute('data-lang'));
+
+			let field = form.fields.get(el.field).getNode();
+			field.setValue(el.oldValue, false);
+			field.focus();
+			if (field.select)
+				field.select();
+			form.changedValues[el.field] = el.oldValue;
+		}
+
+		this.rebuildBox();
+	}
+
+	stepForward() {
+		if (this.canceledChanges.length === 0)
+			return false;
+
+		let el = this.canceledChanges.shift();
+		this.changeHistory.push(el);
+
+		if (typeof el.sublist !== 'undefined') {
+			/*switch (el.action) { // TODO
+				case 'new':
+					sublistRestoreRow(el.sublist, el.id);
+					break;
+				case 'delete':
+					sublistDeleteRow(el.sublist, el.id, false);
+					break;
+			}*/
+		} else {
+			let form = pageForms.get(el.form);
+			if (!form)
+				return;
+			// if (form[el.field].getAttribute('data-multilang') && form[el.field].getAttribute('data-lang')) // TODO
+			// 	switchFieldLang(form[el.field].getAttribute('data-multilang'), form[el.field].getAttribute('data-lang'));
+
+			let field = form.fields.get(el.field).getNode();
+			field.setValue(el.newValue, false);
+			field.focus();
+			if (field.select)
+				field.select();
+			form.changedValues[el.field] = el.newValue;
+		}
+
+		this.rebuildBox();
+	}
+
+	goToStep(t, i) {
+		switch (t) {
+			case 'reset':
+				while (this.changeHistory.length > 0)
+					this.stepBack();
+				break;
+			case 'back':
+				while (this.changeHistory.length > i + 1)
+					this.stepBack();
+				break;
+			case 'forward':
+				if (i + 1 > this.canceledChanges)
+					return;
+				for (let c = 1; c <= i + 1; c++)
+					this.stepForward();
+				break;
+		}
+	}
+
+	wipe() {
+		this.changeHistory = [];
+		this.canceledChanges = [];
+		this.rebuildBox();
+	}
+
+	rebuildBox() {
+		if (!_('links-history'))
+			return false;
+
+		_('links-history').innerHTML = '<a href="#" onclick="historyMgr.goToStep(\'reset\'); return false" class="link-history">Situazione iniziale</a>';
+
+		this.changeHistory.forEach(function (i, idx) {
+			var a = document.createElement('a');
+			a.href = '#';
+			a.setAttribute('onclick', 'historyMgr.goToStep(\'back\', ' + idx + '); return false');
+			a.className = 'link-history';
+			if (typeof i.sublist !== 'undefined') {
+				switch (i.action) {
+					case 'new':
+						a.textContent = 'new sublist row in "' + i.sublist + '"';
+						break;
+					case 'delete':
+						a.textContent = 'deleted row in "' + i.sublist + '"';
+						break;
+				}
+			} else {
+				a.textContent = 'edited "' + i.field + '"';
+			}
+			_('links-history').appendChild(a);
+		});
+
+		this.canceledChanges.forEach(function (i, idx) {
+			var a = document.createElement('a');
+			a.href = '#';
+			a.setAttribute('onclick', 'historyMgr.goToStep(\'forward\', ' + idx + '); return false');
+			a.className = 'link-history disabled';
+			if (typeof i.sublist !== 'undefined') {
+				switch (i.action) {
+					case 'new':
+						a.textContent = 'new sublist row in "' + i.sublist + '"';
+						break;
+					case 'delete':
+						a.textContent = 'deleted row in "' + i.sublist + '"';
+						break;
+				}
+			} else {
+				a.textContent = 'edited "' + i.field + '"';
+			}
+			_('links-history').appendChild(a);
+		});
+	}
+}
+
+var historyMgr = new HistoryManager();
+
+class FormManager {
+	constructor(name) {
+		this.name = name;
+		this.version = 1;
+		this.fields = new Map()
+		this.changedValues = {};
+	}
+
+	async add(field) {
+		let node = field.getNode();
+
+		node.addEventListener('change', () => {
+			let old = null;
+			if (typeof this.changedValues[field.name] === 'undefined') {
+				old = node.getAttribute('data-default-value');
+			} else {
+				old = this.changedValues[field.name];
+			}
+
+			node.getValue().then(v => {
+				if (node.type !== 'file' && v == old)
+					return;
+
+				this.changedValues[field.name] = v;
+
+				if (node.type !== 'file') // Files fields are complex structure, thus are not supported in the changes history
+					historyMgr.append(this.name, field.name, old, v);
+			});
+		});
+
+		if (node.type !== 'file') { // Files fields are complex structure, thus are not supported in the changes history
+			let v = await node.getValue();
+			node.setAttribute('data-default-value', v);
+		}
+
+		this.fields.set(field.name, field);
+	}
+
+	async build(cont, data) {
+		if (data.version)
+			this.version = data.version;
+
+		for (let k of Object.keys(data.fields)) {
+			let fieldCont = cont.querySelector('[data-fieldplaceholder="' + k + '"]');
+			if (!fieldCont)
+				continue;
+
+			let fieldOptions = data.fields[k];
+			if (typeof data.data[k] !== 'undefined')
+				fieldOptions.value = data.data[k];
+
+			let field = new Field(k, fieldOptions);
+			await this.add(field);
+
+			fieldCont.innerHTML = '';
+			fieldCont.appendChild(field.getNode());
+		}
+	}
+
+	getChangedValues() {
+		return this.changedValues;
+	}
+
+	getRequired() {
+		let required = [];
+		for (let field of this.fields) {
+			if (field.required)
+				required.push(field.name);
+		}
+		return required;
+	}
+}
 
 class Field {
 	constructor(name, options = {}) {
 		this.name = name;
-		this.options = array_merge({
+		this.node = null;
+		this.options = {
 			'type': 'text',
 			'value': null,
 			'attributes': {},
-			'options': []
-		}, options);
+			'options': [],
+			'multilang': false,
+			'required': false,
+			...options
+		};
 	}
 
-	render() {
-		let nodeType = null;
-		let attributes = this.options['attributes'];
+	getNode() {
+		if (this.node === null) {
+			let nodeType = null;
+			let attributes = this.options['attributes'];
 
-		switch (this.options['type']) {
-			case 'textarea':
-				nodeType = 'textarea';
-				break;
-			case 'select':
-				nodeType = 'select';
-				break;
-			case 'date':
-				nodeType = 'input';
-				attributes['type'] = 'date';
-				break;
-			default:
-				nodeType = 'input';
-				attributes['type'] = this.options['type'];
-				break;
-		}
+			switch (this.options['type']) {
+				case 'textarea':
+					nodeType = 'textarea';
+					break;
+				case 'select':
+					nodeType = 'select';
+					break;
+				case 'date':
+					nodeType = 'input';
+					attributes['type'] = 'date';
+					break;
+				default:
+					nodeType = 'input';
+					attributes['type'] = this.options['type'];
+					break;
+			}
 
-		if (typeof attributes['name'] === 'undefined')
-			attributes['name'] = this.name;
+			if (typeof attributes['name'] === 'undefined')
+				attributes['name'] = this.name;
 
-		let node = document.createElement(nodeType);
+			let node = document.createElement(nodeType);
 
-		Object.keys(attributes).forEach(k => {
-			node.setAttribute(k, attributes[k]);
-		});
-
-		if (this.options['type'] === 'select') {
-			node.innerHTML = '<option value=""></option>';
-			this.options['options'].forEach(option => {
-				let el = document.createElement('option');
-				el.value = option.id;
-				el.innerHTML = option.text;
-				if (option.id == this.options['value'])
-					el.setAttribute('selected', '');
-				node.appendChild(el);
+			Object.keys(attributes).forEach(k => {
+				node.setAttribute(k, attributes[k]);
 			});
-		} else {
-			node.value = this.options['value'];
+
+			if (this.options['type'] === 'select') {
+				node.innerHTML = '<option value=""></option>';
+				this.options['options'].forEach(option => {
+					let el = document.createElement('option');
+					el.value = option.id;
+					el.innerHTML = option.text;
+					if (option.id == this.options['value'])
+						el.setAttribute('selected', '');
+					node.appendChild(el);
+				});
+			} else {
+				node.value = this.options['value'];
+			}
+
+			this.node = node;
 		}
 
-		return node;
+		return this.node;
 	}
 }
 
@@ -321,7 +555,7 @@ function adminApiRequest(request, payload = {}, options = {}) {
 }
 
 window.addEventListener('beforeunload', function (event) {
-	if (!saving && changeHistory.length === 0)
+	if (!saving && historyMgr.changeHistory.length === 0)
 		return true;
 
 	var message = 'There are unsaved data, are you sure?';
@@ -337,13 +571,13 @@ window.addEventListener('keydown', function (event) {
 	switch (event.keyCode) {
 		case 90: // CTRL+Z
 			if (event.ctrlKey) {
-				historyStepBack();
+				historyMgr.stepBack();
 				event.preventDefault();
 			}
 			break;
 		case 89: // CTRL+Y
 			if (event.ctrlKey) {
-				historyStepForward();
+				historyMgr.stepForward();
 				event.preventDefault();
 			}
 			break;
@@ -443,7 +677,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			if (window.innerWidth < 800)
 				closeMenu();
 
-			historyWipe();
+			wipeForms();
 
 			if (history_push) {
 				let replace = (typeof history_push === 'string' && history_push === 'replace');
@@ -540,7 +774,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					closeMenu();
 
 				clearMainPage();
-				historyWipe();
+				wipeForms();
 
 				switch (currentPageDetails.type) {
 					case 'Custom':
@@ -658,7 +892,7 @@ async function rebuildFilters() {
 					filter.options['attributes']['placeholder'] = label;
 			}
 
-			let field = filter.render();
+			let field = filter.getNode();
 			switch (field.nodeName.toLowerCase()) {
 				case 'input':
 				case 'textarea':
@@ -782,9 +1016,9 @@ function checkBeforePageChange() {
 		alert('Cannot change page while saving. Wait until finished or reload the page.');
 		return false;
 	}
-	if (changeHistory.length > 0) {
+	if (historyMgr.changeHistory.length > 0)
 		return confirm('There are unsaved data. Do you really want to change page?');
-	}
+
 	return true;
 }
 
@@ -1467,9 +1701,11 @@ function loadAdminElement(id, get = {}, history_push = true) {
 				addPageAction(action, responses[1].actions[action]);
 			});
 
-			return renderFieldsInTemplate(_('main-content'), responses[1]);
+			let form = new FormManager('main');
+			pageForms.set('main', form);
+			return form.build(_('main-content'), responses[1]);
 		});
-	}).then(callElementCallback).then(monitorFields).then(() => {
+	}).then(callElementCallback).then(() => {
 		if (!_('adminForm'))
 			return false;
 
@@ -1487,23 +1723,6 @@ function loadAdminElement(id, get = {}, history_push = true) {
 
 function loadElementData(page, id) {
 	return adminApiRequest('page/' + page + '/data/' + id);
-}
-
-async function renderFieldsInTemplate(cont, data) {
-	for (let k of Object.keys(data.fields)) {
-		let fieldCont = cont.querySelector('[data-fieldplaceholder="' + k + '"]');
-		if (!fieldCont)
-			continue;
-
-		let fieldOptions = data.fields[k];
-		if (typeof data.data[k] !== 'undefined')
-			fieldOptions.value = data.data[k];
-
-		let fieldObj = new Field(k, fieldOptions);
-		let field = fieldObj.render();
-		fieldCont.innerHTML = '';
-		fieldCont.appendChild(field);
-	}
 }
 
 function fillAdminForm(data, form = null) { // TODO: probabilmente obsoleto
@@ -1572,7 +1791,7 @@ function fillAdminForm(data, form = null) { // TODO: probabilmente obsoleto
 
 							return Promise.all(promises);
 						};
-					})(list[idx], id, name)).then(monitorFields));
+					})(list[idx], id, name)));
 				}
 			}
 		}
@@ -1580,122 +1799,6 @@ function fillAdminForm(data, form = null) { // TODO: probabilmente obsoleto
 		form.dataset.filled = '1';
 
 		return Promise.all(promises);
-	});
-}
-
-function monitorFields() {
-	let form = _('adminForm');
-
-	for (let i in form.elements) {
-		if (!form.elements.hasOwnProperty(i))
-			continue;
-		let f = form.elements[i];
-		if (!f.name || f.name === 'fakeusernameremembered' || f.name === 'fakepasswordremembered')
-			continue;
-
-		if (f.getAttribute('data-monitored'))
-			continue;
-
-		let isInSublistTemplate = false;
-		let check = f;
-		while (check) {
-			if (check.hasClass && check.hasClass('formlist-template')) {
-				isInSublistTemplate = true;
-				break;
-			}
-			check = check.parentNode;
-		}
-		if (isInSublistTemplate)
-			continue;
-
-		f.setAttribute('data-monitored', '1');
-
-		f.addEventListener('change', function (e) {
-			changedMonitoredField(this);
-		});
-
-		if (f.type !== 'file') { // Files fields are complex structure, thus are not supported in the changes history
-			f.getValue().then((f => {
-				return (v => f.setAttribute('data-default-value', v));
-			})(f));
-		}
-	}
-	return true;
-}
-
-function changedMonitoredField(f) {
-	var old = null;
-	if (typeof changedValues[f.name] === 'undefined') {
-		old = f.getAttribute('data-default-value');
-	} else {
-		old = changedValues[f.name];
-	}
-
-	f.getValue().then(((old, f) => {
-		return v => {
-			if (f.type !== 'file' && v == old)
-				return;
-			changedValues[f.name] = v;
-
-			if (f.type !== 'file') { // Files fields are complex structure, thus are not supported in the changes history
-				changeHistory.push({
-					'field': f.name,
-					'old': old,
-					'new': v
-				});
-
-				canceledChanges = [];
-
-				rebuildHistoryBox();
-			}
-		};
-	})(old, f));
-}
-
-function rebuildHistoryBox() {
-	if (!_('links-history'))
-		return false;
-
-	_('links-history').innerHTML = '<a href="#" onclick="historyGoToStep(\'reset\'); return false" class="link-history">Situazione iniziale</a>';
-
-	changeHistory.forEach(function (i, idx) {
-		var a = document.createElement('a');
-		a.href = '#';
-		a.setAttribute('onclick', 'historyGoToStep(\'back\', ' + idx + '); return false');
-		a.className = 'link-history';
-		if (typeof i.sublist !== 'undefined') {
-			switch (i.action) {
-				case 'new':
-					a.textContent = 'new sublist row in "' + i.sublist + '"';
-					break;
-				case 'delete':
-					a.textContent = 'deleted row in "' + i.sublist + '"';
-					break;
-			}
-		} else {
-			a.textContent = 'edited "' + i.field + '"';
-		}
-		_('links-history').appendChild(a);
-	});
-
-	canceledChanges.forEach(function (i, idx) {
-		var a = document.createElement('a');
-		a.href = '#';
-		a.setAttribute('onclick', 'historyGoToStep(\'forward\', ' + idx + '); return false');
-		a.className = 'link-history disabled';
-		if (typeof i.sublist !== 'undefined') {
-			switch (i.action) {
-				case 'new':
-					a.textContent = 'new sublist row in "' + i.sublist + '"';
-					break;
-				case 'delete':
-					a.textContent = 'deleted row in "' + i.sublist + '"';
-					break;
-			}
-		} else {
-			a.textContent = 'edited "' + i.field + '"';
-		}
-		_('links-history').appendChild(a);
 	});
 }
 
@@ -1708,99 +1811,13 @@ function switchHistoryBox() {
 	}
 }
 
-function historyStepBack() {
-	if (changeHistory.length === 0)
-		return false;
-	let form = _('adminForm');
-	let el = changeHistory.pop();
-	canceledChanges.unshift(el);
-
-	if (typeof el.sublist !== 'undefined') {
-		switch (el.action) {
-			case 'new':
-				sublistDeleteRow(el.sublist, el.id, false);
-				break;
-			case 'delete':
-				sublistRestoreRow(el.sublist, el.id);
-				break;
-		}
-	} else {
-		if (form[el.field].getAttribute('data-multilang') && form[el.field].getAttribute('data-lang')) {
-			switchFieldLang(form[el.field].getAttribute('data-multilang'), form[el.field].getAttribute('data-lang'));
-		}
-
-		form[el.field].setValue(el.old, false);
-		form[el.field].focus();
-		if (form[el.field].select)
-			form[el.field].select();
-		changedValues[el.field] = el.old;
-	}
-
-	rebuildHistoryBox();
-}
-
-function historyStepForward() {
-	if (canceledChanges.length === 0)
-		return false;
-	let form = _('adminForm');
-	let el = canceledChanges.shift();
-	changeHistory.push(el);
-
-	if (typeof el.sublist !== 'undefined') {
-		switch (el.action) {
-			case 'new':
-				sublistRestoreRow(el.sublist, el.id);
-				break;
-			case 'delete':
-				sublistDeleteRow(el.sublist, el.id, false);
-				break;
-		}
-	} else {
-		if (form[el.field].getAttribute('data-multilang') && form[el.field].getAttribute('data-lang')) {
-			switchFieldLang(form[el.field].getAttribute('data-multilang'), form[el.field].getAttribute('data-lang'));
-		}
-
-		form[el.field].setValue(el.new, false);
-		form[el.field].focus();
-		if (form[el.field].select)
-			form[el.field].select();
-		changedValues[el.field] = el.new;
-	}
-
-	rebuildHistoryBox();
-}
-
-function historyGoToStep(t, i) {
-	switch (t) {
-		case 'reset':
-			while (changeHistory.length > 0) {
-				historyStepBack();
-			}
-			break;
-		case 'back':
-			while (changeHistory.length > i + 1) {
-				historyStepBack();
-			}
-			break;
-		case 'forward':
-			if (i + 1 > canceledChanges)
-				return false;
-			for (c = 1; c <= i + 1; c++) {
-				historyStepForward();
-			}
-			break;
-	}
-}
-
-function historyWipe() {
-	changedValues = {};
-	changeHistory = [];
-	canceledChanges = [];
-	rebuildHistoryBox();
+function wipeForms() {
+	pageForms.clear();
+	historyMgr.wipe();
 }
 
 function newElement(get = {}) {
-	return loadAdminElement(0, get).then(monitorFields);
+	return loadAdminElement(0, get);
 }
 
 function toolbarButtonLoading(button) {
@@ -1836,18 +1853,15 @@ function toolbarButtonRestore(button) {
 }
 
 async function save() {
-	let form = _('adminForm');
+	let formNode = _('adminForm');
 
-	let mandatory = [];
-	if (typeof form['_mandatory_fields'] !== 'undefined') {
-		mandatory = await form['_mandatory_fields'].getValue();
-		if (mandatory)
-			mandatory = JSON.parse(mandatory);
-		else
-			mandatory = [];
+	let required = [];
+	for (let formName of pageForms.keys()) {
+		let currentRequired = pageForms.get(formName).getRequired();
+		required = required.concat(currentRequired);
 	}
 
-	if (!checkForm(form, mandatory))
+	if (!checkForm(formNode, required))
 		return false;
 
 	if (saving) {
@@ -1870,25 +1884,22 @@ async function save() {
 		let id = getIdFromRequest(request);
 
 		let payload = {
-			'save': {},
-			'version': null
+			'save': pageForms.get('main').getChangedValues(),
+			'version': pageForms.get('main').version,
 		};
 
-		for (let k in changedValues) {
-			if (typeof form[k] !== 'undefined' && form[k].getAttribute('data-multilang') && typeof payload.save[k] === 'undefined') {
-				if (typeof payload.save[form[k].getAttribute('data-multilang')] === 'undefined')
-					payload.save[form[k].getAttribute('data-multilang')] = {};
-				payload.save[form[k].getAttribute('data-multilang')][form[k].getAttribute('data-lang')] = changedValues[k];
+		/*for (let k in changedValues) {
+			if (typeof formNode[k] !== 'undefined' && formNode[k].getAttribute('data-multilang') && typeof payload.save[k] === 'undefined') {
+				if (typeof payload.save[formNode[k].getAttribute('data-multilang')] === 'undefined')
+					payload.save[formNode[k].getAttribute('data-multilang')] = {};
+				payload.save[formNode[k].getAttribute('data-multilang')][formNode[k].getAttribute('data-lang')] = changedValues[k];
 			} else {
 				payload.save[k] = changedValues[k];
 			}
-		}
+		}*/
 
 		if (Object.keys(payload.save).length === 0)
 			throw 'Nessun dato modificato';
-
-		if (typeof form['_model_version'] !== 'undefined')
-			payload.version = form['_model_version'].getValue(true);
 
 		return adminApiRequest('page/' + request[0] + '/save/' + id, payload, {
 			/*'onprogress': function (event) { // TODO: al momento non supportato in fetch
@@ -1905,7 +1916,7 @@ async function save() {
 			if (!response.id)
 				throw 'Risposta server errata';
 
-			historyWipe();
+			wipeForms();
 			saving = false;
 
 			return loadAdminElement(response.id, {}, id === 0).then(() => {
@@ -1936,7 +1947,7 @@ function setLoadingBar(percentage) {
 }
 
 function duplicate() {
-	if (changeHistory.length > 0) {
+	if (historyMgr.changeHistory.length > 0) {
 		alert('There are pending changes, can\'t duplicate.');
 		return false;
 	}

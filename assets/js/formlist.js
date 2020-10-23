@@ -155,7 +155,7 @@ function sublistAddRow(name, id, trigger) {
 					f.setAttribute('data-filled', '1');
 				});
 			};
-		})(div)).then(monitorFields).then((div => {
+		})(div)).then((div => {
 			return () => {
 				let firstInput = div.querySelector('input:not([type="hidden"])');
 				if (firstInput) {
