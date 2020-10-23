@@ -5,7 +5,7 @@ use Model\Core\Core;
 use Model\Form\Form;
 use Model\ORM\Element;
 
-abstract class DataVisualizer
+class DataVisualizer
 {
 	/** @var Core */
 	protected $model;
@@ -59,7 +59,9 @@ abstract class DataVisualizer
 	 * @param array $options
 	 * @return void
 	 */
-	public abstract function render(array $options = []);
+	public function render(array $options = [])
+	{
+	}
 
 	/**
 	 * @param array $options
@@ -75,7 +77,9 @@ abstract class DataVisualizer
 	 * @param array $options
 	 * @return Form
 	 */
-	public abstract function getRowForm(Element $el, array $options): Form;
+	public function getRowForm(Element $el, array $options): Form
+	{
+	}
 
 	/**
 	 * Automatic field names extraction
