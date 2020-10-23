@@ -60,7 +60,14 @@ class FormList {
 			resolve(templateDiv);
 		});
 
+		if (this.main)
+			this.basicData = adminApiRequest('page/' + this.id + '/data/0');
+		else
+			this.basicData = {data: {}, fields: {}}; // TODO: sublist
+
+		// Forza il caricamento in background
 		this.template.then();
+		this.basicData.then();
 	}
 
 	// Standard visualizers method
@@ -87,32 +94,36 @@ class FormList {
 	}
 
 	async addLocalRow(id = null) {
-		let template = await this.template;
+		let template = (await this.template).cloneNode(true);
+		let data = await this.basicData;
 
 		if (id === null) {
 			id = 'new' + this.nextId;
 			this.nextId++;
 		}
 
-		let row = document.createElement('div');
-		row.id = 'cont-ch-' + this.id + '-' + id;
+		let form = new FormManager(this.id + '-' + id);
+		form.build(template, data);
 
-		let html = template.innerHTML.replace(/\[n\]/g, id);
+		let row;
+
+		// let html = template.innerHTML.replace(/\[n\]/g, id); // TODO: forse non serve più?
 
 		switch (this.options['visualizer-options']['type']) {
 			case 'outer-template':
+				row = template;
 				row.className = this.options['visualizer-options']['class'];
-				row.innerHTML = html;
 				break;
 			default:
+				row = document.createElement('div');
 				row.className = 'rob-field-cont formlist-row';
 
 				let rightPart = document.createElement('div');
 				rightPart.className = 'rob-field';
 
-				let realRow = document.createElement('div');
-				realRow.className = this.options['visualizer-options']['class'];
-				rightPart.appendChild(realRow);
+				template.removeAttribute('id');
+				template.className = this.options['visualizer-options']['class'];
+				rightPart.appendChild(template);
 
 				if (this.options.privileges['D']) {
 					let deleteDiv = document.createElement('div');
@@ -126,12 +137,11 @@ class FormList {
 					rightPart.style.width = '100%';
 				}
 
-				rightPart.innerHTML = html;
 				row.appendChild(rightPart);
 				break;
 		}
-		row.className = this.options['visualizer-options']['class'];
 
+		row.id = 'cont-ch-' + this.id + '-' + id;
 		this.rowsContainer.appendChild(row);
 
 		// changedValues['ch-' + name + '-' + id] = 1; // TODO: serve?
