@@ -1,0 +1,7 @@
+.formlist-template {
+	display: none;
+}
+
+.formlist-row > * {
+	vertical-align: middle;
+}

@@ -126,7 +126,7 @@ function sublistAddRow(name, id, trigger) {
 	let div = document.createElement('div');
 	div.className = container.getAttribute('data-rows-class');
 	div.id = 'cont-ch-' + name + '-' + id;
-	div.innerHTML = _('sublist-template-' + name).innerHTML.replace(/\[n\]/g, id);
+	div.innerHTML = _('formlist-template-' + name).innerHTML.replace(/\[n\]/g, id);
 
 	let addbutton = _('cont-ch-' + name + '-addbutton');
 	if (addbutton && addbutton.parentNode === container) {

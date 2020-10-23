@@ -11,9 +11,9 @@ if ($this->model->isLoaded('Multilang')) {
 		$form->renderLangSelector();
 }
 
-$form->render();
+$form->render(['only-placeholders' => true]);
 
-foreach ($this->model->_Admin->sublists as $s) {
+/*foreach ($this->model->_Admin->sublists as $s) {
 	echo '<hr />';
 	$this->model->_AdminFront->renderSublist($s['name'], $s['options']);
-}
+}*/

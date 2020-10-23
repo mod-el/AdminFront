@@ -13,6 +13,8 @@ class Table {
 
 	// Standard visualizers method
 	async render(list, totals) {
+		this.container.innerHTML = '';
+
 		let renderDeleteCell = list.some(item => item.privileges['D']);
 
 		let head = document.createElement('div');
@@ -486,7 +488,7 @@ class Table {
 	}
 }
 
-visualizerClasses['Table'] = Table;
+visualizerClasses.set('Table', Table);
 
 /***********************************************************************/
 

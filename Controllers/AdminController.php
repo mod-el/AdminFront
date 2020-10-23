@@ -273,6 +273,8 @@ class AdminController extends Controller
 				}
 				break;
 			case 'template':
+				$this->model->viewOptions['cacheTemplate'] = true;
+
 				$this->model->_Admin->setPath($this->model->_AdminFront->url);
 				$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
 
@@ -288,15 +290,19 @@ class AdminController extends Controller
 					$this->model->viewOptions['template'] = 'form-template';
 				}
 
-				$this->model->viewOptions['header'] = ['form-header'];
-				$this->model->viewOptions['footer'] = ['form-footer'];
+				if (isset($_GET['hideLayout'])) {
+					$this->model->viewOptions['showLayout'] = false;
+				} else {
+					$this->model->viewOptions['header'] = ['form-header'];
+					$this->model->viewOptions['footer'] = ['form-footer'];
 
-				if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
-					$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
-				if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
-					array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
+					if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
+						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+					if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
+						array_unshift($this->model->viewOptions['footer'], INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php');
+				}
 
-//				$this->model->viewOptions['warnings'] = $this->model->_Admin->page->warnings($this->model->element); // TODO
+//				$this->model->viewOptions['warnings'] = $this->model->_Admin->page->warnings($this->model->element); // TODO: da spostare nella richiesta data presumo
 				break;
 			default:
 				$this->model->viewOptions['showLayout'] = false;

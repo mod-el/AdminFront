@@ -12,7 +12,7 @@ class FormList extends DataVisualizer
 	/** @var array */
 	protected $defaultOptions = [
 		'type' => 'row',
-		'class' => 'rob-field-cont sublist-row',
+		'class' => 'rob-field-cont formlist-row',
 		'template' => null,
 		'clear-form' => true,
 		'add-button' => true,
@@ -43,7 +43,7 @@ class FormList extends DataVisualizer
 
 		$addButton = '';
 		if ($addPrivilege and $options['add-button'] and !$options['print']) {
-			$addButton = '<div class="rob-field-cont sublist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\').then(id => { ' . entities($options['on-add']) . ' })" id="cont-ch-' . entities($options['name']) . '-addbutton">
+			$addButton = '<div class="rob-field-cont formlist-row" style="cursor: pointer" onclick="sublistAddRow(\'' . entities($options['name']) . '\').then(id => { ' . entities($options['on-add']) . ' })" id="cont-ch-' . entities($options['name']) . '-addbutton">
                     <div class="rob-field" style="width: 5%"></div>
                     <div class="rob-field" style="width: 95%">';
 			if ($options['add-button'] === true) {
@@ -72,7 +72,7 @@ class FormList extends DataVisualizer
 			} else {
 				echo '<div class="rob-field" style="width: 100%">';
 			}
-			echo '<div class="rob-field-cont sublist-row">';
+			echo '<div class="rob-field-cont formlist-row">';
 			$template = $dummyForm->getTemplate(['one-row' => true]);
 			foreach ($template as $f) {
 				echo '<div class="rob-field" style="width: ' . $f['w'] . '%' . ($options['print'] ? ';font-weight: bold' : '') . '">' . entities($dummyForm[$f['field']]->getLabel()) . '</div>';
@@ -84,7 +84,7 @@ class FormList extends DataVisualizer
 
 		foreach ($options['list'] as $el) {
 			?>
-			<div class="rob-field-cont sublist-row" id="cont-ch-<?= entities($options['name']) ?>-<?= entities($el[$el->settings['primary']]) ?>">
+			<div class="rob-field-cont formlist-row" id="cont-ch-<?= entities($options['name']) ?>-<?= entities($el[$el->settings['primary']]) ?>">
 				<?php
 				$form = $this->getRowForm($el, $options);
 				$this->renderRow($el, $form, $options);
@@ -102,7 +102,7 @@ class FormList extends DataVisualizer
 			echo $addButton;
 
 		?>
-		<div id="sublist-template-<?= entities($options['name']) ?>" class="sublist-template" style="display: none">
+		<div id="formlist-template-<?= entities($options['name']) ?>" class="formlist-template" style="display: none">
 			<?php
 			$this->renderRow($options['dummy'], $dummyForm, $options);
 			?>

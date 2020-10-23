@@ -14,8 +14,8 @@ var adminApiToken = null;
 var userCustomizationsCache = {};
 var userCustomizationsBuffer = {};
 
-var visualizerClasses = {};
-var visualizers = {};
+var visualizerClasses = new Map();
+var visualizers = new Map();
 
 var dataCache = {'data': {}, 'children': []};
 
@@ -398,7 +398,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 	request = request.split('/');
 
-	visualizers = {};
+	visualizers.clear();
 	selectFromMainMenu(request);
 
 	clearMainPage();
@@ -993,11 +993,13 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 			sortedBy = [];
 	}
 
-	visualizers[request[0]] = new visualizerClasses[currentPageDetails['type']](request[0], _('main-visualizer-cont'), true, currentPageDetails);
-	visualizers[request[0]].setSorting(sortedBy);
+	let visualizer = new (visualizerClasses.get(currentPageDetails['type']))(request[0], _('main-visualizer-cont'), true, currentPageDetails);
+	visualizers.set(request[0], visualizer);
+
+	visualizer.setSorting(sortedBy);
 	payload['sort-by'] = sortedBy;
 
-	let columns = await visualizers[request[0]].getFieldsToRetrieve();
+	let columns = await visualizer.getFieldsToRetrieve();
 	if (columns !== null)
 		payload['fields'] = columns;
 
@@ -1039,7 +1041,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 			_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
 		}
 
-		return visualizers[request[0]].render(response.list, response.totals).then(() => {
+		return visualizer.render(response.list, response.totals).then(() => {
 			_('main-loading').addClass('d-none');
 			return changedHtml();
 		});
@@ -1402,7 +1404,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 	let dataPromise = loadElementData(request[0], id || 0);
 
 	return Promise.all([templatePromise, dataPromise]).then(responses => {
-		return checkSubPages().then(() => {
+		return checkSubPages().then(async () => {
 			hideLoadingMask();
 
 			// Check privilegi
@@ -1465,7 +1467,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 				addPageAction(action, responses[1].actions[action]);
 			});
 
-			return fillAdminForm(responses[1]);
+			return renderFieldsInTemplate(_('main-content'), responses[1]);
 		});
 	}).then(callElementCallback).then(monitorFields).then(() => {
 		if (!_('adminForm'))
@@ -1487,10 +1489,27 @@ function loadElementData(page, id) {
 	return adminApiRequest('page/' + page + '/data/' + id);
 }
 
-function fillAdminForm(data, form = null) {
+async function renderFieldsInTemplate(cont, data) {
+	for (let k of Object.keys(data.fields)) {
+		let fieldCont = cont.querySelector('[data-fieldplaceholder="' + k + '"]');
+		if (!fieldCont)
+			continue;
+
+		let fieldOptions = data.fields[k];
+		if (typeof data.data[k] !== 'undefined')
+			fieldOptions.value = data.data[k];
+
+		let fieldObj = new Field(k, fieldOptions);
+		let field = fieldObj.render();
+		fieldCont.innerHTML = '';
+		fieldCont.appendChild(field);
+	}
+}
+
+function fillAdminForm(data, form = null) { // TODO: probabilmente obsoleto
 	if (typeof data === 'undefined') {
 		data = dataCache;
-	} else {
+	} else if (form === null) { // Solo per il form principale se sono nel dettaglio
 		dataCache = data;
 	}
 
@@ -1498,58 +1517,63 @@ function fillAdminForm(data, form = null) {
 		form = _('adminForm');
 
 	if (!form)
-		throw 'Can\'t find main form';
+		throw 'Can\'t find form to fill';
+
+	if (!data.data)
+		data.data = {};
 
 	return form.fill(data.data, false, 'filled').then(() => {
 		let promises = [];
 
-		for (let name in data.children) {
-			if (!data.children.hasOwnProperty(name))
-				continue;
-
-			let primary = data.children[name].primary;
-			let list = data.children[name].list;
-
-			for (let idx in list) {
-				if (!list.hasOwnProperty(idx))
+		if (data.children) {
+			for (let name in data.children) {
+				if (!data.children.hasOwnProperty(name))
 					continue;
 
-				let id = list[idx][primary];
+				let primary = data.children[name].primary;
+				let list = data.children[name].list;
 
-				promises.push(sublistAddRow(name, id, false).then(((el, id, name) => {
-					return () => {
-						let promises = [];
+				for (let idx in list) {
+					if (!list.hasOwnProperty(idx))
+						continue;
 
-						for (let k in el) {
-							if (!el.hasOwnProperty(k))
-								continue;
+					let id = list[idx][primary];
 
-							let form_k = 'ch-' + k + '-' + name + '-' + id;
+					promises.push(sublistAddRow(name, id, false).then(((el, id, name) => {
+						return () => {
+							let promises = [];
 
-							let column_cont = _('#cont-ch-' + name + '-' + id + ' [data-custom="' + k + '"]');
-							if (column_cont)
-								column_cont.innerHTML = el[k];
+							for (let k in el) {
+								if (!el.hasOwnProperty(k))
+									continue;
 
-							if (el[k] !== null && typeof el[k] === 'object' && typeof el[k]['text'] === 'undefined') { // If it is an object, and has not "text" (hence, it's not an instant search) then it's a multilang field
-								for (let lang in el[k]) {
-									if (typeof form[form_k + '-' + lang] !== 'undefined') {
-										promises.push(form[form_k + '-' + lang].setValue(el[k][lang], false).then((field => {
+								let form_k = 'ch-' + k + '-' + name + '-' + id;
+
+								let column_cont = _('#cont-ch-' + name + '-' + id + ' [data-custom="' + k + '"]');
+								if (column_cont)
+									column_cont.innerHTML = el[k];
+
+								if (el[k] !== null && typeof el[k] === 'object' && typeof el[k]['text'] === 'undefined') { // If it is an object, and has not "text" (hence, it's not an instant search) then it's a multilang field
+									for (let lang in el[k]) {
+										if (typeof form[form_k + '-' + lang] !== 'undefined') {
+											promises.push(form[form_k + '-' + lang].setValue(el[k][lang], false).then((field => {
+												return () => field.setAttribute('data-filled', '1');
+											})(form[form_k + '-' + lang])));
+										}
+									}
+								} else {
+									if (typeof form[form_k] !== 'undefined') {
+										promises.push(form[form_k].setValue(el[k], false).then((field => {
 											return () => field.setAttribute('data-filled', '1');
-										})(form[form_k + '-' + lang])));
+										})(form[form_k])));
 									}
 								}
-							} else {
-								if (typeof form[form_k] !== 'undefined') {
-									promises.push(form[form_k].setValue(el[k], false).then((field => {
-										return () => field.setAttribute('data-filled', '1');
-									})(form[form_k])));
-								}
 							}
-						}
 
-						return Promise.all(promises);
-					};
-				})(list[idx], id, name)).then(monitorFields));
+							return Promise.all(promises);
+						};
+					})(list[idx], id, name)).then(monitorFields));
+				}
 			}
 		}
 
@@ -1557,27 +1581,6 @@ function fillAdminForm(data, form = null) {
 
 		return Promise.all(promises);
 	});
-}
-
-async function initializeEmptyForm() {
-	let form = _('adminForm');
-	if (!form)
-		return false;
-
-	let promises = [];
-
-	for (let i = 0, f; f = form.elements[i++];) {
-		let v = await f.getValue();
-
-		if (v && f.name)
-			changedValues[f.name] = v;
-
-		promises.push(f.setValue(v).then(() => {
-			f.setAttribute('data-filled', '1');
-		}));
-	}
-
-	return Promise.all(promises);
 }
 
 function monitorFields() {
@@ -1590,15 +1593,13 @@ function monitorFields() {
 		if (!f.name || f.name === 'fakeusernameremembered' || f.name === 'fakepasswordremembered')
 			continue;
 
-		if (!f.getAttribute('data-filled'))
-			continue;
 		if (f.getAttribute('data-monitored'))
 			continue;
 
 		let isInSublistTemplate = false;
 		let check = f;
 		while (check) {
-			if (check.hasClass && check.hasClass('sublist-template')) {
+			if (check.hasClass && check.hasClass('formlist-template')) {
 				isInSublistTemplate = true;
 				break;
 			}
@@ -1799,7 +1800,7 @@ function historyWipe() {
 }
 
 function newElement(get = {}) {
-	return loadAdminElement(0, get).then(initializeEmptyForm).then(monitorFields);
+	return loadAdminElement(0, get).then(monitorFields);
 }
 
 function toolbarButtonLoading(button) {
@@ -1959,7 +1960,9 @@ function duplicate() {
 	});
 }
 
-function checkSubPages() {
+async function checkSubPages() {
+	// TODO: vecchio codice, sistemare se mai servirà di nuovo
+	return;
 	let promises = [];
 
 	let containers = document.querySelectorAll('[data-tabs]');
