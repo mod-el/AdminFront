@@ -5,17 +5,28 @@ class FormList {
 		this.container = container;
 		this.main = main;
 		this.options = options;
-		this.nextId = 0;
 
 		this.options['visualizer-options'] = {
 			"type": 'row',
 			"class": 'flex-fields formlist-row',
 			"add-button": true,
 			"add-button-position": 'after',
-			"on-add": null,
-			"on-delete": null,
+			"on-add": null, // TODO
+			"on-delete": null, // TODO
 			...(this.options['visualizer-options'] || {})
 		};
+
+		this.rows = new Map();
+		this.newRows = [];
+
+		if (this.main) {
+			addPageAction('new', {
+				'fa-icon': 'far fa-plus-square',
+				'text': 'Nuovo',
+				'action': 'visualizers.get(currentAdminPage.split(\'/\')[0]).addLocalRow()',
+			});
+			removePageAction('delete');
+		}
 	}
 
 	// Standard visualizers method
@@ -68,6 +79,19 @@ class FormList {
 		// Forza il caricamento in background
 		this.template.then();
 		this.basicData.then();
+
+		if (list.length > 0) {
+			for (let item of list) {
+				let data = {};
+				for (let k of Object.keys(item.data))
+					data[k] = item.data[k].value;
+
+				this.addLocalRow(item.id, {
+					data,
+					fields: (await this.basicData).fields
+				});
+			}
+		}
 	}
 
 	// Standard visualizers method
@@ -78,7 +102,7 @@ class FormList {
 	// Standard visualizers method
 	async reload() {
 		if (this.main) {
-			search(1, null, false);
+			reloadMainList();
 		} else {
 			// TODO: sublist reloading
 		}
@@ -93,21 +117,20 @@ class FormList {
 	setSorting(sorting) {
 	}
 
-	async addLocalRow(id = null) {
+	async addLocalRow(id = null, data = null) {
 		let template = (await this.template).cloneNode(true);
-		let data = await this.basicData;
 
-		if (id === null) {
-			id = 'new' + this.nextId;
-			this.nextId++;
+		let isNew = false;
+		if (id === null) { // Nuova riga
+			id = 'new' + this.newRows.length;
+			data = await this.basicData;
+			isNew = true;
 		}
 
 		let form = new FormManager(this.id + '-' + id);
 		form.build(template, data);
 
 		let row;
-
-		// let html = template.innerHTML.replace(/\[n\]/g, id); // TODO: forse non serve più?
 
 		switch (this.options['visualizer-options']['type']) {
 			case 'outer-template':
@@ -129,7 +152,19 @@ class FormList {
 					let deleteDiv = document.createElement('div');
 					deleteDiv.className = 'rob-field text-center';
 					deleteDiv.style.width = '5%';
-					deleteDiv.innerHTML = '<i class="fas fa-trash" aria-label="Delete" style="color: #000"></i>';
+
+					let deleteLink = document.createElement('a');
+					deleteLink.setAttribute('href', '#');
+					deleteLink.addEventListener('click', event => {
+						event.preventDefault();
+						if (confirm('Sicuro di voler eliminare questa riga?'))
+							this.deleteLocalRow(id);
+					});
+
+					deleteLink.innerHTML = '<i class="fas fa-trash" aria-label="Delete" style="color: #000"></i>';
+
+					deleteLink = deleteDiv.appendChild(deleteLink);
+
 					row.appendChild(deleteDiv);
 
 					rightPart.style.width = '95%';
@@ -141,12 +176,81 @@ class FormList {
 				break;
 		}
 
-		row.id = 'cont-ch-' + this.id + '-' + id;
 		this.rowsContainer.appendChild(row);
 
-		// changedValues['ch-' + name + '-' + id] = 1; // TODO: serve?
+		this.rows.set(id, {row, form, isNew, deleted: false});
+		if (isNew)
+			this.newRows.push(id);
 
-		return changedHtml();
+		return changedHtml().then(() => {
+			if (isNew) {
+				let firstInput = row.querySelector('input, select');
+				if (firstInput) {
+					firstInput.focus();
+					if (firstInput.select)
+						firstInput.select();
+				}
+			}
+		});
+	}
+
+	async deleteLocalRow(id) {
+		let row = this.rows.get(id);
+		if (!row) {
+			console.error('Riga non trovata al delete');
+			return;
+		}
+		if (row.deleted)
+			return;
+
+		row.row.addClass('d-none');
+		row.deleted = true;
+	}
+
+	getNewRowsSave() {
+		let response = [];
+		for (let id of this.newRows) {
+			let row = this.rows.get(id);
+			if (!row || row.deleted)
+				continue;
+			response.push(row.form.getChangedValues());
+		}
+
+		return response;
+	}
+
+	getExistingRowsSave() {
+		let response = {};
+		for (let id of this.rows.keys()) {
+			let row = this.rows.get(id);
+			if (row.isNew || row.deleted)
+				continue;
+
+			let changed = row.form.getChangedValues();
+			if (Object.keys(changed).length)
+				response[id] = changed;
+		}
+
+		return response;
+	}
+
+	getDeletedRows() {
+		let response = [];
+		for (let id of this.rows.keys()) {
+			let row = this.rows.get(id);
+			if (!row.isNew && row.deleted)
+				response.push(id);
+		}
+
+		return response;
+	}
+
+	getSave() {
+		return {
+			create: this.getNewRowsSave(),
+			update: this.getExistingRowsSave(),
+			delete: this.getDeletedRows()
+		};
 	}
 }
 

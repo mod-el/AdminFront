@@ -11,6 +11,8 @@ var searchCounter = 0;
 var pageLoadingHash = '';
 var adminApiToken = null;
 
+var pageActions = new Map();
+
 var userCustomizationsCache = {};
 var userCustomizationsBuffer = {};
 
@@ -1023,12 +1025,14 @@ function checkBeforePageChange() {
 }
 
 function addPageAction(name, action) {
-	if (_('toolbar-button-' + name))
-		_('toolbar-button-' + name).parentNode.removeChild(_('toolbar-button-' + name));
-
-	var button = document.createElement('a');
-	button.className = 'toolbar-button';
-	button.id = 'toolbar-button-' + name;
+	let button = pageActions.get(name);
+	let isNew = false;
+	if (!button) {
+		button = document.createElement('a');
+		button.className = 'toolbar-button';
+		pageActions.set(name, button);
+		isNew = true;
+	}
 
 	if (action.url)
 		button.href = action.url;
@@ -1049,7 +1053,16 @@ function addPageAction(name, action) {
 	if (action.text)
 		button.innerHTML += action.text;
 
-	_('toolbar').appendChild(button);
+	if (isNew)
+		_('toolbar').appendChild(button);
+}
+
+function removePageAction(name) {
+	let button = pageActions.get(name);
+	if (button) {
+		button.remove();
+		pageActions.delete(name);
+	}
 }
 
 async function goToPage(p, sortBy, history_push = true) {
@@ -1621,7 +1634,7 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 				throw 'Errore durante il cambio di ordine';
 		}).catch(error => {
 			alert(error);
-			reloadList();
+			reloadMainList();
 		}).finally(() => {
 			hideLoadingMask();
 		});
@@ -1820,34 +1833,34 @@ function newElement(get = {}) {
 	return loadAdminElement(0, get);
 }
 
-function toolbarButtonLoading(button) {
-	let img = _('#toolbar-button-' + button + ' img');
-	if (!img)
-		img = _('#toolbar-button-custom-' + button + ' img');
+function toolbarButtonLoading(name) {
+	let button = pageActions.get(name);
+	if (!button)
+		return;
+
+	let img = button.querySelector('img');
 	if (img) {
 		img.setAttribute('data-old-path', img.src);
 		img.src = PATHBASE + 'model/Output/files/loading.gif';
 	}
 
-	let icon = _('#toolbar-button-' + button + ' i');
-	if (!icon)
-		icon = _('#toolbar-button-custom-' + button + ' i');
+	let icon = button.querySelector('i');
 	if (icon) {
 		icon.setAttribute('data-old-class', icon.className);
 		icon.className = 'fas fa-spinner';
 	}
 }
 
-function toolbarButtonRestore(button) {
-	let img = _('#toolbar-button-' + button + ' img');
-	if (!img)
-		img = _('#toolbar-button-custom-' + button + ' img');
+function toolbarButtonRestore(name) {
+	let button = pageActions.get(name);
+	if (!button)
+		return;
+
+	let img = button.querySelector('img');
 	if (img)
 		img.src = img.getAttribute('data-old-path');
 
-	let icon = _('#toolbar-button-' + button + ' i');
-	if (!icon)
-		icon = _('#toolbar-button-custom-' + button + ' i');
+	let icon = button.querySelector('i');
 	if (icon)
 		icon.className = icon.getAttribute('data-old-class');
 }
@@ -2257,7 +2270,7 @@ function deleteRows(ids) {
 	let request = currentAdminPage.split('/');
 	return adminApiRequest('page/' + request[0] + '/delete', {ids}).then(r => {
 		if (request.length === 1)
-			reloadList();
+			reloadMainList();
 		else
 			loadAdminPage(request[0]);
 	}).catch(error => {
@@ -2267,7 +2280,6 @@ function deleteRows(ids) {
 	});
 }
 
-function reloadList() {
-	let request = currentAdminPage.split('/');
-	return search(request[0], null, false);
+function reloadMainList() {
+	return search(1, null, false);
 }
