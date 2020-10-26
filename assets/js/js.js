@@ -672,6 +672,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 		let toolbar = _('toolbar');
 		toolbar.addClass('d-none');
 		toolbar.innerHTML = '';
+		pageActions.clear();
 
 		if (typeof request[1] !== 'undefined') {
 			currentAdminPage = request.join('/');
@@ -1903,7 +1904,7 @@ async function save() {
 		let id = getIdFromRequest(request);
 
 		let payload = {
-			'save': pageForms.get('main').getChangedValues(),
+			'data': pageForms.get('main').getChangedValues(),
 			'version': pageForms.get('main').version,
 		};
 
