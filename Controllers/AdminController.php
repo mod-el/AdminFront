@@ -246,11 +246,7 @@ class AdminController extends Controller
 
 	public function get()
 	{
-		$adminUrl = explode('/', $this->model->_AdminFront->url);
-		if (count($adminUrl) === 0)
-			$adminUrl = [];
-
-		switch ($this->model->getRequest(count($adminUrl))) {
+		switch ($this->model->_AdminFront->request[0]) {
 			case 'get-user-customization':
 				try {
 					if (!isset($_GET['k']))
@@ -280,7 +276,11 @@ class AdminController extends Controller
 
 				$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
 
-				$checkCustomTemplate = Autoloader::searchFile('template', $dir . $this->model->_AdminFront->request[1]);
+				$templatePath = $dir . $this->model->_AdminFront->request[1];
+				if (isset($this->model->_AdminFront->request[2]))
+					$templatePath .= DIRECTORY_SEPARATOR . $this->model->_AdminFront->request[2];
+
+				$checkCustomTemplate = Autoloader::searchFile('template', $templatePath);
 				if ($checkCustomTemplate) {
 					$this->model->_Admin->getElement(); // Per poter fare poi $this->model->element->getForm()
 					$this->model->viewOptions['template'] = $dir . $this->model->_AdminFront->request[1];

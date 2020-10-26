@@ -796,36 +796,11 @@ class AdminFront extends Module
 	 * $name has to be a declared children-set of the current element
 	 *
 	 * @param string $name
-	 * @param array $options
+	 * @param array Deprecated $options
 	 */
 	public function renderSublist(string $name, array $options = [])
 	{
-		$defaultOptions = [];
-		foreach ($this->model->_Admin->sublists as $s) {
-			if ($s['name'] === $name) {
-				$defaultOptions = $s['options'];
-				break;
-			}
-		}
-
-		if (!$defaultOptions)
-			return;
-
-		$options = array_merge($defaultOptions, $options);
-
-		$childrenOptions = $this->model->element->getChildrenOptions($options['children']);
-
-		$visualizerOptions = [
-			'name' => $name,
-			'table' => $childrenOptions['table'],
-			'element' => $childrenOptions['element'],
-			'fields' => $options['fields'] ?? [],
-			'exclude' => (isset($childrenOptions['field'], $childrenOptions['type']) and $childrenOptions['type'] === 'multiple' and $childrenOptions['field']) ? [$childrenOptions['field']] : [],
-			'dummy' => $this->model->element->create($options['children'], '[n]'),
-		];
-
-		$visualizer = $this->getVisualizer($options['visualizer'], $visualizerOptions);
-		$visualizer->render($options);
+		echo '<div data-sublistplaceholder="' . entities($name) . '"></div>';
 	}
 
 	/**

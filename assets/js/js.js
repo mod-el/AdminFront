@@ -760,10 +760,9 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 					await rebuildFilters();
 
-					// ==== Load visualizer files ====
+					// ==== Preload visualizer files ====
 
-					loadingPromises.push(loadRuntimeJs(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.js'));
-					loadRuntimeCss(PATH + 'model/AdminFront/assets/visualizers/' + currentPageDetails.type + '.css');
+					loadingPromises.push(loadVisualizer(currentPageDetails.type));
 					break;
 			}
 
@@ -1247,7 +1246,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 			sortedBy = [];
 	}
 
-	let visualizer = new (visualizerClasses.get(currentPageDetails['type']))(request[0], _('main-visualizer-cont'), true, currentPageDetails);
+	let visualizer = await loadVisualizer(currentPageDetails['type'], request[0], _('main-visualizer-cont'), true, currentPageDetails);
 	visualizers.set(request[0], visualizer);
 
 	visualizer.setSorting(sortedBy);
@@ -1659,8 +1658,6 @@ function loadAdminElement(id, get = {}, history_push = true) {
 
 	return Promise.all([templatePromise, dataPromise]).then(responses => {
 		return checkSubPages().then(async () => {
-			hideLoadingMask();
-
 			// Check privilegi
 			if (currentPageDetails.privileges.C) {
 				addPageAction('new', {
@@ -1721,9 +1718,39 @@ function loadAdminElement(id, get = {}, history_push = true) {
 				addPageAction(action, responses[1].actions[action]);
 			});
 
+			let mainContent = _('main-content');
+
 			let form = new FormManager('main');
 			pageForms.set('main', form);
-			return form.build(_('main-content'), responses[1]);
+			await form.build(mainContent, responses[1]);
+
+			let sublistsPromises = [];
+
+			for (let sublist of responses[1].sublists) {
+				let sublistCont = mainContent.querySelector('[data-sublistplaceholder="' + sublist.name + '"]');
+				if (!sublistCont)
+					continue;
+
+				sublistsPromises.push(new Promise(async (resolve, reject) => {
+					try {
+						let visualizer = await loadVisualizer(sublist.visualizer, 'sublist-' + sublist.name, sublistCont, false, {
+							"fields": sublist.fields,
+							"privileges": sublist.privileges,
+							"visualizer-options": sublist['visualizer-options'],
+						});
+
+						await visualizer.render(sublist.list);
+
+						resolve();
+					} catch (e) {
+						reject(e);
+					}
+				}));
+			}
+
+			await Promise.all(sublistsPromises);
+
+			hideLoadingMask();
 		});
 	}).then(callElementCallback).then(() => {
 		if (!_('adminForm'))
@@ -2113,7 +2140,7 @@ function callElementCallback() {
 }
 
 function reportAdminError(err) {
-	console.log(err);
+	console.error(err);
 	alert(err);
 }
 
@@ -2293,4 +2320,20 @@ async function reloadMainList() {
 
 function getMainVisualizer() {
 	return visualizers.get(currentAdminPage.split('/')[0]);
+}
+
+async function loadVisualizer(visualizerName, visualizerId, container, main, options) {
+	loadRuntimeCss(PATH + 'model/AdminFront/assets/visualizers/' + visualizerName + '.css');
+	await loadRuntimeJs(PATH + 'model/AdminFront/assets/visualizers/' + visualizerName + '.js');
+
+	if (!visualizerId)
+		return;
+
+	let visualizerClass = visualizerClasses.get(visualizerName);
+	if (!visualizerClass) {
+		console.error('Visualizer ' + visualizerName + ' does not exist');
+		return null;
+	}
+
+	return new (visualizerClass)(visualizerId, container, main, options);
 }

@@ -1,7 +1,7 @@
 class FormList {
 	// Standard visualizers method
-	constructor(id, container, main, options) {
-		this.id = id;
+	constructor(visualizerId, container, main, options) {
+		this.id = visualizerId;
 		this.container = container;
 		this.main = main;
 		this.options = options;
@@ -13,7 +13,7 @@ class FormList {
 			"add-button-position": 'after',
 			"on-add": null, // TODO
 			"on-delete": null, // TODO
-			...(this.options['visualizer-options'] || {})
+			...(options['visualizer-options'] || {})
 		};
 
 		this.rows = new Map();
@@ -72,17 +72,27 @@ class FormList {
 			if (this.main)
 				templateUrl += this.id;
 			else
-				templateUrl += currentAdminPage.split('/') + '/' + this.id;
+				templateUrl += currentAdminPage.split('/')[0] + '/' + this.id.replace(/^sublist-/, '');
 
 			templateDiv.innerHTML = await ajax(templateUrl, get);
 
 			resolve(templateDiv);
 		});
 
-		if (this.main)
+		if (this.main) {
 			this.basicData = adminApiRequest('page/' + this.id + '/data/0');
-		else
-			this.basicData = {data: {}, fields: {}}; // TODO: sublist
+		} else {
+			this.basicData = new Promise(resolve => {
+				let defaultData = {};
+				for (let k of Object.keys(this.options.fields))
+					defaultData[k] = this.options.fields[k].hasOwnProperty('default') ? this.options.fields[k].default : null;
+
+				resolve({
+					fields: this.options.fields,
+					data: defaultData
+				});
+			});
+		}
 
 		// Forza il caricamento in background
 		this.template.then();
@@ -92,12 +102,12 @@ class FormList {
 			for (let item of list) {
 				let data = {};
 				for (let k of Object.keys(item.data))
-					data[k] = item.data[k].value;
+					data[k] = (typeof item.data[k] === 'object' && item.data[k].hasOwnProperty('value')) ? item.data[k].value : item.data[k];
 
-				this.addLocalRow(item.id, {
+				await this.addLocalRow(item.id, {
 					data,
 					fields: (await this.basicData).fields
-				}, item.privileges['D']);
+				}, item.privileges ? item.privileges['D'] : true);
 			}
 		}
 	}

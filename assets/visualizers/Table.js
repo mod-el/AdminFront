@@ -3,8 +3,8 @@ var holdingRowsSelection = null;
 
 class Table {
 	// Standard visualizers method
-	constructor(id, container, main, options) {
-		this.id = id;
+	constructor(visualizerId, container, main, options) {
+		this.id = visualizerId;
 		this.container = container;
 		this.main = main;
 		this.options = options;
