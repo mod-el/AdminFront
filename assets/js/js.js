@@ -2286,7 +2286,7 @@ function deleteRows(ids) {
 	});
 }
 
-function reloadMainList() {
+async function reloadMainList() {
 	return search(1, null, false);
 }
 

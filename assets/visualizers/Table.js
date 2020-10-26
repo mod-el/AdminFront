@@ -366,7 +366,7 @@ class Table {
 	// Standard visualizers method
 	async reload() {
 		if (this.main) {
-			reloadMainList();
+			return reloadMainList();
 		} else {
 			// TODO: sublist reloading
 		}

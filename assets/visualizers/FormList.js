@@ -110,7 +110,7 @@ class FormList {
 	// Standard visualizers method
 	async reload() {
 		if (this.main) {
-			reloadMainList();
+			return reloadMainList();
 		} else {
 			// TODO: sublist reloading
 		}
@@ -275,8 +275,8 @@ class FormList {
 		let data = this.getSave();
 		this.saving = true;
 
-		adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', data).then(() => {
-			this.reload();
+		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', data).then(() => {
+			return this.reload();
 		}).catch(error => {
 			alert(error);
 		}).finally(() => {
