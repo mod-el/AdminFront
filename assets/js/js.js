@@ -1053,8 +1053,14 @@ function addPageAction(name, action) {
 	if (action.text)
 		button.innerHTML += action.text;
 
-	if (isNew)
-		_('toolbar').appendChild(button);
+	if (isNew) {
+		let toolbar = _('toolbar');
+		let topForm = toolbar.querySelector('#topForm');
+		if (topForm)
+			toolbar.insertBefore(button, topForm);
+		else
+			toolbar.appendChild(button);
+	}
 }
 
 function removePageAction(name) {
@@ -2282,4 +2288,8 @@ function deleteRows(ids) {
 
 function reloadMainList() {
 	return search(1, null, false);
+}
+
+function getMainVisualizer() {
+	return visualizers.get(currentAdminPage.split('/')[0]);
 }

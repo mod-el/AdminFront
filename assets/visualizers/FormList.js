@@ -18,13 +18,21 @@ class FormList {
 
 		this.rows = new Map();
 		this.newRows = [];
+		this.saving = false;
 
 		if (this.main) {
 			addPageAction('new', {
 				'fa-icon': 'far fa-plus-square',
 				'text': 'Nuovo',
-				'action': 'visualizers.get(currentAdminPage.split(\'/\')[0]).addLocalRow()',
+				'action': 'getMainVisualizer().addLocalRow()',
 			});
+
+			addPageAction('save', {
+				'fa-icon': 'far fa-save',
+				'text': 'Salva',
+				'action': 'getMainVisualizer().save()',
+			});
+
 			removePageAction('delete');
 		}
 	}
@@ -89,7 +97,7 @@ class FormList {
 				this.addLocalRow(item.id, {
 					data,
 					fields: (await this.basicData).fields
-				});
+				}, item.privileges['D']);
 			}
 		}
 	}
@@ -117,7 +125,7 @@ class FormList {
 	setSorting(sorting) {
 	}
 
-	async addLocalRow(id = null, data = null) {
+	async addLocalRow(id = null, data = null, canDelete = true) {
 		let template = (await this.template).cloneNode(true);
 
 		let isNew = false;
@@ -153,17 +161,19 @@ class FormList {
 					deleteDiv.className = 'rob-field text-center';
 					deleteDiv.style.width = '5%';
 
-					let deleteLink = document.createElement('a');
-					deleteLink.setAttribute('href', '#');
-					deleteLink.addEventListener('click', event => {
-						event.preventDefault();
-						if (confirm('Sicuro di voler eliminare questa riga?'))
-							this.deleteLocalRow(id);
-					});
+					if (canDelete) {
+						let deleteLink = document.createElement('a');
+						deleteLink.setAttribute('href', '#');
+						deleteLink.addEventListener('click', event => {
+							event.preventDefault();
+							if (confirm('Sicuro di voler eliminare questa riga?'))
+								this.deleteLocalRow(id);
+						});
 
-					deleteLink.innerHTML = '<i class="fas fa-trash" aria-label="Delete" style="color: #000"></i>';
+						deleteLink.innerHTML = '<i class="fas fa-trash" aria-label="Delete" style="color: #000"></i>';
 
-					deleteLink = deleteDiv.appendChild(deleteLink);
+						deleteLink = deleteDiv.appendChild(deleteLink);
+					}
 
 					row.appendChild(deleteDiv);
 
@@ -251,6 +261,28 @@ class FormList {
 			update: this.getExistingRowsSave(),
 			delete: this.getDeletedRows()
 		};
+	}
+
+	async save() {
+		if (this.saving) {
+			alert('Already saving');
+			return;
+		}
+		if (!this.main) // Serve solo quando non sono in una sublist
+			return;
+
+		toolbarButtonLoading('save');
+		let data = this.getSave();
+		this.saving = true;
+
+		adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', data).then(() => {
+			this.reload();
+		}).catch(error => {
+			alert(error);
+		}).finally(() => {
+			toolbarButtonRestore('save');
+			this.saving = false;
+		});
 	}
 }
 
