@@ -716,9 +716,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					break;
 			}
 		} else {
-			// TODO: rimuovere scritte sottostanti quando saranno fatte
-			// Ripassare dalla richiesta per abilitare tutti i parametri restanti)
-			//      Ad esempio: tasto print, eliminazione multipla righe
+			// TODO: tasto print, export csv, tasto url pubblico
 
 			if (sessionStorage.getItem('current-page') !== request[0])
 				sessionStorage.removeItem('filters-values');
@@ -1786,83 +1784,6 @@ function loadAdminElement(id, get = {}, history_push = true) {
 
 function loadElementData(page, id) {
 	return adminApiRequest('page/' + page + '/data/' + id);
-}
-
-function fillAdminForm(data, form = null) { // TODO: probabilmente obsoleto
-	if (typeof data === 'undefined') {
-		data = dataCache;
-	} else if (form === null) { // Solo per il form principale se sono nel dettaglio
-		dataCache = data;
-	}
-
-	if (form === null)
-		form = _('adminForm');
-
-	if (!form)
-		throw 'Can\'t find form to fill';
-
-	if (!data.data)
-		data.data = {};
-
-	return form.fill(data.data, false, 'filled').then(() => {
-		let promises = [];
-
-		if (data.children) {
-			for (let name in data.children) {
-				if (!data.children.hasOwnProperty(name))
-					continue;
-
-				let primary = data.children[name].primary;
-				let list = data.children[name].list;
-
-				for (let idx in list) {
-					if (!list.hasOwnProperty(idx))
-						continue;
-
-					let id = list[idx][primary];
-
-					promises.push(sublistAddRow(name, id, false).then(((el, id, name) => {
-						return () => {
-							let promises = [];
-
-							for (let k in el) {
-								if (!el.hasOwnProperty(k))
-									continue;
-
-								let form_k = 'ch-' + k + '-' + name + '-' + id;
-
-								let column_cont = _('#cont-ch-' + name + '-' + id + ' [data-custom="' + k + '"]');
-								if (column_cont)
-									column_cont.innerHTML = el[k];
-
-								if (el[k] !== null && typeof el[k] === 'object' && typeof el[k]['text'] === 'undefined') { // If it is an object, and has not "text" (hence, it's not an instant search) then it's a multilang field
-									for (let lang in el[k]) {
-										if (typeof form[form_k + '-' + lang] !== 'undefined') {
-											promises.push(form[form_k + '-' + lang].setValue(el[k][lang], false).then((field => {
-												return () => field.setAttribute('data-filled', '1');
-											})(form[form_k + '-' + lang])));
-										}
-									}
-								} else {
-									if (typeof form[form_k] !== 'undefined') {
-										promises.push(form[form_k].setValue(el[k], false).then((field => {
-											return () => field.setAttribute('data-filled', '1');
-										})(form[form_k])));
-									}
-								}
-							}
-
-							return Promise.all(promises);
-						};
-					})(list[idx], id, name)));
-				}
-			}
-		}
-
-		form.dataset.filled = '1';
-
-		return Promise.all(promises);
-	});
 }
 
 function switchHistoryBox() {
