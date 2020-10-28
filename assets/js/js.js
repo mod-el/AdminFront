@@ -1946,22 +1946,21 @@ async function save() {
 		let request = currentAdminPage.split('/');
 		let id = getIdFromRequest(request);
 
+		// TODO: multilang
 		let payload = {
 			'data': pageForms.get('main').getChangedValues(),
 			'version': pageForms.get('main').version,
+			'sublists': {}
 		};
 
-		/*for (let k in changedValues) {
-			if (typeof formNode[k] !== 'undefined' && formNode[k].getAttribute('data-multilang') && typeof payload.save[k] === 'undefined') {
-				if (typeof payload.save[formNode[k].getAttribute('data-multilang')] === 'undefined')
-					payload.save[formNode[k].getAttribute('data-multilang')] = {};
-				payload.save[formNode[k].getAttribute('data-multilang')][formNode[k].getAttribute('data-lang')] = changedValues[k];
-			} else {
-				payload.save[k] = changedValues[k];
-			}
-		}*/
+		for (let k of pageSublists.keys()) {
+			let sublist = pageSublists.get(k);
+			let sublistChanges = sublist.getSave();
+			if (sublistChanges.create.length || Object.keys(sublistChanges.update).length || sublistChanges.delete.length)
+				payload.sublists[k] = sublistChanges;
+		}
 
-		if (Object.keys(payload.save).length === 0)
+		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0)
 			throw 'Nessun dato modificato';
 
 		return adminApiRequest('page/' + request[0] + '/save/' + id, payload, {
