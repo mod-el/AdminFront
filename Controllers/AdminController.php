@@ -100,8 +100,6 @@ class AdminController extends Controller
 					else
 						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-footer.php';
 				}
-
-//				$this->model->viewOptions['warnings'] = $this->model->_Admin->page->warnings($this->model->element); // TODO: da spostare nella richiesta data presumo
 				break;
 			default:
 				$this->model->viewOptions['showLayout'] = false;

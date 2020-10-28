@@ -1765,6 +1765,9 @@ function loadAdminElement(id, get = {}, history_push = true) {
 
 		await Promise.all(sublistsPromises);
 
+		for (let warning of responses[1].warnings)
+			inPageMessage(warning, 'warning');
+
 		hideLoadingMask();
 	}).then(callElementCallback).then(() => {
 		if (!_('adminForm'))
@@ -1829,11 +1832,11 @@ function toolbarButtonRestore(name) {
 		return;
 
 	let img = button.querySelector('img');
-	if (img)
+	if (img && img.hasAttribute('data-old-path'))
 		img.src = img.getAttribute('data-old-path');
 
 	let icon = button.querySelector('i');
-	if (icon)
+	if (icon && icon.hasAttribute('data-old-class'))
 		icon.className = icon.getAttribute('data-old-class');
 }
 
