@@ -1669,104 +1669,102 @@ function loadAdminElement(id, get = {}, history_push = true) {
 	let templatePromise = loadAdminPage(request[0] + '/edit/' + id, get, history_push, false).then(showLoadingMask);
 	let dataPromise = loadElementData(request[0], id || 0);
 
-	return Promise.all([templatePromise, dataPromise]).then(responses => {
-		return checkSubPages().then(async () => {
-			// Check privilegi
+	return Promise.all([templatePromise, dataPromise]).then(async responses => {
+		// Check privilegi
+		if (currentPageDetails.privileges.C) {
+			addPageAction('new', {
+				'fa-icon': 'far fa-plus-square',
+				'text': 'Nuovo',
+				'action': 'newElement()',
+			});
+		}
+
+		if (id === 0) {
 			if (currentPageDetails.privileges.C) {
-				addPageAction('new', {
-					'fa-icon': 'far fa-plus-square',
-					'text': 'Nuovo',
-					'action': 'newElement()',
+				addPageAction('save', {
+					'fa-icon': 'far fa-save',
+					'text': 'Salva',
+					'action': 'save()',
 				});
 			}
 
-			if (id === 0) {
-				if (currentPageDetails.privileges.C) {
-					addPageAction('save', {
-						'fa-icon': 'far fa-save',
-						'text': 'Salva',
-						'action': 'save()',
-					});
-				}
-
-				addPageAction('list', {
-					'fa-icon': 'fas fa-list',
-					'text': 'Elenco',
-					'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
+			addPageAction('list', {
+				'fa-icon': 'fas fa-list',
+				'text': 'Elenco',
+				'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
+			});
+		} else {
+			if (responses[1].privileges.U) {
+				addPageAction('save', {
+					'fa-icon': 'far fa-save',
+					'text': 'Salva',
+					'action': 'save()',
 				});
-			} else {
-				if (responses[1].privileges.U) {
-					addPageAction('save', {
-						'fa-icon': 'far fa-save',
-						'text': 'Salva',
-						'action': 'save()',
-					});
-				}
-
-				addPageAction('list', {
-					'fa-icon': 'fas fa-list',
-					'text': 'Elenco',
-					'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
-				});
-
-				if (currentPageDetails.privileges.C) {
-					addPageAction('duplicate', {
-						'fa-icon': 'far fa-clone',
-						'text': 'Duplica',
-						'action': 'duplicate()',
-					});
-				}
-
-				if (responses[1].privileges.D) {
-					addPageAction('delete', {
-						'fa-icon': 'far fa-trash-alt',
-						'text': 'Elimina',
-						'action': 'deleteRows(' + JSON.stringify([id]) + ')',
-					});
-				}
 			}
 
-			// Tasti azione custom
-			Object.keys(responses[1].actions).forEach(action => {
-				addPageAction(action, responses[1].actions[action]);
+			addPageAction('list', {
+				'fa-icon': 'fas fa-list',
+				'text': 'Elenco',
+				'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
 			});
 
-			let mainContent = _('main-content');
-
-			let form = new FormManager('main');
-			pageForms.set('main', form);
-			await form.build(mainContent, responses[1]);
-
-			let sublistsPromises = [];
-
-			for (let sublist of responses[1].sublists) {
-				let sublistCont = mainContent.querySelector('[data-sublistplaceholder="' + sublist.name + '"]');
-				if (!sublistCont)
-					continue;
-
-				sublistsPromises.push(new Promise(async (resolve, reject) => {
-					try {
-						let visualizer = await loadVisualizer(sublist.visualizer, 'sublist-' + sublist.name, sublistCont, false, {
-							"fields": sublist.fields,
-							"privileges": sublist.privileges,
-							"visualizer-options": sublist['visualizer-options'],
-						});
-
-						pageSublists.set('sublist-' + sublist.name, visualizer);
-
-						await visualizer.render(sublist.list);
-
-						resolve();
-					} catch (e) {
-						reject(e);
-					}
-				}));
+			if (currentPageDetails.privileges.C) {
+				addPageAction('duplicate', {
+					'fa-icon': 'far fa-clone',
+					'text': 'Duplica',
+					'action': 'duplicate()',
+				});
 			}
 
-			await Promise.all(sublistsPromises);
+			if (responses[1].privileges.D) {
+				addPageAction('delete', {
+					'fa-icon': 'far fa-trash-alt',
+					'text': 'Elimina',
+					'action': 'deleteRows(' + JSON.stringify([id]) + ')',
+				});
+			}
+		}
 
-			hideLoadingMask();
+		// Tasti azione custom
+		Object.keys(responses[1].actions).forEach(action => {
+			addPageAction(action, responses[1].actions[action]);
 		});
+
+		let mainContent = _('main-content');
+
+		let form = new FormManager('main');
+		pageForms.set('main', form);
+		await form.build(mainContent, responses[1]);
+
+		let sublistsPromises = [];
+
+		for (let sublist of responses[1].sublists) {
+			let sublistCont = mainContent.querySelector('[data-sublistplaceholder="' + sublist.name + '"]');
+			if (!sublistCont)
+				continue;
+
+			sublistsPromises.push(new Promise(async (resolve, reject) => {
+				try {
+					let visualizer = await loadVisualizer(sublist.visualizer, 'sublist-' + sublist.name, sublistCont, false, {
+						"fields": sublist.fields,
+						"privileges": sublist.privileges,
+						"visualizer-options": sublist['visualizer-options'],
+					});
+
+					pageSublists.set('sublist-' + sublist.name, visualizer);
+
+					await visualizer.render(sublist.list);
+
+					resolve();
+				} catch (e) {
+					reject(e);
+				}
+			}));
+		}
+
+		await Promise.all(sublistsPromises);
+
+		hideLoadingMask();
 	}).then(callElementCallback).then(() => {
 		if (!_('adminForm'))
 			return false;
@@ -2031,120 +2029,6 @@ function duplicate() {
 	}).finally(() => {
 		toolbarButtonRestore('duplicate');
 	});
-}
-
-async function checkSubPages() {
-	// TODO: vecchio codice, sistemare se mai servirà di nuovo
-	return;
-	let promises = [];
-
-	let containers = document.querySelectorAll('[data-tabs]');
-	containers.forEach(tabsCont => {
-		let cont = document.querySelector('[data-subpages="' + tabsCont.getAttribute('data-name') + '"]');
-		let tabs = tabsCont.querySelectorAll('[data-tab]');
-		tabs.forEach(tab => {
-			if (cont) {
-				let page = cont.querySelector('[data-subpage="' + tab.getAttribute('data-tab') + '"]');
-				if (!page) {
-					let subPageCont = document.createElement('div');
-					subPageCont.setAttribute('data-subpage', tab.getAttribute('data-tab'));
-					subPageCont.innerHTML = '[to-be-loaded]';
-					cont.appendChild(subPageCont);
-				}
-			}
-
-			if (tab.getAttribute('data-oninit')) {
-				(() => {
-					eval(this.getAttribute('data-oninit'));
-				}).call(tab);
-			}
-
-			tab.addEventListener('click', event => {
-				loadSubPage(tab.parentNode.getAttribute('data-name'), tab.getAttribute('data-tab'));
-
-				if (tab.getAttribute('data-onclick')) {
-					eval(tab.getAttribute('data-onclick'));
-				}
-
-				return false;
-			});
-		});
-
-		let def = null;
-		if (sessionStorage.getItem(tabsCont.getAttribute('data-tabs'))) {
-			def = sessionStorage.getItem(tabsCont.getAttribute('data-tabs'));
-		} else if (tabsCont.getAttribute('data-default')) {
-			def = tabsCont.getAttribute('data-default');
-		} else {
-			def = tabsCont.querySelector('[data-tab]');
-			if (def)
-				def = def.getAttribute('data-tab');
-		}
-
-		if (def) {
-			promises.push(new Promise(resolve => {
-				loadSubPage(tabsCont.getAttribute('data-name'), def).then(resolve);
-			}));
-		}
-	});
-
-	return Promise.all(promises);
-}
-
-function switchAdminTab(cont_name, p) {
-	let tabsCont = document.querySelector('[data-tabs][data-name="' + cont_name + '"]');
-	sessionStorage.setItem(tabsCont.getAttribute('data-tabs'), p);
-
-	tabsCont.querySelectorAll('[data-tab]').forEach(el => {
-		if (el.getAttribute('data-tab') === p) {
-			el.addClass('selected');
-
-			if (el.getAttribute('data-onchange')) {
-				(() => {
-					eval(this.getAttribute('data-onchange'));
-				}).call(el);
-			}
-		} else {
-			if (el.hasClass('selected')) {
-				el.removeClass('selected');
-
-				if (el.getAttribute('data-onchange')) {
-					(() => {
-						eval(this.getAttribute('data-onchange'));
-					}).call(el);
-				}
-			}
-		}
-	});
-}
-
-function loadSubPage(cont_name, p) {
-	switchAdminTab(cont_name, p);
-
-	document.querySelectorAll('[data-subpages="' + cont_name + '"] [data-subpage]').forEach(cont => {
-		if (cont.getAttribute('data-subpage') === p) {
-			cont.style.display = 'block';
-		} else {
-			cont.style.display = 'none';
-		}
-	});
-
-	let cont = document.querySelector('[data-subpages="' + cont_name + '"] [data-subpage="' + p + '"]');
-	if (cont && cont.innerHTML === '[to-be-loaded]') {
-		let request = currentAdminPage.split('/');
-		if (request.length === 2)
-			request.push(0);
-
-		return cont.loading().ajax(adminPrefix + request.join('/') + '/' + p, 'ajax', '').then(() => {
-			return new Promise(resolve => {
-				setTimeout(() => {
-					resolve(fillAdminForm);
-				}, 500);
-			});
-		}).then(checkSubPages);
-	} else {
-		return new Promise(resolve => resolve());
-	}
 }
 
 function callElementCallback() {
