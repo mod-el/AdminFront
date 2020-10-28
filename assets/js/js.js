@@ -24,6 +24,7 @@ var dataCache = {'data': {}, 'children': []};
 var saving = false;
 
 var pageForms = new Map();
+var pageSublists = new Map();
 
 class HistoryManager {
 	constructor() {
@@ -37,6 +38,12 @@ class HistoryManager {
 		this.rebuildBox();
 	}
 
+	sublistAppend(sublist, action, id) {
+		this.changeHistory.push({sublist, action, id});
+		this.canceledChanges = [];
+		this.rebuildBox();
+	}
+
 	stepBack() {
 		if (this.changeHistory.length === 0)
 			return false;
@@ -45,14 +52,17 @@ class HistoryManager {
 		this.canceledChanges.unshift(el);
 
 		if (typeof el.sublist !== 'undefined') {
-			/*switch (el.action) { // TODO
-				case 'new':
-					sublistDeleteRow(el.sublist, el.id, false);
-					break;
-				case 'delete':
-					sublistRestoreRow(el.sublist, el.id);
-					break;
-			}*/
+			let sublist = pageSublists.get(el.sublist);
+			if (sublist) {
+				switch (el.action) {
+					case 'new':
+						sublist.deleteLocalRow(el.id, false);
+						break;
+					case 'delete':
+						sublist.restoreLocalRow(el.id);
+						break;
+				}
+			}
 		} else {
 			let form = pageForms.get(el.form);
 			if (!form)
@@ -80,14 +90,17 @@ class HistoryManager {
 		this.changeHistory.push(el);
 
 		if (typeof el.sublist !== 'undefined') {
-			/*switch (el.action) { // TODO
-				case 'new':
-					sublistRestoreRow(el.sublist, el.id);
-					break;
-				case 'delete':
-					sublistDeleteRow(el.sublist, el.id, false);
-					break;
-			}*/
+			let sublist = pageSublists.get(el.sublist);
+			if (sublist) {
+				switch (el.action) {
+					case 'new':
+						sublist.restoreLocalRow(el.id);
+						break;
+					case 'delete':
+						sublist.deleteLocalRow(el.id, false);
+						break;
+				}
+			}
 		} else {
 			let form = pageForms.get(el.form);
 			if (!form)
@@ -145,7 +158,7 @@ class HistoryManager {
 			if (typeof i.sublist !== 'undefined') {
 				switch (i.action) {
 					case 'new':
-						a.textContent = 'new sublist row in "' + i.sublist + '"';
+						a.textContent = 'new row in "' + i.sublist + '"';
 						break;
 					case 'delete':
 						a.textContent = 'deleted row in "' + i.sublist + '"';
@@ -165,7 +178,7 @@ class HistoryManager {
 			if (typeof i.sublist !== 'undefined') {
 				switch (i.action) {
 					case 'new':
-						a.textContent = 'new sublist row in "' + i.sublist + '"';
+						a.textContent = 'new row in "' + i.sublist + '"';
 						break;
 					case 'delete':
 						a.textContent = 'deleted row in "' + i.sublist + '"';
@@ -1739,6 +1752,8 @@ function loadAdminElement(id, get = {}, history_push = true) {
 							"visualizer-options": sublist['visualizer-options'],
 						});
 
+						pageSublists.set('sublist-' + sublist.name, visualizer);
+
 						await visualizer.render(sublist.list);
 
 						resolve();
@@ -1860,6 +1875,7 @@ function switchHistoryBox() {
 
 function wipeForms() {
 	pageForms.clear();
+	pageSublists.clear();
 	historyMgr.wipe();
 }
 

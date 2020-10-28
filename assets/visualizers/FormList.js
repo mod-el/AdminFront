@@ -107,7 +107,7 @@ class FormList {
 				await this.addLocalRow(item.id, {
 					data,
 					fields: (await this.basicData).fields
-				}, item.privileges ? item.privileges['D'] : true);
+				}, item.privileges ? item.privileges['D'] : true, false);
 			}
 		}
 	}
@@ -135,7 +135,7 @@ class FormList {
 	setSorting(sorting) {
 	}
 
-	async addLocalRow(id = null, data = null, canDelete = true) {
+	async addLocalRow(id = null, data = null, canDelete = true, historyPush = true) {
 		let template = (await this.template).cloneNode(true);
 
 		let isNew = false;
@@ -147,6 +147,11 @@ class FormList {
 
 		let form = new FormManager(this.id + '-' + id);
 		form.build(template, data);
+
+		pageForms.set(this.id + '-' + id, form);
+
+		if (historyPush)
+			historyMgr.sublistAppend(this.id, 'new', id);
 
 		let row;
 
@@ -214,7 +219,7 @@ class FormList {
 		});
 	}
 
-	async deleteLocalRow(id) {
+	async deleteLocalRow(id, historyPush = true) {
 		let row = this.rows.get(id);
 		if (!row) {
 			console.error('Riga non trovata al delete');
@@ -225,6 +230,20 @@ class FormList {
 
 		row.row.addClass('d-none');
 		row.deleted = true;
+
+		if (historyPush)
+			historyMgr.sublistAppend(this.id, 'delete', id);
+	}
+
+	async restoreLocalRow(id) {
+		let row = this.rows.get(id);
+		if (!row) {
+			console.error('Riga non trovata al delete');
+			return;
+		}
+
+		row.row.removeClass('d-none');
+		row.deleted = false;
 	}
 
 	getNewRowsSave() {

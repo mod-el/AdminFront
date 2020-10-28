@@ -246,7 +246,7 @@ class AdminController extends Controller
 
 	public function get()
 	{
-		switch ($this->model->_AdminFront->request[0]) {
+		switch ($this->model->_AdminFront->request[0] ?? null) {
 			case 'get-user-customization':
 				try {
 					if (!isset($_GET['k']))
