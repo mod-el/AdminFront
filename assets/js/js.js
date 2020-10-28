@@ -607,8 +607,6 @@ function loadPage(url, get = {}, post = {}, deleteContent = true) {
 	if (!checkBeforePageChange())
 		return false;
 
-	get['ajax'] = '';
-
 	if (deleteContent)
 		clearMainPage();
 
@@ -796,7 +794,9 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 							historyPush(request, queryStringFromObject(get), replace);
 						}
 
-						return loadPage(adminPrefix + request.join('/'));
+						hideBreadcrumbs();
+
+						return loadPage(adminPrefix + 'template/' + request.join('/'), {ajax: 1});
 						break;
 					default:
 						// ==== Set page variable ====
@@ -1288,15 +1288,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
 		_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
-		_('breadcrumbs').removeClass('d-none');
-		_('breadcrumbs').innerHTML = '';
-
-		let breadcrumbs = getBreadcrumbs(request[0]);
-		breadcrumbs.forEach((link, idx) => {
-			if (idx !== 0)
-				_('breadcrumbs').appendChild(document.createTextNode(' -> '));
-			_('breadcrumbs').appendChild(link);
-		});
+		buildBreadcrumbs();
 
 		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
 		if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0) {
@@ -1353,6 +1345,25 @@ function getPaginationHtml(tot_pages, current) {
 	});
 
 	return html.join(' ');
+}
+
+function buildBreadcrumbs() {
+	_('breadcrumbs').innerHTML = '';
+	_('breadcrumbs').removeClass('d-none');
+
+	let request = currentAdminPage.split('/');
+
+	let breadcrumbs = getBreadcrumbs(request[0]);
+	breadcrumbs.forEach((link, idx) => {
+		if (idx !== 0)
+			_('breadcrumbs').appendChild(document.createTextNode(' -> '));
+		_('breadcrumbs').appendChild(link);
+	});
+}
+
+function hideBreadcrumbs() {
+	_('breadcrumbs').innerHTML = '';
+	_('breadcrumbs').addClass('d-none');
 }
 
 function getBreadcrumbs(page) {
@@ -1768,6 +1779,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 		for (let warning of responses[1].warnings)
 			inPageMessage(warning, 'warning');
 
+		buildBreadcrumbs();
 		hideLoadingMask();
 	}).then(callElementCallback).then(() => {
 		if (!_('adminForm'))

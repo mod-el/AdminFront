@@ -68,7 +68,7 @@ class FormList {
 			templateDiv.className = 'formlist-template';
 
 			let templateUrl = adminPrefix + 'template/';
-			let get = {hideLayout: ''};
+			let get = {ajax: ''};
 			if (this.main)
 				templateUrl += this.id;
 			else

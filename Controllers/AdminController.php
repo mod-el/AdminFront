@@ -54,57 +54,59 @@ class AdminController extends Controller
 				}
 				break;
 			case 'template':
-				$this->model->viewOptions['cacheTemplate'] = true;
+				if ($this->model->_AdminFront->request[1] ?? null) {
+					$this->model->viewOptions['cacheTemplate'] = true;
 
-				$this->model->_Admin->setPath($this->model->_AdminFront->url);
-				$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
+					$this->model->_Admin->setPath($this->model->_AdminFront->url);
+					$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
 
-				$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
+					$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
 
-				$templatePath = $dir . $this->model->_AdminFront->request[1];
-				if (isset($this->model->_AdminFront->request[2]))
-					$templatePath .= DIRECTORY_SEPARATOR . $this->model->_AdminFront->request[2];
+					$forceLoad = false;
+					$templatePath = $dir . $this->model->_AdminFront->request[1];
+					if (isset($this->model->_AdminFront->request[2])) {
+						$forceLoad = true;
+						$templatePath .= DIRECTORY_SEPARATOR . $this->model->_AdminFront->request[2];
+					}
 
-				$checkCustomTemplate = Autoloader::searchFile('template', $templatePath);
-				if ($checkCustomTemplate) {
-					$this->model->_Admin->getElement(); // Per poter fare poi $this->model->element->getForm()
-					$this->model->viewOptions['template'] = $dir . $this->model->_AdminFront->request[1];
-					unset($this->model->viewOptions['template-module']);
+					if (!isset($this->model->viewOptions['template']) or $forceLoad) {
+						$checkCustomTemplate = Autoloader::searchFile('template', $templatePath);
+						if ($checkCustomTemplate) {
+							$this->model->_Admin->getElement(); // Per poter fare poi $this->model->element->getForm()
+							$this->model->viewOptions['template'] = $dir . $this->model->_AdminFront->request[1];
+							unset($this->model->viewOptions['template-module']);
+						} else {
+							$this->model->viewOptions['template-module'] = 'AdminFront';
+							$this->model->viewOptions['template'] = 'form-template';
+						}
+					}
+
+					if (isset($_GET['ajax'])) {
+						$this->model->viewOptions['showLayout'] = false;
+					} else {
+						$this->model->viewOptions['header'] = [];
+
+						if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-header.php'))
+							$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-header.php';
+						else
+							$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-header.php';
+
+						if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
+							$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+						else
+							$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
+
+						$this->model->viewOptions['footer'] = [];
+
+						if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
+							$this->model->viewOptions['footer'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php';
+
+						if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-footer.php'))
+							$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-footer.php';
+						else
+							$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-footer.php';
+					}
 				} else {
-					$this->model->viewOptions['template-module'] = 'AdminFront';
-					$this->model->viewOptions['template'] = 'form-template';
-				}
-
-				if (isset($_GET['hideLayout'])) {
-					$this->model->viewOptions['showLayout'] = false;
-				} else {
-					$this->model->viewOptions['header'] = [];
-
-					if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-header.php'))
-						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-header.php';
-					else
-						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-header.php';
-
-					if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php'))
-						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
-					else
-						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-header.php';
-
-					$this->model->viewOptions['footer'] = [];
-
-					if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php'))
-						$this->model->viewOptions['footer'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page-footer.php';
-
-					if (file_exists(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-footer.php'))
-						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . $this->templateModuleName . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-footer.php';
-					else
-						$this->model->viewOptions['header'][] = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'form-footer.php';
-				}
-				break;
-			default:
-				$this->model->viewOptions['showLayout'] = false;
-
-				if (isset($_GET['ajax'])) {
 					if ($this->model->moduleExists('Dashboard'))
 						$this->model->viewOptions['template-module'] = 'Dashboard';
 					else
@@ -112,10 +114,13 @@ class AdminController extends Controller
 
 					$this->model->viewOptions['cacheTemplate'] = false;
 					$this->model->viewOptions['template'] = 'dashboard';
-				} else {
-					$this->model->viewOptions['cacheTemplate'] = true;
-					$this->model->viewOptions['template'] = 'shell';
+					$this->model->viewOptions['showLayout'] = false;
 				}
+				break;
+			default:
+				$this->model->viewOptions['showLayout'] = false;
+				$this->model->viewOptions['cacheTemplate'] = true;
+				$this->model->viewOptions['template'] = 'shell';
 				break;
 		}
 	}
