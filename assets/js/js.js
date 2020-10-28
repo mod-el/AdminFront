@@ -1745,13 +1745,16 @@ function loadAdminElement(id, get = {}, history_push = true) {
 
 			sublistsPromises.push(new Promise(async (resolve, reject) => {
 				try {
-					let visualizer = await loadVisualizer(sublist.visualizer, 'sublist-' + sublist.name, sublistCont, false, {
+					if (sublist.name === request[0])
+						throw 'You cannot a sublist like the main page';
+
+					let visualizer = await loadVisualizer(sublist.visualizer, sublist.name, sublistCont, false, {
 						"fields": sublist.fields,
 						"privileges": sublist.privileges,
 						"visualizer-options": sublist['visualizer-options'],
 					});
 
-					pageSublists.set('sublist-' + sublist.name, visualizer);
+					pageSublists.set(sublist.name, visualizer);
 
 					await visualizer.render(sublist.list);
 

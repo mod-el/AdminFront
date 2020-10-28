@@ -72,7 +72,7 @@ class FormList {
 			if (this.main)
 				templateUrl += this.id;
 			else
-				templateUrl += currentAdminPage.split('/')[0] + '/' + this.id.replace(/^sublist-/, '');
+				templateUrl += currentAdminPage.split('/')[0] + '/' + this.id;
 
 			templateDiv.innerHTML = await ajax(templateUrl, get);
 
