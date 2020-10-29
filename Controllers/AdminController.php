@@ -82,7 +82,6 @@ class AdminController extends Controller
 					if (!isset($this->model->viewOptions['template']) or $forceLoad) {
 						$checkCustomTemplate = Autoloader::searchFile('template', $templatePath);
 						if ($checkCustomTemplate) {
-							$this->model->_Admin->getElement(); // Per poter fare poi $this->model->element->getForm()
 							$this->model->viewOptions['template'] = $dir . $this->model->_AdminFront->request[1];
 							unset($this->model->viewOptions['template-module']);
 						} else {
