@@ -32,8 +32,8 @@ class HistoryManager {
 		this.canceledChanges = [];
 	}
 
-	append(form, field, oldValue, newValue) {
-		this.changeHistory.push({form, field, oldValue, newValue});
+	append(form, field, oldValue, newValue, lang = null) {
+		this.changeHistory.push({form, field, oldValue, newValue, lang});
 		this.canceledChanges = [];
 		this.rebuildBox();
 	}
@@ -44,7 +44,7 @@ class HistoryManager {
 		this.rebuildBox();
 	}
 
-	stepBack() {
+	async stepBack() {
 		if (this.changeHistory.length === 0)
 			return false;
 
@@ -68,21 +68,21 @@ class HistoryManager {
 			if (!form)
 				return;
 
-			// if (form[el.field].getAttribute('data-multilang') && form[el.field].getAttribute('data-lang')) // TODO
-			// 	switchFieldLang(form[el.field].getAttribute('data-multilang'), form[el.field].getAttribute('data-lang'));
+			let field = form.fields.get(el.field);
+			await field.setValue(el.oldValue, false);
 
-			let field = form.fields.get(el.field).getNode();
-			field.setValue(el.oldValue, false);
-			field.focus();
-			if (field.select)
-				field.select();
+			if (el.lang && field.options.multilang)
+				switchFieldLang(field.name, el.lang);
+
+			field.focus(el.lang || null);
+
 			form.changedValues[el.field] = el.oldValue;
 		}
 
 		this.rebuildBox();
 	}
 
-	stepForward() {
+	async stepForward() {
 		if (this.canceledChanges.length === 0)
 			return false;
 
@@ -105,35 +105,36 @@ class HistoryManager {
 			let form = pageForms.get(el.form);
 			if (!form)
 				return;
-			// if (form[el.field].getAttribute('data-multilang') && form[el.field].getAttribute('data-lang')) // TODO
-			// 	switchFieldLang(form[el.field].getAttribute('data-multilang'), form[el.field].getAttribute('data-lang'));
 
-			let field = form.fields.get(el.field).getNode();
-			field.setValue(el.newValue, false);
-			field.focus();
-			if (field.select)
-				field.select();
+			let field = form.fields.get(el.field);
+			await field.setValue(el.newValue, false);
+
+			if (el.lang && field.options.multilang)
+				switchFieldLang(field.name, el.lang);
+
+			field.focus(el.lang || null);
+
 			form.changedValues[el.field] = el.newValue;
 		}
 
 		this.rebuildBox();
 	}
 
-	goToStep(t, i) {
+	async goToStep(t, i) {
 		switch (t) {
 			case 'reset':
 				while (this.changeHistory.length > 0)
-					this.stepBack();
+					await this.stepBack();
 				break;
 			case 'back':
 				while (this.changeHistory.length > i + 1)
-					this.stepBack();
+					await this.stepBack();
 				break;
 			case 'forward':
 				if (i + 1 > this.canceledChanges)
 					return;
 				for (let c = 1; c <= i + 1; c++)
-					this.stepForward();
+					await this.stepForward();
 				break;
 		}
 	}
@@ -203,31 +204,25 @@ class FormManager {
 	}
 
 	async add(field) {
-		let node = field.getNode();
+		field.historyDefaultValue = await field.getValue();
 
-		node.addEventListener('change', () => {
+		field.addEventListener('change', event => {
 			let old = null;
 			if (typeof this.changedValues[field.name] === 'undefined') {
-				old = node.getAttribute('data-default-value');
+				old = field.historyDefaultValue;
 			} else {
 				old = this.changedValues[field.name];
 			}
 
-			node.getValue().then(v => {
-				if (node.type !== 'file' && v == old)
+			field.getValue().then(v => {
+				if (v === old)
 					return;
 
 				this.changedValues[field.name] = v;
 
-				if (node.type !== 'file') // Files fields are complex structure, thus are not supported in the changes history
-					historyMgr.append(this.name, field.name, old, v);
+				historyMgr.append(this.name, field.name, old, v, event.langChanged || null);
 			});
 		});
-
-		if (node.type !== 'file') { // Files fields are complex structure, thus are not supported in the changes history
-			let v = await node.getValue();
-			node.setAttribute('data-default-value', v);
-		}
 
 		this.fields.set(field.name, field);
 	}
@@ -249,7 +244,7 @@ class FormManager {
 			await this.add(field);
 
 			fieldCont.innerHTML = '';
-			fieldCont.appendChild(field.getNode());
+			fieldCont.appendChild(await field.render());
 		}
 	}
 
@@ -280,57 +275,214 @@ class Field {
 			'required': false,
 			...options
 		};
+
+		this.value = this.options.value;
+		this.options.type = this.options.type.toLowerCase();
+
+		this.listeners = new Map();
 	}
 
-	getNode() {
-		if (this.node === null) {
-			let nodeType = null;
-			let attributes = this.options['attributes'];
+	addEventListener(event, callback) {
+		let listeners = this.listeners.get(event);
+		if (!listeners)
+			listeners = [];
+		listeners.push(callback);
+		this.listeners.set(event, listeners);
+	}
 
-			switch (this.options['type']) {
-				case 'textarea':
-					nodeType = 'textarea';
-					break;
-				case 'select':
-					nodeType = 'select';
-					break;
-				case 'date':
-					nodeType = 'input';
-					attributes['type'] = 'date';
-					break;
-				default:
-					nodeType = 'input';
-					attributes['type'] = this.options['type'];
-					break;
+	emit(eventName, event = null) {
+		let listeners = this.listeners.get(eventName);
+		if (!listeners)
+			return;
+
+		for (let listener of listeners)
+			listener.call(this, event);
+	}
+
+	async setValue(v, trigger = true) {
+		this.value = v;
+
+		let node = await this.getNode();
+		if (this.options.multilang) {
+			for (let lang of this.options.multilang) {
+				if (node.hasOwnProperty(lang) && v.hasOwnProperty(lang))
+					await node[lang].setValue(v[lang], trigger);
 			}
+		} else {
+			await node.setValue(v, trigger);
+		}
 
-			if (typeof attributes['name'] === 'undefined')
-				attributes['name'] = this.name;
+		if (trigger)
+			this.emit('change');
+	}
 
-			let node = document.createElement(nodeType);
+	async getValue() {
+		if (this.value === null || typeof this.value !== 'object')
+			return this.value;
+		else
+			return {...this.value};
+	}
 
-			Object.keys(attributes).forEach(k => {
-				node.setAttribute(k, attributes[k]);
-			});
-
-			if (this.options['type'] === 'select') {
-				node.innerHTML = '<option value=""></option>';
-				this.options['options'].forEach(option => {
-					let el = document.createElement('option');
-					el.value = option.id;
-					el.innerHTML = option.text;
-					if (option.id == this.options['value'])
-						el.setAttribute('selected', '');
-					node.appendChild(el);
-				});
+	focus(lang = null) {
+		this.getNode().then(obj => {
+			let node;
+			if (this.options.multilang) {
+				if (lang === null)
+					lang = this.options.multilang[0];
+				node = obj[lang];
 			} else {
-				node.value = this.options['value'];
+				node = obj;
 			}
 
-			this.node = node;
+			node.focus();
+			if (node.select)
+				node.select();
+		});
+	}
+
+	getSingleNode(lang = null) {
+		let nodeType = null;
+		let attributes = this.options['attributes'];
+
+		switch (this.options['type']) {
+			case 'textarea':
+				nodeType = 'textarea';
+				break;
+			case 'select':
+				nodeType = 'select';
+				break;
+			case 'date':
+				nodeType = 'input';
+				attributes['type'] = 'date';
+				break;
+			default:
+				nodeType = 'input';
+				attributes['type'] = this.options['type'];
+				break;
+		}
+
+		if (typeof attributes['name'] === 'undefined')
+			attributes['name'] = this.name;
+
+		let node = document.createElement(nodeType);
+
+		Object.keys(attributes).forEach(k => {
+			node.setAttribute(k, attributes[k]);
+		});
+
+		if (this.options['type'] === 'select') {
+			node.innerHTML = '<option value=""></option>';
+			this.options['options'].forEach(option => {
+				let el = document.createElement('option');
+				el.value = option.id;
+				el.innerHTML = option.text;
+				if (option.id == this.options['value'])
+					el.setAttribute('selected', '');
+				node.appendChild(el);
+			});
+		}
+
+		for (let eventName of ['keyup', 'keydown', 'click', 'change', 'input']) {
+			node.addEventListener(eventName, async event => {
+				if (eventName === 'change') {
+					await node.getValue().then(v => {
+						if (this.options.multilang) {
+							event.langChanged = lang;
+							if (this.value === null || typeof this.value !== 'object')
+								this.value = {};
+
+							this.value[lang] = v;
+						} else {
+							this.value = v;
+						}
+					});
+				}
+
+				this.emit(eventName, event);
+			});
+		}
+
+		return node;
+	}
+
+	async getNode() {
+		if (this.node === null) {
+			if (this.options.multilang) {
+				this.node = {};
+				for (let lang of this.options.multilang)
+					this.node[lang] = this.getSingleNode(lang);
+			} else {
+				this.node = this.getSingleNode();
+			}
+
+			await this.setValue(this.value, false);
 		}
 
 		return this.node;
+	}
+
+	async render() {
+		let node = await this.getNode();
+
+		if (this.options.multilang) {
+			let cont = document.createElement('div');
+			cont.className = 'multilang-field-container';
+			cont.setAttribute('data-name', this.name);
+
+			let firstLang = true;
+			for (let lang of this.options.multilang) {
+				let langCont = document.createElement('div');
+				langCont.setAttribute('data-lang', lang);
+				langCont.appendChild(node[lang]);
+
+				if (firstLang) {
+					firstLang = false;
+				} else {
+					langCont.style.display = 'none';
+				}
+
+				cont.appendChild(langCont);
+			}
+
+			let defaultLang = this.options.multilang[0];
+
+			let flagsCont = document.createElement('div');
+			flagsCont.className = 'multilang-field-lang-container';
+
+			let mainFlag = document.createElement('a');
+			mainFlag.href = '#';
+			mainFlag.setAttribute('data-lang', defaultLang);
+			mainFlag.addEventListener('click', event => {
+				event.preventDefault();
+				switchFieldLang(this.name, defaultLang);
+			});
+			mainFlag.innerHTML = `<img src="${PATH}model/Form/assets/img/langs/${defaultLang}.png" alt="${defaultLang}"/>`;
+			flagsCont.appendChild(mainFlag);
+
+			let otherFlagsCont = document.createElement('div');
+			otherFlagsCont.className = 'multilang-field-other-langs-container';
+			for (let lang of this.options.multilang) {
+				if (lang === defaultLang)
+					continue;
+
+				let flag = document.createElement('a');
+				flag.href = '#';
+				flag.setAttribute('data-lang', lang);
+				flag.addEventListener('click', event => {
+					event.preventDefault();
+					switchFieldLang(this.name, lang);
+				});
+				flag.innerHTML = `<img src="${PATH}model/Form/assets/img/langs/${lang}.png" alt="${lang}"/>`;
+				otherFlagsCont.appendChild(flag);
+			}
+			flagsCont.appendChild(otherFlagsCont);
+
+			cont.appendChild(flagsCont);
+
+			return cont;
+		} else {
+			return node;
+		}
 	}
 }
 
@@ -887,8 +1039,8 @@ async function rebuildFilters() {
 		'secondary': secondaryForm
 	};
 
-	Object.keys(filters).forEach(formName => {
-		filters[formName].forEach(filter => {
+	for (let formName of Object.keys(filters)) {
+		for (let filter of filters[formName]) {
 			let div = document.createElement('div');
 
 			let label = '';
@@ -905,46 +1057,36 @@ async function rebuildFilters() {
 					filter.options['attributes']['placeholder'] = label;
 			}
 
-			let field = filter.getNode();
-			switch (field.nodeName.toLowerCase()) {
-				case 'input':
-				case 'textarea':
-					switch (field.type.toLowerCase()) {
-						case 'checkbox':
-						case 'radio':
-						case 'hidden':
-						case 'date':
-							field.addEventListener('change', function () {
-								search();
-							});
-							break;
-						default:
-							field.addEventListener('keyup', function (event) {
-								if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
-									return false;
-
-								searchCounter++;
-								setTimeout((function (c) {
-									return function () {
-										if (c === searchCounter)
-											search();
-									}
-								})(searchCounter), 400);
-							});
-							break;
-					}
+			switch (filter.options.type) {
+				case 'checkbox':
+				case 'radio':
+				case 'hidden':
+				case 'date':
+				case 'select':
+					filter.addEventListener('change', function () {
+						search();
+					});
 					break;
 				default:
-					field.addEventListener('change', function () {
-						search();
+					filter.addEventListener('keyup', function (event) {
+						if ((event.keyCode <= 40 && event.keyCode != 8 && event.keyCode != 13 && event.keyCode != 32))
+							return false;
+
+						searchCounter++;
+						setTimeout((function (c) {
+							return function () {
+								if (c === searchCounter)
+									search();
+							}
+						})(searchCounter), 400);
 					});
 					break;
 			}
 
-			div.appendChild(field);
+			div.appendChild(await filter.render());
 			forms[formName].firstChild.appendChild(div);
-		});
-	});
+		}
+	}
 
 	resize();
 }
@@ -1883,7 +2025,6 @@ async function save() {
 		let request = currentAdminPage.split('/');
 		let id = getIdFromRequest(request);
 
-		// TODO: multilang
 		let payload = {
 			'data': pageForms.get('main').getChangedValues(),
 			'version': pageForms.get('main').version,
