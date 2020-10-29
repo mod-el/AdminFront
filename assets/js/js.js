@@ -682,7 +682,7 @@ function adminApiRequest(request, payload = {}, options = {}) {
 	if (adminApiToken !== null)
 		headers['X-Access-Token'] = adminApiToken;
 
-	return ajax(adminApiPath + request, {}, payload, {
+	return ajax(adminApiPath + request, {c_id}, payload, {
 		'fullResponse': true,
 		'headers': headers,
 		'json': true,
