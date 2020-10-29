@@ -56,7 +56,6 @@ class FormList {
 			this.container.appendChild(addButtonRow);
 
 		this.rowsContainer = document.createElement('div');
-		this.rowsContainer.id = 'cont-ch-' + this.id;
 		this.container.appendChild(this.rowsContainer);
 
 		if (addButtonRow && this.options['visualizer-options']['add-button-position'] === 'after')
@@ -307,7 +306,7 @@ class FormList {
 		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', data).then(() => {
 			return this.reload();
 		}).catch(error => {
-			alert(error);
+			reportAdminError(error);
 		}).finally(() => {
 			toolbarButtonRestore('save');
 			this.saving = false;

@@ -12,8 +12,6 @@ class AdminFront extends Module
 	public $request;
 	/** @var array */
 	private $dictionary = null;
-	/** @var DataVisualizer */
-	private $visualizer = null;
 
 	/**
 	 *
@@ -39,7 +37,6 @@ class AdminFront extends Module
 	 */
 	public function getController(array $request, string $rule): ?array
 	{
-		$config = $this->retrieveConfig();
 		$paths = $this->model->_Admin->getAdminPaths();
 
 		if (substr($rule, 0, 2) === 'sw') {

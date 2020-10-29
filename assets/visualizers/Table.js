@@ -639,7 +639,7 @@ async function saveEditableField(field) {
 		});
 	}).catch(error => {
 		field.style.display = 'none';
-		alert(error);
+		reportAdminError(error);
 	}).finally(() => {
 		field.style.opacity = 1;
 	});

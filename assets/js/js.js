@@ -2095,7 +2095,7 @@ async function save() {
 			});
 		});
 	}).catch(error => {
-		alert(error);
+		reportAdminError(error);
 	}).finally(() => {
 		setLoadingBar(0);
 
@@ -2135,7 +2135,7 @@ function duplicate() {
 			throw 'Errore sconosciuto';
 		}
 	}).catch(error => {
-		alert(error);
+		reportAdminError(error);
 	}).finally(() => {
 		toolbarButtonRestore('duplicate');
 	});
@@ -2275,7 +2275,7 @@ function checkForCsvExport(sId, rowsNumber) {
 				checkForCsvExport(sId, rowsNumber);
 			} else {
 				div.innerHTML = 'Errore.';
-				alert(r);
+				reportAdminError(r);
 			}
 		});
 	}
@@ -2317,7 +2317,7 @@ function deleteRows(ids) {
 		else
 			loadAdminPage(request[0]);
 	}).catch(error => {
-		alert(error);
+		reportAdminError(error);
 	}).finally(() => {
 		toolbarButtonRestore('delete');
 	});

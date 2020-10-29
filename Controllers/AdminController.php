@@ -24,6 +24,16 @@ class AdminController extends Controller
 		$this->model->load('ContextMenu');
 		$this->model->load('CSRF');
 
+		if ($this->model->moduleExists('Dashboard'))
+			$this->model->load('Dashboard');
+		if ($this->model->moduleExists('CkEditor'))
+			$this->model->load('CkEditor');
+		if ($this->model->moduleExists('InstantSearch'))
+			$this->model->load('InstantSearch');
+
+		if ($this->model->isLoaded('Multilang') and isset($_COOKIE['admin-lang']))
+			$this->model->_Multilang->setLang($_COOKIE['admin-lang']);
+
 		$this->templateModuleName = $this->model->_AdminFront->getTemplateModule();
 		$this->templateModule = $this->model->load($this->templateModuleName);
 		$this->model->viewOptions['template-module'] = $this->templateModuleName;
