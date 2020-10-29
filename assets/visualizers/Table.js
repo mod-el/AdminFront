@@ -368,6 +368,7 @@ class Table {
 		if (this.main) {
 			return reloadMainList();
 		} else {
+			alert('TODO: sublist reloading');
 			// TODO: sublist reloading
 		}
 	}

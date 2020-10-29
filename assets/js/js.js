@@ -572,7 +572,7 @@ function adminInit() {
 				}
 			});
 		});
-	}).catch(err => alert(err));
+	}).catch(err => reportAdminError(err));
 }
 
 function checkUserToken() {
@@ -893,7 +893,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					break;
 			}
 		} else {
-			// TODO: tasto print, export csv, tasto url pubblico
+			// TODO: tasto url pubblico
 
 			if (sessionStorage.getItem('current-page') !== request[0])
 				sessionStorage.removeItem('filters-values');
@@ -929,6 +929,14 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 							'fa-icon': 'far fa-trash-alt',
 							'text': 'Elimina',
 							'action': 'deleteRows()',
+						});
+					}
+
+					if (currentPageDetails.export) {
+						addPageAction('export', {
+							'fa-icon': 'fab fa-wpforms',
+							'text': 'Esporta',
+							'action': `exportPopup(1)`,
 						});
 					}
 
@@ -996,7 +1004,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			});
 		}
 	}).catch(err => {
-		alert(err);
+		reportAdminError(err);
 	});
 }
 
@@ -1369,7 +1377,7 @@ function historyPush(request, get = '', replace = false, state = {}) {
 	}
 }
 
-async function search(page = 1, sortedBy = null, history_push = true) {
+async function search(page = 1, sortedBy = null, history_push = true, onlyForPayload = false) {
 	let request = currentAdminPage.split('/');
 
 	let filters = [];
@@ -1413,13 +1421,15 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	if (searchFields.length > 0)
 		payload['search-fields'] = searchFields;
 
-	_('main-content').innerHTML = `<div class="px-3 no-overflow">
+	if (!onlyForPayload) {
+		_('main-content').innerHTML = `<div class="px-3 no-overflow">
 			<div id="results-table-count">
 				<div><img src="` + PATH + `model/Output/files/loading.gif" alt="" /></div>
 			</div>
 			<div id="results-table-pages"></div>
 		</div>
 		<div id="main-visualizer-cont"></div>`;
+	}
 
 	if (sortedBy === null) {
 		let visualizer = visualizers.get(request[0]);
@@ -1438,6 +1448,9 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 	let columns = await visualizer.getFieldsToRetrieve();
 	if (columns !== null)
 		payload['fields'] = columns;
+
+	if (onlyForPayload)
+		return payload;
 
 	if (history_push) {
 		let get;
@@ -1473,7 +1486,7 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 			_('main-loading').addClass('d-none');
 			return changedHtml();
 		});
-	}).catch(error => alert(error));
+	}).catch(error => reportAdminError(error));
 }
 
 function getPaginationHtml(tot_pages, current) {
@@ -1833,7 +1846,7 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 			if (!r.success)
 				throw 'Errore durante il cambio di ordine';
 		}).catch(error => {
-			alert(error);
+			reportAdminError(error);
 			reloadMainList();
 		}).finally(() => {
 			hideLoadingMask();
@@ -2264,15 +2277,43 @@ function selectRow(id, enable) {
 	}
 }
 
-function checkForCsvExport(sId, rowsNumber) {
-	var div = document.querySelector('[data-csvpage][data-csvexecuted="0"]');
+async function exportPopup(step) {
+	switch (step) {
+		case 1:
+			return zkPopup({
+				url: adminPrefix + 'export/' + currentAdminPage.split('/')[0],
+				get: {step}
+			});
+		case 2:
+			let rowsNumber = await _('export-form')['rows-number'].getValue();
+			let payload = await search(null, null, false, true);
+			return zkPopup({
+				url: adminPrefix + 'export/' + currentAdminPage.split('/')[0],
+				get: {step},
+				post: {
+					rows: rowsNumber,
+					payload: JSON.stringify(payload)
+				}
+			}).then(() => {
+				checkForExport(rowsNumber, payload);
+			});
+	}
+}
+
+function checkForExport(rowsNumber, payload) {
+	let div = document.querySelector('[data-csvpage][data-csvexecuted="0"]');
 	if (div) {
 		div.loading();
-		ajax(currentAdminPage, {'sId': sId, 'csv': div.getAttribute('data-csvpage')}, {'rows-number': rowsNumber}).then(r => {
+		payload['per-page'] = rowsNumber;
+		payload['page'] = parseInt(div.getAttribute('data-csvpage'));
+		return ajax(adminPrefix + 'export/' + currentAdminPage.split('/')[0], {step: 3}, {
+			rows: rowsNumber,
+			payload: JSON.stringify(payload)
+		}, {'rows-number': rowsNumber}).then(r => {
 			if (typeof r === 'object') {
 				div.innerHTML = '[<a href="' + r.link + '" target="_blank"> ' + r.name + ' </a>]';
 				div.setAttribute('data-csvexecuted', '1');
-				checkForCsvExport(sId, rowsNumber);
+				checkForExport(rowsNumber, payload);
 			} else {
 				div.innerHTML = 'Errore.';
 				reportAdminError(r);
