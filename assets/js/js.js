@@ -433,7 +433,7 @@ class Field {
 			for (let lang of this.options.multilang) {
 				let langCont = document.createElement('div');
 				langCont.setAttribute('data-lang', lang);
-				langCont.appendChild(node[lang]);
+				langCont.appendChild(await this.renderNode(node[lang]));
 
 				if (firstLang) {
 					firstLang = false;
@@ -480,6 +480,31 @@ class Field {
 			cont.appendChild(flagsCont);
 
 			return cont;
+		} else {
+			return this.renderNode(node);
+		}
+	}
+
+	async renderNode(node) {
+		if (this.options.type === 'checkbox' && this.options.label) {
+			let id = node.id;
+			if (!id) {
+				id = 'checkbox-' + Math.round(Math.random() * 10000);
+				node.id = id;
+			}
+
+			let span = document.createElement('span');
+			span.appendChild(node);
+
+			let whitespace = document.createTextNode(' ');
+			span.appendChild(whitespace);
+
+			let label = document.createElement('label');
+			label.setAttribute('for', id);
+			label.innerHTML = this.options.label;
+			span.appendChild(label);
+
+			return span;
 		} else {
 			return node;
 		}
@@ -802,7 +827,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 	clearMainPage();
 
-	return new Promise(resolve => {
+	return new Promise((resolve, reject) => {
 		if (!firstLoad && currentAdminPage.split('/')[0] === request[0]) {
 			resolve();
 		} else {
@@ -815,6 +840,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 				currentPageDetails = r;
 				resolve();
+			}).catch(err => {
+				reject(err);
 			});
 		}
 	}).then(async () => {
@@ -968,6 +995,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 				}
 			});
 		}
+	}).catch(err => {
+		alert(err);
 	});
 }
 
