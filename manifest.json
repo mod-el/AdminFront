@@ -1,10 +1,10 @@
 {
 	"name": "AdminFront",
 	"description": "Front mask for Admin module",
-	"version": "0.5.0",
+	"version": "1.0.0",
 	"dependencies": {
-		"Core": ">=2.9.0",
-		"Admin": ">=1.2.0",
+		"Core": ">=2.10.0",
+		"Admin": ">=2.0.0",
 		"Output": ">=0.3.2",
 		"ContextMenu": ">=1.1.0",
 		"FrontEnd": ">=1.1.2",
@@ -12,7 +12,7 @@
 		"WebAppManifest": ">=0.1.0",
 		"CSRF": ">=0.1.0",
 		"User": ">=2.2.0",
-		"DraggableOrder": ">=0.1.1"
+		"DraggableOrder": ">=0.2.0"
 	},
 	"file-types": {
 		"DataVisualizer": {
