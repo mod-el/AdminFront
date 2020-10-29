@@ -36,7 +36,7 @@ class Table {
 		let columns = await this.getColumns();
 		let widths = await this.getWidths();
 
-		columns.forEach(fieldName => {
+		for (let fieldName of columns) {
 			let field = this.options['fields'][fieldName];
 
 			let width = 150;
@@ -129,7 +129,7 @@ class Table {
 					this.reload();
 				});
 			}
-		});
+		}
 
 		this.container.appendChild(head);
 
@@ -155,7 +155,7 @@ class Table {
 		}
 
 		let rowCount = 0;
-		list.forEach(item => {
+		for (let item of list) {
 			let row = bodyMain.appendChild(document.createElement('div'));
 			row.className = 'results-table-row-cont';
 
@@ -236,7 +236,7 @@ class Table {
 					deleteCell.innerHTML = '<a href="#" onclick="event.stopPropagation(); deleteRows([\'' + item.id + '\']); return false"><img src="' + PATHBASE + 'model/AdminTemplateEditt/assets/img/delete.png" alt="" style="vertical-align: middle"/></a>';
 			}
 
-			columns.forEach(fieldName => {
+			for (let fieldName of columns) {
 				let field = this.options['fields'][fieldName];
 
 				let width = 150;
@@ -293,12 +293,12 @@ class Table {
 				let innerDiv = div.appendChild(document.createElement('div'));
 				if (field.editable) {
 					innerDiv.innerHTML = '';
-					let fieldClass = new Field(fieldName, {...field.editable, value: item.data[fieldName].value});
+					let fieldClass = new Field(fieldName, {...field.editable, value: item.data[fieldName].value, label: null});
 
-					let fieldNode = fieldClass.render();
-					fieldNode.setAttribute('data-editable', item.id);
-					fieldNode.addEventListener('change', function () {
-						saveEditableField(this);
+					let fieldNode = await fieldClass.render();
+					fieldNode.setAttribute('data-editable', rowCount.toString());
+					fieldClass.addEventListener('change', () => {
+						saveEditableField(item.id, fieldClass, fieldNode);
 					});
 					innerDiv.appendChild(fieldNode);
 				} else if (field.price) {
@@ -306,10 +306,10 @@ class Table {
 				} else {
 					innerDiv.innerHTML = entities(item.data[fieldName].text);
 				}
-			});
+			}
 
 			rowCount++;
-		});
+		}
 
 		if (Object.keys(totals).length > 0) {
 			let row = bodyMain.appendChild(document.createElement('div'));
@@ -327,7 +327,7 @@ class Table {
 
 			let firstFound = false;
 
-			columns.forEach(fieldName => {
+			for(let fieldName of columns) {
 				let field = this.options['fields'][fieldName];
 
 				let width = 150;
@@ -352,7 +352,7 @@ class Table {
 				} else if (!firstFound) {
 					textDivCont.style.width = (parseInt(textDivCont.style.width) + width) + 'px';
 				}
-			});
+			}
 		}
 
 		this.container.appendChild(body);
@@ -610,39 +610,39 @@ function selectAllRows(id, enable) {
 	});
 }
 
-async function saveEditableField(field) {
-	let id = field.dataset.editable;
-	if (!id)
-		return false;
-
-	let riga = _('.results-table-row[data-id="' + id + '"]');
-	if (!riga)
+async function saveEditableField(id, field, node) {
+	let row = _('.results-table-row[data-id="' + id + '"]');
+	if (!row)
 		return false;
 
 	let request = currentAdminPage.split('/');
 	let value = await field.getValue();
 
-	field.style.opacity = 0.2;
+	node.style.opacity = 0.2;
 
-	let n = parseInt(riga.getAttribute('data-n'));
-	let rigaSuccessiva = _('.results-table-row[data-n="' + (n + 1) + '"]');
+	let nextRow = parseInt(row.getAttribute('data-n')) + 1;
 
-	return adminApiRequest('page/' + request[0] + '/save/' + id, {save: {[field.name]: value}}).then(response => {
+	return adminApiRequest('page/' + request[0] + '/save/' + id, {data: {[field.name]: value}}).then(response => {
 		if (!response.id)
 			throw 'Risposta server errata';
 
-		reloadList().then(() => {
-			if (rigaSuccessiva) {
-				let idRigaSuccessiva = rigaSuccessiva.dataset.id;
-				_('[data-editable="' + idRigaSuccessiva + '"][name="' + field.name + '"]').focus();
-				_('[data-editable="' + idRigaSuccessiva + '"][name="' + field.name + '"]').select();
+		reloadMainList().then(() => {
+			let nextField = _('[data-editable="' + nextRow + '"][name="' + field.name + '"]');
+			if (nextField) {
+				if (nextField.nodeName.toLowerCase() !== 'input' && nextField.nodeName.toLowerCase() !== 'select')
+					nextField = nextField.querySelector('input, select');
+
+				if (nextField) {
+					nextField.focus();
+					nextField.select();
+				}
 			}
 		});
 	}).catch(error => {
-		field.style.display = 'none';
+		node.style.display = 'none';
 		reportAdminError(error);
 	}).finally(() => {
-		field.style.opacity = 1;
+		node.style.opacity = 1;
 	});
 }
 
