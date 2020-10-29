@@ -17,6 +17,9 @@ if (isset($this->model->_AdminFront->request[2])) {
 	$form->render();
 } else {
 	$form = $this->model->_Admin->getForm();
+	if (!$form)
+		return;
+
 	if ($this->model->isLoaded('Multilang')) {
 		$hasMultilang = false;
 		foreach ($form->getDataset() as $d) {
