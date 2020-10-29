@@ -1393,8 +1393,9 @@ async function search(page = 1, sortedBy = null, history_push = true) {
 		<div id="main-visualizer-cont"></div>`;
 
 	if (sortedBy === null) {
-		if (typeof visualizers[request[0]] !== 'undefined')
-			sortedBy = visualizers[request[0]].getSorting();
+		let visualizer = visualizers.get(request[0]);
+		if (visualizer)
+			sortedBy = visualizer.getSorting();
 		else
 			sortedBy = [];
 	}
