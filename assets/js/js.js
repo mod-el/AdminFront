@@ -2189,7 +2189,7 @@ async function getUserCustomization(k) {
 	if (typeof userCustomizationsCache[k] !== 'undefined')
 		return userCustomizationsCache[k];
 
-	return ajax(PATH + 'admin/get-user-customization', {
+	return ajax(adminPrefix + 'get-user-customization', {
 		'k': k
 	}, {}, {
 		'headers': {
@@ -2231,7 +2231,7 @@ async function saveUserCustomization(k, v) {
 					return;
 
 				delete userCustomizationsBuffer[k];
-				return ajax(PATH + 'admin/save-user-customization', {
+				return ajax(adminPrefix + 'save-user-customization', {
 					'k': k
 				}, {
 					'v': JSON.stringify(v),
@@ -2250,7 +2250,7 @@ async function saveUserCustomization(k, v) {
 }
 
 async function deleteUserCustomization(k) {
-	return ajax(PATH + 'admin/delete-user-customization', {
+	return ajax(adminPrefix + 'delete-user-customization', {
 		'k': k
 	}, {}, {
 		'method': 'POST',
