@@ -909,10 +909,12 @@ function addPageAction(name, action) {
 		isNew = true;
 	}
 
-	if (action.url)
+	if (action.url) {
 		button.href = action.url;
-	else
+		button.setAttribute('target', '_blank');
+	} else {
 		button.href = '#';
+	}
 
 	if (action.action)
 		button.setAttribute('onclick', action.action + '; return false');
