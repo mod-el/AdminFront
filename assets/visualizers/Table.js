@@ -304,7 +304,7 @@ class Table {
 				} else if (field.price) {
 					innerDiv.innerHTML = makePrice(item.data[fieldName].value);
 				} else {
-					innerDiv.innerHTML = entities(item.data[fieldName].text);
+					innerDiv.innerHTML = field.raw ? item.data[fieldName].text : entities(item.data[fieldName].text);
 				}
 			}
 
@@ -327,7 +327,7 @@ class Table {
 
 			let firstFound = false;
 
-			for(let fieldName of columns) {
+			for (let fieldName of columns) {
 				let field = this.options['fields'][fieldName];
 
 				let width = 150;
