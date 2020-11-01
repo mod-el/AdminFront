@@ -53,7 +53,7 @@ class Table {
 
 			let resize = div.appendChild(document.createElement('div'));
 			resize.className = 'table-head-resize';
-			resize.setAttribute('data-context-menu', "{'Ottimizza':function(){ autoResizeColumns('" + this.id + "', '" + fieldName + "'); }, 'Ottimizza colonne':function(){ autoResizeColumns('" + this.id + "'); }, 'Personalizza colonne':function(){ visualizers['" + this.id + "'].customizeColumns(); }}");
+			resize.setAttribute('data-context-menu', "{'Ottimizza':function(){ autoResizeColumns('" + this.id + "', '" + fieldName + "'); }, 'Ottimizza colonne':function(){ autoResizeColumns('" + this.id + "'); }, 'Personalizza colonne':function(){ visualizers.get('" + this.id + "').customizeColumns(); }}");
 
 			resize.addEventListener('mousedown', event => {
 				startColumnResize(event, this.id, fieldName);
@@ -413,16 +413,16 @@ class Table {
 		let fieldset = document.createElement('fieldset');
 		fieldset.className = 'p-3';
 
-		fieldset.innerHTML = `<form action="?" method="post" id="customize-columns-form" onsubmit="visualizers['` + this.id + `'].saveColumns(); return false">
+		fieldset.innerHTML = `<form action="?" method="post" id="customize-columns-form" onsubmit="visualizers.get('` + this.id + `').saveColumns(); return false">
 			<h2>Personalizza colonne</h2>
 			<div class="py-1 text-center">
 				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
-				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="visualizers['` + this.id + `'].restoreDefaultColumns()"/>
+				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="visualizers.get('` + this.id + `').restoreDefaultColumns()"/>
 			</div>
 			<div class="container-fluid py-2" id="customize-columns-cont" data-draggable-cont></div>
 			<div class="py-1 text-center">
 				<input type="submit" value="Salva preferenza" class="btn btn-primary"/>
-				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="visualizers['` + this.id + `'].restoreDefaultColumns()"/>
+				<input type="button" value="Ripristina default" class="btn btn-danger" onclick="visualizers.get('` + this.id + `').restoreDefaultColumns()"/>
 			</div>
 		</form>`;
 
@@ -527,7 +527,7 @@ window.addEventListener('mouseup', event => {
 
 	if (columnResizing !== false) {
 		if (columnResizing.endW !== false)
-			visualizers[columnResizing.table].saveColumnWidth(columnResizing.k, columnResizing.endW);
+			visualizers.get(columnResizing.table).saveColumnWidth(columnResizing.k, columnResizing.endW);
 		columnResizing = false;
 	}
 });
@@ -555,7 +555,7 @@ function autoResizeColumns(table, column) {
 		}
 
 		if (startW !== maxW)
-			visualizers[table].saveColumnWidth(column, maxW);
+			visualizers.get(table).saveColumnWidth(column, maxW);
 	} else {
 		let cells = document.querySelectorAll('.table-head[data-table="' + table + '"] div[data-column]');
 		cells.forEach(cell => {
