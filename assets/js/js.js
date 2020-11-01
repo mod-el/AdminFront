@@ -578,8 +578,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					break;
 			}
 		} else {
-			// TODO: tasto url pubblico
-
 			if (sessionStorage.getItem('current-page') !== request[0])
 				sessionStorage.removeItem('filters-values');
 			sessionStorage.setItem('current-page', request[0]);
