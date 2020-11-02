@@ -77,6 +77,25 @@ class AdminController extends Controller
 					if (isset($this->model->_AdminFront->request[2])) {
 						$forceLoad = true;
 						$templatePath .= DIRECTORY_SEPARATOR . $this->model->_AdminFront->request[2];
+
+						$element = $this->model->_Admin->getElement();
+						if (!$element)
+							die();
+
+						$sublist = $this->model->_Admin->sublists[$this->model->_AdminFront->request[2]];
+						$relationshipOptions = $element->getChildrenOptions($sublist['children']);
+
+						$sublistItem = $element->create($sublist['children']);
+						if (!$sublistItem)
+							die();
+
+						$form = $sublistItem->getForm();
+						$form->remove($relationshipOptions['field']);
+						$form->options['render-only-placeholders'] = true;
+
+						$this->model->inject('form', $form);
+					} else {
+						$this->model->inject('form', $this->model->_Admin->getForm());
 					}
 
 					if (!isset($this->model->viewOptions['template']) or $forceLoad) {

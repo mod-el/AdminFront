@@ -1,25 +1,7 @@
 <?php
 if (isset($this->model->_AdminFront->request[2])) {
-	$element = $this->model->_Admin->getElement();
-	if (!$element)
-		die();
-
-	$sublist = $this->model->_Admin->sublists[$this->model->_AdminFront->request[2]];
-	$relationshipOptions = $element->getChildrenOptions($sublist['children']);
-
-	$sublistItem = $element->create($sublist['children']);
-	if (!$sublistItem)
-		die();
-
-	$form = $sublistItem->getForm();
-	$form->remove($relationshipOptions['field']);
-	$form->options['render-only-placeholders'] = true;
 	$form->render();
 } else {
-	$form = $this->model->_Admin->getForm();
-	if (!$form)
-		return;
-
 	if ($this->model->isLoaded('Multilang')) {
 		$hasMultilang = false;
 		foreach ($form->getDataset() as $d) {
