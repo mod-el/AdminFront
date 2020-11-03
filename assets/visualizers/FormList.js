@@ -101,7 +101,7 @@ class FormList {
 			for (let item of list) {
 				let data = {};
 				for (let k of Object.keys(item.data))
-					data[k] = (typeof item.data[k] === 'object' && item.data[k].hasOwnProperty('value')) ? item.data[k].value : item.data[k];
+					data[k] = (item.data[k] && typeof item.data[k] === 'object' && item.data[k].hasOwnProperty('value')) ? item.data[k].value : item.data[k];
 
 				await this.addLocalRow(item.id, {
 					data,
@@ -210,7 +210,7 @@ class FormList {
 
 		this.rowsContainer.appendChild(row);
 
-		this.rows.set(id, {row, form, isNew, deleted: false});
+		this.rows.set(id, {id, row, form, isNew, deleted: false});
 		if (isNew)
 			this.newRows.push(id);
 
@@ -251,6 +251,17 @@ class FormList {
 
 		row.row.removeClass('d-none');
 		row.deleted = false;
+	}
+
+	getRows() {
+		let arr = []
+		for (let id of this.rows.keys()) {
+			let row = this.rows.get(id);
+			if (!row.deleted)
+				arr.push(row);
+		}
+
+		return arr;
 	}
 
 	getNewRowsSave() {
