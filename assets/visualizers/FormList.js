@@ -145,6 +145,13 @@ class FormList {
 			isNew = true;
 		}
 
+		for (let fieldName of Object.keys(data.fields)) {
+			if (data.fields[fieldName].hasOwnProperty('attributes')) {
+				for (let attrName of Object.keys(data.fields[fieldName].attributes))
+					data.fields[fieldName].attributes[attrName] = data.fields[fieldName].attributes[attrName].replace('[id]', id);
+			}
+		}
+
 		let form = new FormManager(this.id + '-' + id);
 		form.build(template, data);
 
