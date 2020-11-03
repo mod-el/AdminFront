@@ -209,6 +209,7 @@ class FormList {
 				break;
 		}
 
+		row.dataset.id = id;
 		this.rowsContainer.appendChild(row);
 
 		this.rows.set(id, {id, row, form, isNew, deleted: false});
