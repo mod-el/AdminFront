@@ -137,6 +137,7 @@ class FormList {
 
 	async addLocalRow(id = null, data = null, canDelete = true, historyPush = true) {
 		let template = (await this.template).cloneNode(true);
+		data = JSON.parse(JSON.stringify(data)); // clono per evitare problemi di referenze
 
 		let isNew = false;
 		if (id === null) { // Nuova riga
