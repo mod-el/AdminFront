@@ -82,18 +82,22 @@ class AdminController extends Controller
 						if (!$element)
 							die();
 
-						$sublist = $this->model->_Admin->sublists[$this->model->_AdminFront->request[2]];
-						$relationshipOptions = $element->getChildrenOptions($sublist['children']);
+						if (isset($this->model->_Admin->sublists[$this->model->_AdminFront->request[2]])) {
+							$sublist = $this->model->_Admin->sublists[$this->model->_AdminFront->request[2]];
+							$relationshipOptions = $element->getChildrenOptions($sublist['children']);
 
-						$sublistItem = $element->create($sublist['children']);
-						if (!$sublistItem)
-							die();
+							$sublistItem = $element->create($sublist['children']);
+							if (!$sublistItem)
+								die();
 
-						$form = $sublistItem->getForm();
-						$form->remove($relationshipOptions['field']);
-						$form->options['render-only-placeholders'] = true;
+							$form = $sublistItem->getForm();
+							$form->remove($relationshipOptions['field']);
+							$form->options['render-only-placeholders'] = true;
 
-						$this->model->inject('form', $form);
+							$this->model->inject('form', $form);
+						} else {
+							$this->model->inject('form', $this->model->_Admin->getForm());
+						}
 					} else {
 						$this->model->inject('form', $this->model->_Admin->getForm());
 					}
