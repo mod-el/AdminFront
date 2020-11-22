@@ -3,7 +3,7 @@ var sId = null;
 var firstLoad = true;
 var currentAdminPage = false;
 var currentPageDetails = {};
-var runtimeLoadedJs = [];
+var runtimeLoadedJs = new Map();
 var runtimeLoadedCss = [];
 var selectedRows = [];
 var currentPage = 1;
@@ -702,20 +702,19 @@ function getIdFromRequest(request) {
 }
 
 function loadRuntimeJs(file) {
-	if (runtimeLoadedJs.indexOf(file) !== -1)
-		return;
+	if (!runtimeLoadedJs.get(file)) {
+		runtimeLoadedJs.set(file, new Promise(resolve => {
+			let fileref = document.createElement('script');
+			fileref.setAttribute('type', 'text/javascript');
+			document.getElementsByTagName('head')[0].appendChild(fileref);
+			fileref.onload = () => {
+				resolve();
+			};
+			fileref.setAttribute('src', file);
+		}));
+	}
 
-	return new Promise(resolve => {
-		let fileref = document.createElement('script');
-		fileref.setAttribute('type', 'text/javascript');
-		document.getElementsByTagName('head')[0].appendChild(fileref);
-		fileref.onload = () => {
-			resolve();
-		};
-		fileref.setAttribute('src', file);
-
-		runtimeLoadedJs.push(file);
-	});
+	return runtimeLoadedJs.get(file);
 }
 
 function loadRuntimeCss(file) {
