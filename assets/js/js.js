@@ -1609,6 +1609,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 		});
 
 		let mainContent = _('main-content');
+		replaceTemplateValues(mainContent, id, responses[1].data);
 
 		let form = new FormManager('main');
 		pageForms.set('main', form);
@@ -2072,4 +2073,28 @@ async function loadVisualizer(visualizerName, visualizerId, container, main, opt
 	}
 
 	return new (visualizerClass)(visualizerId, container, main, options);
+}
+
+function replaceTemplateValues(cont, id, data) {
+	let keys = ['id', ...Object.keys(data)];
+	for (let k of keys) {
+		let v = '';
+		if (k === 'id') {
+			v = id;
+		} else {
+			v = data[k];
+		}
+
+		if (v === null)
+			v = '';
+
+		if (typeof v === 'object') {
+			if (typeof v['it'] !== 'undefined')
+				v = v['it'];
+			else
+				v = '';
+		}
+
+		cont.innerHTML = cont.innerHTML.replace('[' + k + ']', v);
+	}
 }
