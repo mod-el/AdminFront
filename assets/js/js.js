@@ -548,6 +548,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 		toolbar.addClass('d-none');
 		toolbar.innerHTML = '';
 		pageActions.clear();
+		_('main-page').addClass('no-toolbar');
 
 		if (typeof request[1] !== 'undefined') {
 			currentAdminPage = request.join('/');
@@ -566,6 +567,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 				case 'edit':
 					let id = getIdFromRequest(request);
 
+					_('main-page').removeClass('no-toolbar');
 					toolbar.removeClass('d-none');
 
 					// ==== Basic actions ====
@@ -588,6 +590,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 					if (currentPageDetails.actions && Object.keys(currentPageDetails.actions).length > 0) {
 						toolbar.removeClass('d-none');
+						_('main-page').removeClass('no-toolbar');
 
 						Object.keys(currentPageDetails.actions).forEach(action => {
 							addPageAction(action, currentPageDetails.actions[action]);
@@ -596,6 +599,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					break;
 				default:
 					toolbar.removeClass('d-none');
+					_('main-page').removeClass('no-toolbar');
 
 					// ==== Basic actions ====
 
@@ -1218,6 +1222,7 @@ function getPaginationHtml(tot_pages, current) {
 
 function buildBreadcrumbs() {
 	_('breadcrumbs').innerHTML = '';
+	_('main-page').removeClass('no-breadcrumbs');
 	_('breadcrumbs').removeClass('d-none');
 
 	let request = currentAdminPage.split('/');
@@ -1231,6 +1236,7 @@ function buildBreadcrumbs() {
 }
 
 function hideBreadcrumbs() {
+	_('main-page').addClass('no-breadcrumbs');
 	_('breadcrumbs').innerHTML = '';
 	_('breadcrumbs').addClass('d-none');
 }
