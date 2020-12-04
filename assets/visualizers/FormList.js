@@ -148,8 +148,10 @@ class FormList {
 
 		for (let fieldName of Object.keys(data.fields)) {
 			if (data.fields[fieldName].hasOwnProperty('attributes')) {
-				for (let attrName of Object.keys(data.fields[fieldName].attributes))
-					data.fields[fieldName].attributes[attrName] = data.fields[fieldName].attributes[attrName].replace('[id]', id);
+				for (let attrName of Object.keys(data.fields[fieldName].attributes)) {
+					if (typeof data.fields[fieldName].attributes[attrName] === 'string')
+						data.fields[fieldName].attributes[attrName] = data.fields[fieldName].attributes[attrName].replace('[id]', id);
+				}
 			}
 		}
 
