@@ -1618,6 +1618,9 @@ function loadAdminElement(id, get = {}, history_push = true) {
 			addPageAction(action, responses[1].actions[action]);
 		});
 
+		if ((responses[1]['prev-item'] || responses[1]['next-item']) && window.handleItemsNavigation)
+			handleItemsNavigation(responses[1]);
+
 		let mainContent = _('main-content');
 		replaceTemplateValues(mainContent, id, responses[1].data);
 
