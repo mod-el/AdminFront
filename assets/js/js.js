@@ -316,6 +316,10 @@ window.addEventListener('load', function () {
 	window.addEventListener('resize', function () {
 		resize();
 	});
+
+	let keepAlive = setInterval(() => {
+		adminApiRequest('keep-alive');
+	}, 30000);
 });
 
 // TODO: disattivo temporaneamente sw
