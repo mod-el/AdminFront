@@ -24,6 +24,7 @@ class AdminFront extends Module
 			var adminPath = '<?=$this->url?>';
 			var adminPrefix = <?=json_encode($this->getUrlPrefix())?>;
 			var elementCallback = null;
+			var adminTemplate = <?=json_encode($this->getTemplateModule())?>;
 		</script>
 		<?php
 	}
