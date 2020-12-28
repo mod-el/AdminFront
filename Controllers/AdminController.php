@@ -84,9 +84,9 @@ class AdminController extends Controller
 
 						if (isset($this->model->_Admin->sublists[$this->model->_AdminFront->request[2]])) {
 							$sublist = $this->model->_Admin->sublists[$this->model->_AdminFront->request[2]];
-							$relationshipOptions = $element->getChildrenOptions($sublist['children']);
+							$relationshipOptions = $element->getChildrenOptions($sublist['relationship']);
 
-							$sublistItem = $element->create($sublist['children']);
+							$sublistItem = $element->create($sublist['relationship']);
 							if (!$sublistItem)
 								die();
 
