@@ -46,7 +46,7 @@ class FormList {
 			addButtonRow = document.createElement('div');
 			addButtonRow.className = 'rob-field-cont formlist-row';
 			addButtonRow.style.cursor = 'pointer';
-			addButtonRow.innerHTML = `<div class="rob-field" style="width: 5%"></div><div class="rob-field" style="width: 95%">` + (this.options['visualizer-options']['add-button'] === true ? '<i class="fas fa-plus" aria-hidden="true"></i> Aggiungi' : this.options['visualizer-options']['add-button']) + `</div>`;
+			addButtonRow.innerHTML = `<div class="rob-field" style="width: 30px"></div><div class="rob-field" style="width: calc(100% - 30px)">` + (this.options['visualizer-options']['add-button'] === true ? '<i class="fas fa-plus" aria-hidden="true"></i> Aggiungi' : this.options['visualizer-options']['add-button']) + `</div>`;
 			addButtonRow.addEventListener('click', () => {
 				this.addLocalRow();
 			})
@@ -186,7 +186,7 @@ class FormList {
 				if (this.options.privileges['D']) {
 					let deleteDiv = document.createElement('div');
 					deleteDiv.className = 'rob-field text-center';
-					deleteDiv.style.width = '5%';
+					deleteDiv.style.width = '30px';
 
 					if (canDelete) {
 						let deleteLink = document.createElement('a');
@@ -204,7 +204,7 @@ class FormList {
 
 					row.appendChild(deleteDiv);
 
-					rightPart.style.width = '95%';
+					rightPart.style.width = 'calc(100% - 30px)';
 				} else {
 					rightPart.style.width = '100%';
 				}
