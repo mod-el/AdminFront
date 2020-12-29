@@ -158,7 +158,7 @@ class FormList {
 		replaceTemplateValues(template, id, data.data);
 
 		let form = new FormManager(this.id + '-' + id);
-		form.build(template, data);
+		await form.build(template, data);
 
 		pageForms.set(this.id + '-' + id, form);
 
@@ -229,6 +229,8 @@ class FormList {
 						firstInput.select();
 				}
 			}
+
+			return id;
 		});
 	}
 
