@@ -577,7 +577,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					// ==== Basic actions ====
 
 					if (loadFullDetails) {
-						return loadAdminElement(id, get, false);
+						return loadAdminElement(id, get, null, false);
 					} else {
 						return loadPage(adminPrefix + 'template/' + request[0]);
 					}
@@ -1548,14 +1548,15 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 	}
 }
 
-function loadAdminElement(id, get = {}, history_push = true) {
+function loadAdminElement(id, get = {}, page = null, history_push = true) {
 	elementCallback = null;
 	dataCache = {'data': {}, 'children': []};
 
-	let request = currentAdminPage.split('/');
+	if (page === null)
+		page = currentAdminPage.split('/')[0];
 
-	let templatePromise = loadAdminPage(request[0] + '/edit/' + id, get, history_push, false).then(showLoadingMask);
-	let dataPromise = loadElementData(request[0], id || 0);
+	let templatePromise = loadAdminPage(page + '/edit/' + id, get, history_push, false).then(showLoadingMask);
+	let dataPromise = loadElementData(page, id || 0);
 
 	return Promise.all([templatePromise, dataPromise]).then(async responses => {
 		// Check privilegi
@@ -1579,7 +1580,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 			addPageAction('list', {
 				'fa-icon': 'fas fa-list',
 				'text': 'Elenco',
-				'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
+				'action': 'loadAdminPage(' + JSON.stringify(page) + ')',
 			});
 		} else {
 			if (responses[1].privileges.U) {
@@ -1593,7 +1594,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 			addPageAction('list', {
 				'fa-icon': 'fas fa-list',
 				'text': 'Elenco',
-				'action': 'loadAdminPage(' + JSON.stringify(request[0]) + ')',
+				'action': 'loadAdminPage(' + JSON.stringify(page) + ')',
 			});
 
 			if (currentPageDetails.privileges.C) {
@@ -1637,7 +1638,7 @@ function loadAdminElement(id, get = {}, history_push = true) {
 
 			sublistsPromises.push(new Promise(async (resolve, reject) => {
 				try {
-					if (sublist.name === request[0])
+					if (sublist.name === page)
 						throw 'You cannot a sublist like the main page';
 
 					let visualizer = await loadVisualizer(sublist.visualizer, sublist.name, sublistCont, false, {
@@ -1782,7 +1783,7 @@ async function save() {
 		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0)
 			throw 'Nessun dato modificato';
 
-		return adminApiRequest('page/' + request[0] + '/save/' + id, payload, {
+		return adminApiRequest('page/' + page + '/save/' + id, payload, {
 			/*'onprogress': function (event) { // TODO: al momento non supportato in fetch
 				let percentage;
 				if (event.total === 0) {
@@ -1800,7 +1801,7 @@ async function save() {
 			wipeForms();
 			saving = false;
 
-			return loadAdminElement(response.id, {}, id === 0).then(() => {
+			return loadAdminElement(response.id, {}, null, id === 0).then(() => {
 				inPageMessage('Salvataggio correttamente effettuato.', 'success');
 				return response.id;
 			});
