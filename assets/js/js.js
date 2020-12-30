@@ -1783,7 +1783,7 @@ async function save() {
 		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0)
 			throw 'Nessun dato modificato';
 
-		return adminApiRequest('page/' + page + '/save/' + id, payload, {
+		return adminApiRequest('page/' + request[0] + '/save/' + id, payload, {
 			/*'onprogress': function (event) { // TODO: al momento non supportato in fetch
 				let percentage;
 				if (event.total === 0) {
