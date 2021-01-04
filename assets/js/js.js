@@ -2109,6 +2109,7 @@ function replaceTemplateValues(cont, id, data) {
 				v = '';
 		}
 
-		cont.innerHTML = cont.innerHTML.replace('[' + k + ']', v);
+		let regex = new RegExp('\\[' + k + '\\]', 'g');
+		cont.innerHTML = cont.innerHTML.replace(regex, v);
 	}
 }
