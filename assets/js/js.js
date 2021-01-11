@@ -1,5 +1,4 @@
 var mainMenu = null;
-var sId = null;
 var firstLoad = true;
 var currentAdminPage = false;
 var currentPageDetails = {};
@@ -1753,7 +1752,15 @@ function toolbarButtonRestore(name) {
 		icon.className = icon.getAttribute('data-old-class');
 }
 
-async function save() {
+async function save(options = {}) {
+	options = {
+		...{
+			no_data_alert: true,
+			load_element: true
+		},
+		...options
+	};
+
 	let formNode = _('adminForm');
 
 	let required = [];
@@ -1797,7 +1804,7 @@ async function save() {
 				payload.sublists[k] = sublistChanges;
 		}
 
-		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0)
+		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0 && options.no_data_alert)
 			throw 'Nessun dato modificato';
 
 		return adminApiRequest('page/' + request[0] + '/save/' + id, payload, {
@@ -1818,10 +1825,14 @@ async function save() {
 			wipeForms();
 			saving = false;
 
-			return loadAdminElement(response.id, {}, null, id === 0).then(() => {
-				inPageMessage('Salvataggio correttamente effettuato.', 'success');
+			if (options.load_element) {
+				return loadAdminElement(response.id, {}, null, id === 0).then(() => {
+					inPageMessage('Salvataggio correttamente effettuato.', 'success');
+					return response.id;
+				});
+			} else {
 				return response.id;
-			});
+			}
 		});
 	}).catch(error => {
 		reportAdminError(error);
