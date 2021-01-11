@@ -597,6 +597,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 						_('main-page').removeClass('no-toolbar');
 
 						Object.keys(currentPageDetails.actions).forEach(action => {
+							if (!currentPageDetails.actions[action])
+								return;
 							addPageAction(action, currentPageDetails.actions[action]);
 						});
 					}
@@ -640,6 +642,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					// ==== Custom actions ====
 
 					Object.keys(currentPageDetails.actions).forEach(action => {
+						if (!currentPageDetails.actions[action])
+							return;
 						addPageAction(action, currentPageDetails.actions[action]);
 					});
 
@@ -1548,6 +1552,13 @@ function adminRowDragged(id, elementIdx, targetIdx) {
 	}
 }
 
+function checkIfDefaultActionEnabled(action) {
+	if (currentPageDetails.actions && typeof currentPageDetails.actions[action] !== 'undefined' && !currentPageDetails.actions[action])
+		return false;
+	else
+		return true;
+}
+
 function loadAdminElement(id, get = {}, page = null, history_push = true) {
 	elementCallback = null;
 	dataCache = {'data': {}, 'children': []};
@@ -1560,7 +1571,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 
 	return Promise.all([templatePromise, dataPromise]).then(async responses => {
 		// Check privilegi
-		if (currentPageDetails.privileges.C) {
+		if (currentPageDetails.privileges.C && checkIfDefaultActionEnabled('new')) {
 			addPageAction('new', {
 				'fa-icon': 'far fa-plus-square',
 				'text': 'Nuovo',
@@ -1569,7 +1580,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 		}
 
 		if (id === 0) {
-			if (currentPageDetails.privileges.C) {
+			if (currentPageDetails.privileges.C && checkIfDefaultActionEnabled('save')) {
 				addPageAction('save', {
 					'fa-icon': 'far fa-save',
 					'text': 'Salva',
@@ -1577,13 +1588,15 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 				});
 			}
 
-			addPageAction('list', {
-				'fa-icon': 'fas fa-list',
-				'text': 'Elenco',
-				'action': 'loadAdminPage(' + JSON.stringify(page) + ')',
-			});
+			if (checkIfDefaultActionEnabled('list')) {
+				addPageAction('list', {
+					'fa-icon': 'fas fa-list',
+					'text': 'Elenco',
+					'action': 'loadAdminPage(' + JSON.stringify(page) + ')',
+				});
+			}
 		} else {
-			if (responses[1].privileges.U) {
+			if (responses[1].privileges.U && checkIfDefaultActionEnabled('save')) {
 				addPageAction('save', {
 					'fa-icon': 'far fa-save',
 					'text': 'Salva',
@@ -1591,13 +1604,15 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 				});
 			}
 
-			addPageAction('list', {
-				'fa-icon': 'fas fa-list',
-				'text': 'Elenco',
-				'action': 'loadAdminPage(' + JSON.stringify(page) + ')',
-			});
+			if (checkIfDefaultActionEnabled('list')) {
+				addPageAction('list', {
+					'fa-icon': 'fas fa-list',
+					'text': 'Elenco',
+					'action': 'loadAdminPage(' + JSON.stringify(page) + ')',
+				});
+			}
 
-			if (currentPageDetails.privileges.C) {
+			if (currentPageDetails.privileges.C && checkIfDefaultActionEnabled('duplicate')) {
 				addPageAction('duplicate', {
 					'fa-icon': 'far fa-clone',
 					'text': 'Duplica',
@@ -1605,7 +1620,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 				});
 			}
 
-			if (responses[1].privileges.D) {
+			if (responses[1].privileges.D && checkIfDefaultActionEnabled('delete')) {
 				addPageAction('delete', {
 					'fa-icon': 'far fa-trash-alt',
 					'text': 'Elimina',
@@ -1616,6 +1631,8 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 
 		// Tasti azione custom
 		Object.keys(responses[1].actions).forEach(action => {
+			if (!responses[1].actions[action])
+				return;
 			addPageAction(action, responses[1].actions[action]);
 		});
 
