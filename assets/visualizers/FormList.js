@@ -73,7 +73,7 @@ class FormList {
 			else
 				templateUrl += currentAdminPage.split('/')[0] + '/' + this.id;
 
-			templateDiv.innerHTML = await ajax(templateUrl, get);
+			templateDiv.innerHTML = await loadPage(templateUrl, get, {}, {fill_main: false});
 
 			resolve(templateDiv);
 		});

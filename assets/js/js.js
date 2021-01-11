@@ -10,6 +10,8 @@ var searchCounter = 0;
 var pageLoadingHash = '';
 var adminApiToken = null;
 
+var cachedPages = new Map();
+
 var pageActions = new Map();
 
 var userCustomizationsCache = {};
@@ -466,32 +468,60 @@ window.addEventListener('keydown', function (event) {
 });
 
 /*
- Loads a page using fetch; fills the main div with the content when the response comes, and additionally returns a Promise
+ Loads a page using fetch; if specified fills the main div with the content when the response comes; it returns a Promise with the returned content
  */
-function loadPage(url, get = {}, post = {}, deleteContent = true) {
-	if (!checkBeforePageChange())
-		return false;
+function loadPage(url, get = {}, post = {}, options = {}) {
+	options = {
+		...{
+			fill_main: true,
+			cache: true
+		},
+		...options
+	};
 
-	if (deleteContent)
+	if (options.cache && Object.keys(post).length)
+		options.cache = false;
+
+	if (options.fill_main) {
+		if (!checkBeforePageChange())
+			return false;
+
 		clearMainPage();
+	}
+
+	let cacheKey = url + '?' + queryStringFromObject(get);
 
 	pageLoadingHash = url + JSON.stringify(get) + JSON.stringify(post);
 
-	return ajax(url, get, post).then((function (hash) {
+	return (new Promise((resolve, reject) => {
+		if (options.cache) {
+			if (cachedPages.get(cacheKey))
+				return resolve(cachedPages.get(cacheKey));
+		}
+
+		ajax(url, get, post).then(resolve).catch(reject);
+	})).then((function (hash) {
 		return function (response) {
 			if (hash !== pageLoadingHash)
 				return false;
 
-			_('main-loading').addClass('d-none');
-			_('main-content').jsFill(response);
+			if (options.cache)
+				cachedPages.set(cacheKey, response);
 
-			if (window.resetAllInstantSearches)
-				resetAllInstantSearches();
+			if (options.fill_main) {
+				_('main-loading').addClass('d-none');
+				_('main-content').jsFill(response);
 
-			resize();
-			return changedHtml().then(() => {
+				if (window.resetAllInstantSearches)
+					resetAllInstantSearches();
+
+				resize();
+				return changedHtml().then(() => {
+					return response;
+				});
+			} else {
 				return response;
-			});
+			}
 		}
 	})(pageLoadingHash));
 }
