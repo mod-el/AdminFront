@@ -483,7 +483,8 @@ function loadPage(url, get = {}, post = {}, options = {}) {
 		...options
 	};
 
-	if (options.cache && Object.keys(post).length)
+	// Ci sono casi in cui non è possibile cachare il template
+	if (currentPageDetails.type === 'Custom' || Object.keys(post).length)
 		options.cache = false;
 
 	if (options.fill_main) {
