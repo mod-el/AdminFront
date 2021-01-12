@@ -11,6 +11,7 @@ var pageLoadingHash = '';
 var adminApiToken = null;
 
 var cachedPages = new Map();
+var cachedInitialData = new Map();
 
 var pageActions = new Map();
 
@@ -1728,7 +1729,14 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 }
 
 function loadElementData(page, id) {
-	return adminApiRequest('page/' + page + '/data/' + id);
+	if (id === 0 && cachedInitialData.get(page))
+		return cachedInitialData.get(page);
+
+	return adminApiRequest('page/' + page + '/data/' + id).then(data => {
+		if (id === 0)
+			cachedInitialData.set(page, data);
+		return data;
+	});
 }
 
 function switchHistoryBox() {
@@ -1785,30 +1793,46 @@ function toolbarButtonRestore(name) {
 async function save(options = {}) {
 	options = {
 		...{
+			form: 'main',
 			no_data_alert: true,
-			load_element: true
+			load_element: true,
+			sublists: true,
+			page: null,
+			id: null
 		},
 		...options
 	};
 
-	let formNode = _('adminForm');
+	let formNode;
+	if (options.form === 'main') {
+		formNode = _('adminForm');
 
-	let required = [];
-	for (let formName of pageForms.keys()) {
-		let currentRequired = pageForms.get(formName).getRequired();
-		required = required.concat(currentRequired);
+		let required = [];
+		for (let formName of pageForms.keys()) {
+			let currentRequired = pageForms.get(formName).getRequired();
+			required = required.concat(currentRequired);
+		}
+
+		if (!checkForm(formNode, required))
+			return false;
+
+		if (saving) {
+			alert('Already saving');
+			return false;
+		}
+
+		saving = true;
+		toolbarButtonLoading('save');
+	} else {
+		formNode = _('form-' + options.form);
+
+		let required = pageForms.get(options.form).getRequired();
+		if (!checkForm(formNode, required))
+			return false;
+
+		formNode.querySelector('input[type="submit"]').value = 'Attendere...';
 	}
 
-	if (!checkForm(formNode, required))
-		return false;
-
-	if (saving) {
-		alert('Already saving');
-		return false;
-	}
-
-	saving = true;
-	toolbarButtonLoading('save');
 	resize();
 
 	setLoadingBar(0);
@@ -1819,25 +1843,30 @@ async function save(options = {}) {
 		}, 200);
 	}).then(function () {
 		let request = currentAdminPage.split('/');
-		let id = getIdFromRequest(request);
+		if (options.page === null)
+			options.page = request[0];
+		if (options.id === null)
+			options.id = getIdFromRequest(request);
 
 		let payload = {
-			'data': pageForms.get('main').getChangedValues(),
-			'version': pageForms.get('main').version,
+			'data': pageForms.get(options.form).getChangedValues(),
+			'version': pageForms.get(options.form).version,
 			'sublists': {}
 		};
 
-		for (let k of pageSublists.keys()) {
-			let sublist = pageSublists.get(k);
-			let sublistChanges = sublist.getSave();
-			if (sublistChanges.create.length || Object.keys(sublistChanges.update).length || sublistChanges.delete.length)
-				payload.sublists[k] = sublistChanges;
+		if (options.sublists) {
+			for (let k of pageSublists.keys()) {
+				let sublist = pageSublists.get(k);
+				let sublistChanges = sublist.getSave();
+				if (sublistChanges.create.length || Object.keys(sublistChanges.update).length || sublistChanges.delete.length)
+					payload.sublists[k] = sublistChanges;
+			}
 		}
 
 		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0 && options.no_data_alert)
 			throw 'Nessun dato modificato';
 
-		return adminApiRequest('page/' + request[0] + '/save/' + id, payload, {
+		return adminApiRequest('page/' + options.page + '/save/' + options.id, payload, {
 			/*'onprogress': function (event) { // TODO: al momento non supportato in fetch
 				let percentage;
 				if (event.total === 0) {
@@ -1852,11 +1881,13 @@ async function save(options = {}) {
 			if (!response.id)
 				throw 'Risposta server errata';
 
-			wipeForms();
-			saving = false;
+			if (options.form === 'main') {
+				wipeForms();
+				saving = false;
+			}
 
 			if (options.load_element) {
-				return loadAdminElement(response.id, {}, null, id === 0).then(() => {
+				return loadAdminElement(response.id, {}, null, options.id === 0).then(() => {
 					inPageMessage('Salvataggio correttamente effettuato.', 'success');
 					return response.id;
 				});
@@ -1869,8 +1900,10 @@ async function save(options = {}) {
 	}).finally(() => {
 		setLoadingBar(0);
 
-		saving = false;
-		toolbarButtonRestore('save');
+		if (options.form === 'main') {
+			saving = false;
+			toolbarButtonRestore('save');
+		}
 	});
 }
 
@@ -2170,4 +2203,73 @@ function replaceTemplateValues(cont, id, data) {
 		let regex = new RegExp('\\[' + k + '\\]', 'g');
 		cont.innerHTML = cont.innerHTML.replace(regex, v);
 	}
+}
+
+async function makeDynamicOption(fieldName, page) {
+	let form = pageForms.get('main');
+	if (!form.fields.get(fieldName))
+		return;
+
+	let templatePromise = loadPage(adminPrefix + 'template/' + page, {ajax: ''}, {}, {fill_main: false});
+	let dataPromise = loadElementData(page, 0);
+	let popupPromise = zkPopup('<form id="form-popup" action="" method="post"></form>', {
+		onClose: function () {
+			if (pageForms.get('popup'))
+				pageForms.delete('popup');
+		}
+	});
+
+	return Promise.all([templatePromise, dataPromise, popupPromise]).then(async responses => {
+		let popupForm = _('form-popup');
+		popupForm.innerHTML = responses[0];
+
+		let saveButtonCont = document.createElement('div');
+		saveButtonCont.className = 'text-center pt-2';
+		saveButtonCont.innerHTML = '<input type="submit" value="Salva" class="btn btn-primary"/>';
+		popupForm.appendChild(saveButtonCont);
+
+		replaceTemplateValues(popupForm, 0, responses[1].data);
+
+		let form = new FormManager('popup');
+		pageForms.set('popup', form);
+		await form.build(popupForm, responses[1]);
+
+		popupForm.addEventListener('submit', event => {
+			event.preventDefault();
+			saveDynamicOption(fieldName, page);
+		});
+
+		Array.from(document.querySelectorAll('#popup-real input')).some(field => {
+			if (field.offsetParent !== null && field.type.toLowerCase() !== 'hidden' && field.name !== 'fakeusernameremembered' && field.name !== 'fakepasswordremembered') {
+				field.focus();
+				if (field.select)
+					field.select();
+				return true;
+			}
+			return false;
+		});
+
+		return fillPopup();
+	});
+}
+
+async function saveDynamicOption(fieldName, page) {
+	return save({
+		form: 'popup',
+		no_data_alert: false,
+		load_element: false,
+		sublists: false,
+		page: page,
+		id: 0
+	}).then(async id => {
+		let form = pageForms.get('main');
+		let field = form.fields.get(fieldName);
+
+		if (field.options.type === 'select')
+			await field.reloadOptions();
+
+		await field.setValue(id);
+
+		zkPopupClose();
+	});
 }
