@@ -367,9 +367,12 @@ window.onpopstate = function (event) {
 
 			fillFiltersValues(s['filters']).then(() => {
 				if (typeof s['p'] !== 'undefined' && s['p'] !== currentPage) {
-					goToPage(s['p'], s['sort-by'], false);
+					goToPage(s['p'], s['sort_by'], false);
 				} else {
-					search(currentPage, s['sort-by'], false);
+					search(currentPage, {
+						sort_by: s['sort_by'],
+						history: false
+					});
 				}
 			});
 		} else {
@@ -723,7 +726,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 						}
 
 						// ==== First search ====
-						return search(currentPage, null, history_push);
+						return search(currentPage, {history: history_push});
 						break;
 				}
 			});
@@ -884,7 +887,14 @@ async function getFiltersFromPageDetails() {
 			fieldOptions['value'] = value;
 			fieldOptions['attributes']['data-default'] = defaultValue;
 
-			let filter = new Field('filter-' + idx, fieldOptions);
+			let filter;
+			if (fieldOptions.hasOwnProperty('type') && formSignatures.get(fieldOptions.type)) {
+				let fieldClass = formSignatures.get(fieldOptions.type);
+				filter = new fieldClass('filter-' + idx, fieldOptions);
+			} else {
+				filter = new Field('filter-' + idx, fieldOptions);
+			}
+
 			filters[form].push(filter);
 			idx++;
 		});
@@ -987,7 +997,7 @@ function removePageAction(name) {
 	}
 }
 
-async function goToPage(p, sortBy, history_push = true) {
+async function goToPage(p, sort_by, history_push = true) {
 	let mainContentDiv = _('main-content');
 
 	let moveBy = mainContentDiv.offsetWidth + 50;
@@ -1012,7 +1022,7 @@ async function goToPage(p, sortBy, history_push = true) {
 		_('main-content').style.display = 'none';
 		_('main-loading').removeClass('d-none');
 
-		return search(p, sortBy, history_push);
+		return search(p, {sort_by: sort_by, history: history_push});
 	}).then(() => {
 		_('main-content').style.display = 'block';
 		_('main-loading').addClass('d-none');
@@ -1103,51 +1113,20 @@ function historyPush(request, get = '', replace = false, state = {}) {
 	}
 }
 
-async function search(page = 1, sortedBy = null, history_push = true, onlyForPayload = false) {
-	let request = currentAdminPage.split('/');
-
-	let filters = [];
-	let searchValue = '';
-	let filtersValues = {};
-
-	document.querySelectorAll('[data-filter]').forEach(el => {
-		let v = el.getValue(true);
-
-		filtersValues[el.getAttribute('data-filter') + '-' + el.getAttribute('data-filter-type')] = v;
-
-		if (v === '')
-			return;
-
-		if (el.getAttribute('data-filter') === 'zk-all') {
-			searchValue = v;
-			return;
-		}
-
-		filters.push({
-			'filter': el.getAttribute('data-filter'),
-			'type': el.getAttribute('data-filter-type'),
-			'value': v
-		});
-	});
-
-	sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
-
-	let payload = {
-		'search': searchValue,
-		'filters': filters
+async function search(page = 1, options = {}) {
+	options = {
+		...{
+			sort_by: null,
+			history: true,
+			only_payload: false,
+			visualizer_meta: {}
+		},
+		...options
 	};
 
-	if (page === null) {
-		payload['per-page'] = 0;
-	} else {
-		payload['page'] = page;
-	}
+	let request = currentAdminPage.split('/');
 
-	let searchFields = await getSearchFieldsFromStorage();
-	if (searchFields.length > 0)
-		payload['search-fields'] = searchFields;
-
-	if (!onlyForPayload) {
+	if (!options.only_payload) {
 		_('main-content').innerHTML = `<div class="px-3 no-overflow">
 			<div id="results-table-count">
 				<div><img src="` + PATH + `model/Output/files/loading.gif" alt="" /></div>
@@ -1157,28 +1136,84 @@ async function search(page = 1, sortedBy = null, history_push = true, onlyForPay
 		<div id="main-visualizer-cont"></div>`;
 	}
 
-	if (sortedBy === null) {
+	if (options.sort_by === null) {
 		let visualizer = visualizers.get(request[0]);
 		if (visualizer)
-			sortedBy = visualizer.getSorting();
+			options.sort_by = visualizer.getSorting(options.visualizer_meta);
 		else
-			sortedBy = [];
+			options.sort_by = [];
 	}
 
 	let visualizer = await loadVisualizer(currentPageDetails['type'], request[0], _('main-visualizer-cont'), true, currentPageDetails);
 	visualizers.set(request[0], visualizer);
 
-	visualizer.setSorting(sortedBy);
-	payload['sort-by'] = sortedBy;
+	let filters = [];
+	let searchValue = '';
+	let filtersValues = {};
+
+	if (visualizer.useFilters) {
+		document.querySelectorAll('[data-filter]').forEach(el => {
+			let v = el.getValue(true);
+
+			filtersValues[el.getAttribute('data-filter') + '-' + el.getAttribute('data-filter-type')] = v;
+
+			if (v === '')
+				return;
+
+			if (el.getAttribute('data-filter') === 'zk-all') {
+				searchValue = v;
+				return;
+			}
+
+			filters.push({
+				'filter': el.getAttribute('data-filter'),
+				'type': el.getAttribute('data-filter-type'),
+				'value': v
+			});
+		});
+
+		sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
+	} else {
+		let form = _('topForm');
+		if (form)
+			form.innerHTML = '';
+
+		let secondaryForm = _('filtersFormCont');
+		if (secondaryForm)
+			secondaryForm.innerHTML = '';
+
+		removePageAction('filters');
+	}
+
+	filters = [...filters, ...await visualizer.getSpecialFilters(options.visualizer_meta)];
+
+	let payload = {
+		'search': searchValue,
+		'filters': filters
+	};
+
+	if (page === null)
+		payload['per-page'] = 0;
+	else
+		payload['page'] = page;
+
+	if (visualizer.useFilters) {
+		let searchFields = await getSearchFieldsFromStorage();
+		if (searchFields.length > 0)
+			payload['search-fields'] = searchFields;
+	}
+
+	visualizer.setSorting(options.sort_by);
+	payload['sort_by'] = options.sort_by;
 
 	let columns = await visualizer.getFieldsToRetrieve();
 	if (columns !== null)
 		payload['fields'] = columns;
 
-	if (onlyForPayload)
+	if (options.only_payload)
 		return payload;
 
-	if (history_push) {
+	if (options.history) {
 		let get;
 		if (page === null) {
 			get = 'nopag=1';
@@ -1186,29 +1221,39 @@ async function search(page = 1, sortedBy = null, history_push = true, onlyForPay
 			get = 'p=' + page;
 		}
 
-		let replace = (typeof history_push === 'string' && history_push === 'replace');
+		let replace = (typeof options.history === 'string' && options.history === 'replace');
 		historyPush(request, get, replace, {
 			'filters': filtersValues,
 			'p': page,
-			'sort-by': sortedBy
+			'sort_by': options.sort_by
 		});
 	}
 
 	currentPage = page;
 
 	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
-		_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
-
 		buildBreadcrumbs();
 
-		_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
-		if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0) {
-			_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?p=1" onclick="goToPage(1); return false"> ritorna alla paginazione </a>]</span>';
+		if (visualizer.hasPagination) {
+			_('results-table-pages').removeClass('d-none');
+			_('results-table-count').removeClass('d-none');
+
+			_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
+
+			_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
+			if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0)
+				_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?p=1" onclick="goToPage(1); return false"> ritorna alla paginazione </a>]</span>';
+			else
+				_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
 		} else {
-			_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
+			_('results-table-pages').addClass('d-none');
+			_('results-table-count').addClass('d-none');
 		}
 
-		return visualizer.render(response.list, response.totals).then(() => {
+		return visualizer.render(response.list, {
+			...{totals: response.totals},
+			...options.visualizer_meta
+		}).then(() => {
 			_('main-loading').addClass('d-none');
 			return changedHtml();
 		});
@@ -2076,7 +2121,7 @@ async function exportPopup(step) {
 			});
 		case 2:
 			let rowsNumber = await _('export-form')['rows-number'].getValue();
-			let payload = await search(null, null, false, true);
+			let payload = await search(null, {history: false, only_payload: true});
 			return zkPopup({
 				url: adminPrefix + 'export/' + currentAdminPage.split('/')[0],
 				get: {step},
@@ -2157,7 +2202,7 @@ function deleteRows(ids) {
 }
 
 async function reloadMainList() {
-	return search(1, null, false);
+	return search(1, {history: false});
 }
 
 function getMainVisualizer() {

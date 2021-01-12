@@ -8,11 +8,17 @@ class Table {
 		this.container = container;
 		this.main = main;
 		this.options = options;
+
+		this.useFilters = true;
+		this.hasPagination = true;
+
 		this.sortedBy = [];
 	}
 
 	// Standard visualizers method
-	async render(list, totals) {
+	async render(list, options = {}) {
+		options = {...{totals: {}}, ...options};
+
 		this.container.innerHTML = '';
 
 		let renderDeleteCell = list.some(item => item.privileges['D']);
@@ -311,7 +317,7 @@ class Table {
 			rowCount++;
 		}
 
-		if (Object.keys(totals).length > 0) {
+		if (Object.keys(options.totals).length > 0) {
 			let row = bodyMain.appendChild(document.createElement('div'));
 			row.className = 'results-table-row-cont';
 
@@ -334,7 +340,7 @@ class Table {
 				if (typeof widths[fieldName] !== 'undefined')
 					width = widths[fieldName];
 
-				if (typeof totals[fieldName] !== 'undefined' || firstFound) {
+				if (typeof options.totals[fieldName] !== 'undefined' || firstFound) {
 					let div = innerRow.appendChild(document.createElement('div'));
 					div.style.width = width + 'px';
 					div.setAttribute('data-column', fieldName);
@@ -343,11 +349,11 @@ class Table {
 
 					firstFound = true;
 
-					if (typeof totals[fieldName] !== 'undefined') {
+					if (typeof options.totals[fieldName] !== 'undefined') {
 						if (field.price)
-							innerDiv.innerHTML = makePrice(totals[fieldName]);
+							innerDiv.innerHTML = makePrice(options.totals[fieldName]);
 						else
-							innerDiv.innerHTML = entities(totals[fieldName]);
+							innerDiv.innerHTML = entities(options.totals[fieldName]);
 					}
 				} else if (!firstFound) {
 					textDivCont.style.width = (parseInt(textDivCont.style.width) + width) + 'px';
@@ -374,13 +380,18 @@ class Table {
 	}
 
 	// Standard visualizers method
-	getSorting() {
+	getSorting(options = {}) {
 		return this.sortedBy;
 	}
 
 	// Standard visualizers method
 	setSorting(sorting) {
 		this.sortedBy = sorting;
+	}
+
+	// Standard visualizers method
+	async getSpecialFilters(options = {}) {
+		return [];
 	}
 
 	async getWidths() {

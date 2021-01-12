@@ -16,6 +16,9 @@ class FormList {
 			...(options['visualizer-options'] || {})
 		};
 
+		this.useFilters = true;
+		this.hasPagination = true;
+
 		this.rows = new Map();
 		this.newRows = [];
 		this.saving = false;
@@ -38,7 +41,7 @@ class FormList {
 	}
 
 	// Standard visualizers method
-	async render(list, totals) {
+	async render(list, options = {}) {
 		this.container.innerHTML = '';
 
 		let addButtonRow = null;
@@ -127,12 +130,17 @@ class FormList {
 	}
 
 	// Standard visualizers method
-	getSorting() {
+	getSorting(options = {}) {
 		return [];
 	}
 
 	// Standard visualizers method
 	setSorting(sorting) {
+	}
+
+	// Standard visualizers method
+	async getSpecialFilters(options = {}) {
+		return [];
 	}
 
 	async addLocalRow(id = null, data = null, canDelete = true, historyPush = true) {
