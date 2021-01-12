@@ -491,11 +491,11 @@ function loadPage(url, get = {}, post = {}, options = {}) {
 			return false;
 
 		clearMainPage();
+
+		pageLoadingHash = url + JSON.stringify(get) + JSON.stringify(post);
 	}
 
 	let cacheKey = url + '?' + queryStringFromObject(get);
-
-	pageLoadingHash = url + JSON.stringify(get) + JSON.stringify(post);
 
 	return (new Promise((resolve, reject) => {
 		if (options.cache) {
@@ -506,7 +506,7 @@ function loadPage(url, get = {}, post = {}, options = {}) {
 		ajax(url, get, post).then(resolve).catch(reject);
 	})).then((function (hash) {
 		return function (response) {
-			if (hash !== pageLoadingHash)
+			if (options.fill_main && hash !== pageLoadingHash)
 				return false;
 
 			if (options.cache)
