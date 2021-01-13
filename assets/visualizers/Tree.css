@@ -25,9 +25,7 @@
 }
 
 .tree-node:not(.selected):hover {
-	background: var(--color-light);
-	color: #fff;
-	opacity: 0.6;
+	text-shadow: 0 0 15px var(--color-light);
 }
 
 .tree-node.selected {

@@ -2205,7 +2205,7 @@ function deleteRows(ids) {
 	toolbarButtonLoading('delete');
 
 	let request = currentAdminPage.split('/');
-	return adminApiRequest('page/' + request[0] + '/delete', {ids}).then(r => {
+	return adminApiRequest('page/' + request[0] + '/delete', {ids}).then(() => {
 		wipeForms();
 
 		if (request.length === 1)

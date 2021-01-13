@@ -65,6 +65,15 @@ class Tree {
 				this.selectNode(options.level, item.id);
 			});
 
+			node.ctxMenu({
+				'Elimina': () => {
+					if (!confirm('Sicuro di voler eliminare?'))
+						return;
+
+					this.deleteNode(options.level, item.id);
+				}
+			});
+
 			container.appendChild(node);
 		}
 
@@ -198,6 +207,21 @@ class Tree {
 				level: level,
 				parent: parent
 			}
+		});
+	}
+
+	async deleteNode(level, id) {
+		document.body.style.cursor = 'pointer';
+
+		let request = currentAdminPage.split('/');
+		return adminApiRequest('page/' + request[0] + '/delete', {ids: [id]}).then(() => {
+			wipeForms();
+
+			return this.reloadLevel(level);
+		}).catch(error => {
+			reportAdminError(error);
+		}).finally(() => {
+			document.body.style.cursor = 'auto';
 		});
 	}
 }
