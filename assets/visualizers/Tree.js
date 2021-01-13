@@ -4,12 +4,12 @@ class Tree {
 		this.id = visualizerId;
 		this.container = container;
 		this.main = main;
-		this.options = {
-			...{
-				field: 'parent',
-				separator: ' | '
-			},
-			...options
+		this.options = options;
+
+		this.options['visualizer-options'] = {
+			field: 'parent',
+			separator: ' | ',
+			...(options['visualizer-options'] || {})
 		};
 
 		this.useFilters = false;
@@ -58,7 +58,7 @@ class Tree {
 				text.push(item.data[field].text);
 
 			let node_text = document.createElement('span');
-			node_text.innerHTML = text.join(this.options.separator);
+			node_text.innerHTML = text.join(this.options['visualizer-options'].separator);
 			node.appendChild(node_text);
 
 			node.addEventListener('click', event => {
@@ -85,7 +85,7 @@ class Tree {
 			node.addEventListener('click', event => {
 				this.editNode(options.level, 0).then(() => {
 					if (options.parent)
-						pageForms.get('popup').fields.get(this.options.field).setValue(options.parent);
+						pageForms.get('popup').fields.get(this.options['visualizer-options'].field).setValue(options.parent);
 				});
 			});
 
@@ -123,7 +123,7 @@ class Tree {
 
 		return [
 			{
-				'filter': this.options.field,
+				'filter': this.options['visualizer-options'].field,
 				'type': '=',
 				'value': options.parent
 			}
