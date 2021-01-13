@@ -1960,6 +1960,7 @@ async function save(options = {}) {
 		});
 	}).catch(error => {
 		reportAdminError(error);
+		throw error;
 	}).finally(() => {
 		setLoadingBar(0);
 
