@@ -582,11 +582,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			loadRuntimeCss(file);
 		});
 
-		let toolbar = _('toolbar');
-		toolbar.addClass('d-none');
-		toolbar.innerHTML = '';
-		pageActions.clear();
-		_('main-page').addClass('no-toolbar');
+		wipePageActions();
 
 		if (typeof request[1] !== 'undefined') {
 			currentAdminPage = request.join('/');
@@ -604,9 +600,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			switch (request[1]) {
 				case 'edit':
 					let id = getIdFromRequest(request);
-
-					_('main-page').removeClass('no-toolbar');
-					toolbar.removeClass('d-none');
 
 					// ==== Basic actions ====
 
@@ -626,10 +619,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 				case 'Custom':
 					// ==== Custom actions ====
 
-					if (currentPageDetails.actions && Object.keys(currentPageDetails.actions).length > 0) {
-						toolbar.removeClass('d-none');
-						_('main-page').removeClass('no-toolbar');
-
+					if (currentPageDetails.actions) {
 						Object.keys(currentPageDetails.actions).forEach(action => {
 							if (!currentPageDetails.actions[action])
 								return;
@@ -638,9 +628,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					}
 					break;
 				default:
-					toolbar.removeClass('d-none');
-					_('main-page').removeClass('no-toolbar');
-
 					// ==== Basic actions ====
 
 					if (currentPageDetails.privileges.C) {
@@ -792,6 +779,9 @@ async function rebuildFilters() {
 		form.setAttribute('onsubmit', 'return false');
 		_('toolbar').appendChild(form);
 	}
+
+	refreshToolbarVisibility();
+
 	form.innerHTML = '<div class="flex-fields"></div>';
 
 	let secondaryForm = _('filtersFormCont');
@@ -949,6 +939,15 @@ function checkBeforePageChange() {
 	return true;
 }
 
+function wipePageActions() {
+	let toolbar = _('toolbar');
+	toolbar.addClass('d-none');
+	toolbar.innerHTML = '';
+	pageActions.clear();
+
+	refreshToolbarVisibility();
+}
+
 function addPageAction(name, action) {
 	let button = pageActions.get(name);
 	let isNew = false;
@@ -988,6 +987,8 @@ function addPageAction(name, action) {
 		else
 			toolbar.appendChild(button);
 	}
+
+	refreshToolbarVisibility();
 }
 
 function removePageAction(name) {
@@ -995,6 +996,19 @@ function removePageAction(name) {
 	if (button) {
 		button.remove();
 		pageActions.delete(name);
+	}
+
+	refreshToolbarVisibility();
+}
+
+function refreshToolbarVisibility() {
+	let toolbar = _('toolbar');
+	if (pageActions.size > 0 || (_('topForm') && _('topForm').innerHTML)) {
+		_('main-page').removeClass('no-toolbar');
+		toolbar.removeClass('d-none');
+	} else {
+		_('main-page').addClass('no-toolbar');
+		toolbar.addClass('d-none');
 	}
 }
 
@@ -1119,7 +1133,8 @@ async function search(page = 1, options = {}) {
 		...{
 			sort_by: null,
 			history: true,
-			only_payload: false,
+			return_payload: false,
+			empty_main: true,
 			visualizer_meta: {}
 		},
 		...options
@@ -1127,7 +1142,7 @@ async function search(page = 1, options = {}) {
 
 	let request = currentAdminPage.split('/');
 
-	if (!options.only_payload) {
+	if (options.empty_main) {
 		_('main-content').innerHTML = `<div class="px-3 no-overflow">
 			<div id="results-table-count">
 				<div><img src="` + PATH + `model/Output/files/loading.gif" alt="" /></div>
@@ -1137,16 +1152,18 @@ async function search(page = 1, options = {}) {
 		<div id="main-visualizer-cont"></div>`;
 	}
 
+	let visualizer = visualizers.get(request[0]);
 	if (options.sort_by === null) {
-		let visualizer = visualizers.get(request[0]);
 		if (visualizer)
 			options.sort_by = visualizer.getSorting(options.visualizer_meta);
 		else
 			options.sort_by = [];
 	}
 
-	let visualizer = await loadVisualizer(currentPageDetails['type'], request[0], _('main-visualizer-cont'), true, currentPageDetails);
-	visualizers.set(request[0], visualizer);
+	if (options.empty_main || !visualizer) {
+		visualizer = await loadVisualizer(currentPageDetails['type'], request[0], _('main-visualizer-cont'), true, currentPageDetails);
+		visualizers.set(request[0], visualizer);
+	}
 
 	let filters = [];
 	let searchValue = '';
@@ -1211,7 +1228,7 @@ async function search(page = 1, options = {}) {
 	if (columns !== null)
 		payload['fields'] = columns;
 
-	if (options.only_payload)
+	if (options.return_payload)
 		return payload;
 
 	if (options.history) {
@@ -2122,7 +2139,7 @@ async function exportPopup(step) {
 			});
 		case 2:
 			let rowsNumber = await _('export-form')['rows-number'].getValue();
-			let payload = await search(null, {history: false, only_payload: true});
+			let payload = await search(null, {history: false, empty_main: false, return_payload: true});
 			return zkPopup({
 				url: adminPrefix + 'export/' + currentAdminPage.split('/')[0],
 				get: {step},
