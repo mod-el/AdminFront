@@ -24,17 +24,23 @@ class FormList {
 		this.saving = false;
 
 		if (this.main) {
-			addPageAction('new', {
-				'fa-icon': 'far fa-plus-square',
-				'text': 'Nuovo',
-				'action': 'getMainVisualizer().addLocalRow()',
-			});
+			if (this.options.privileges['C']) {
+				addPageAction('new', {
+					'fa-icon': 'far fa-plus-square',
+					'text': 'Nuovo',
+					'action': 'getMainVisualizer().addLocalRow()',
+				});
+			} else {
+				removePageAction('new');
+			}
 
-			addPageAction('save', {
-				'fa-icon': 'far fa-save',
-				'text': 'Salva',
-				'action': 'getMainVisualizer().save()',
-			});
+			if (this.options.privileges['C'] || this.options.privileges['U']) {
+				addPageAction('save', {
+					'fa-icon': 'far fa-save',
+					'text': 'Salva',
+					'action': 'getMainVisualizer().save()',
+				});
+			}
 
 			removePageAction('delete');
 		}
