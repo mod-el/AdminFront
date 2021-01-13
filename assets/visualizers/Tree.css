@@ -16,7 +16,7 @@
 	border-bottom-right-radius: 15px;
 }
 
-.tree-node, #main-content .tree-node a:link, #main-content .tree-node a:visited {
+.tree-node {
 	color: #333;
 }
 
@@ -24,11 +24,17 @@
 	margin-right: 5px;
 }
 
+.tree-node:not(.selected):hover {
+	background: var(--color-light);
+	color: #fff;
+	opacity: 0.6;
+}
+
 .tree-node.selected {
 	background: var(--color-light);
 	order: -1;
 }
 
-.tree-node.selected, #main-content .tree-node.selected a:link, #main-content .tree-node.selected a:visited {
+.tree-node.selected {
 	color: #fff;
 }

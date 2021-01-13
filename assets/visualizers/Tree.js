@@ -32,6 +32,7 @@ class Tree {
 		};
 
 		let container = this.getLevelContainer(options.level, options.drop);
+		container.dataset.parent = options.parent || '';
 		container.innerHTML = '';
 
 		for (let item of list) {
@@ -39,14 +40,18 @@ class Tree {
 			node.className = 'tree-node';
 			node.setAttribute('data-id', item.id);
 
-			let edit_link = document.createElement('a');
-			edit_link.innerHTML = '<i class="fas fa-edit"></i>';
-			edit_link.setAttribute('href', '#');
-			edit_link.addEventListener('click', event => {
+			let edit_node = document.createElement('i');
+			edit_node.className = 'fas fa-edit';
+			edit_node.addEventListener('click', event => {
 				event.preventDefault();
 				event.stopPropagation();
+
+				if (this.options.privileges['U'])
+					this.editNode(options.level, item.id);
+				else
+					alert('Non autorizzato');
 			});
-			node.appendChild(edit_link);
+			node.appendChild(edit_node);
 
 			let text = [];
 			for (let field of Object.keys(item.data))
@@ -58,6 +63,21 @@ class Tree {
 
 			node.addEventListener('click', event => {
 				this.selectNode(options.level, item.id);
+			});
+
+			container.appendChild(node);
+		}
+
+		if (this.options.privileges['C']) {
+			let node = document.createElement('div');
+			node.className = 'tree-node';
+			node.innerHTML = '<i class="fas fa-plus"></i> <span>Nuovo</span>';
+
+			node.addEventListener('click', event => {
+				this.editNode(options.level, 0).then(() => {
+					if (options.parent)
+						pageForms.get('popup').fields.get(this.options.field).setValue(options.parent);
+				});
 			});
 
 			container.appendChild(node);
@@ -147,6 +167,36 @@ class Tree {
 			visualizer_meta: {
 				level: level + 1,
 				parent: id
+			}
+		});
+	}
+
+	async editNode(level, id) {
+		if (!this.main)
+			return;
+
+		return openElementInPopup(id, {
+			afterSave: () => {
+				return this.reloadLevel(level);
+			}
+		});
+	}
+
+	async reloadLevel(level) {
+		let column = this.getLevelContainer(level, true).loading();
+
+		let parent = null;
+		if (column.dataset.parent)
+			parent = parseInt(column.dataset.parent);
+
+		if (level > 1 && parent === null)
+			throw 'Parent can\'t be null for levels other than the first one';
+
+		return search(1, {
+			empty_main: false,
+			visualizer_meta: {
+				level: level,
+				parent: parent
 			}
 		});
 	}

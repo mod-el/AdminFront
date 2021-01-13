@@ -1749,7 +1749,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 			sublistsPromises.push(new Promise(async (resolve, reject) => {
 				try {
 					if (sublist.name === page)
-						throw 'You cannot a sublist like the main page';
+						throw 'You cannot name a sublist like the main page';
 
 					let visualizer = await loadVisualizer(sublist.visualizer, sublist.name, sublistCont, false, {
 						"fields": sublist.fields,
@@ -2268,22 +2268,32 @@ function replaceTemplateValues(cont, id, data) {
 	}
 }
 
-async function makeDynamicOption(fieldName, page) {
-	let form = pageForms.get('main');
-	if (!form.fields.get(fieldName))
-		return;
+async function openElementInPopup(id, options = {}) {
+	options = {
+		...{
+			formName: 'popup',
+			page: currentAdminPage.split('/')[0],
+			save: null,
+			afterSave: null
+		},
+		...options
+	};
 
-	let templatePromise = loadPage(adminPrefix + 'template/' + page, {ajax: ''}, {}, {fill_main: false});
-	let dataPromise = loadElementData(page, 0);
-	let popupPromise = zkPopup('<form id="form-popup" action="" method="post"></form>', {
-		onClose: function () {
-			if (pageForms.get('popup'))
-				pageForms.delete('popup');
+	let templatePromise = loadPage(adminPrefix + 'template/' + options.page, {ajax: ''}, {}, {fill_main: false});
+	let dataPromise = loadElementData(options.page, id);
+	let popupPromise = zkPopup('<form id="form-' + options.formName + '" action="" method="post"><img src="' + PATH + 'model/Output/files/loading.gif" alt="Attendere"/></form>', {
+		onClose: () => {
+			if (options.formName === 'main') {
+				wipeForms();
+			} else {
+				if (pageForms.get(options.formName))
+					pageForms.delete(options.formName);
+			}
 		}
 	});
 
 	return Promise.all([templatePromise, dataPromise, popupPromise]).then(async responses => {
-		let popupForm = _('form-popup');
+		let popupForm = _('form-' + options.formName);
 		popupForm.innerHTML = responses[0];
 
 		let saveButtonCont = document.createElement('div');
@@ -2293,13 +2303,30 @@ async function makeDynamicOption(fieldName, page) {
 
 		replaceTemplateValues(popupForm, 0, responses[1].data);
 
-		let form = new FormManager('popup');
-		pageForms.set('popup', form);
+		let form = new FormManager(options.formName);
+		pageForms.set(options.formName, form);
 		await form.build(popupForm, responses[1]);
 
-		popupForm.addEventListener('submit', event => {
+		popupForm.addEventListener('submit', async event => {
 			event.preventDefault();
-			saveDynamicOption(fieldName, page);
+
+			let newId;
+			if (options.save) {
+				newId = await options.save();
+			} else {
+				newId = await save({
+					form: options.formName,
+					load_element: false,
+					sublists: false,
+					page: options.page,
+					id: id
+				});
+			}
+
+			if (options.afterSave)
+				await options.afterSave(newId);
+
+			zkPopupClose();
 		});
 
 		Array.from(document.querySelectorAll('#popup-real input')).some(field => {
@@ -2316,23 +2343,22 @@ async function makeDynamicOption(fieldName, page) {
 	});
 }
 
-async function saveDynamicOption(fieldName, page) {
-	return save({
-		form: 'popup',
-		no_data_alert: false,
-		load_element: false,
-		sublists: false,
+async function makeDynamicOption(fieldName, page) {
+	let form = pageForms.get('main');
+	if (!form.fields.get(fieldName))
+		return;
+
+	return openElementInPopup(0, {
+		formName: 'popup',
 		page: page,
-		id: 0
-	}).then(async id => {
-		let form = pageForms.get('main');
-		let field = form.fields.get(fieldName);
+		afterSave: async id => {
+			let form = pageForms.get('main');
+			let field = form.fields.get(fieldName);
 
-		if (field.options.type === 'select')
-			await field.reloadOptions();
+			if (field.options.type === 'select')
+				await field.reloadOptions();
 
-		await field.setValue(id);
-
-		zkPopupClose();
+			await field.setValue(id);
+		}
 	});
 }
