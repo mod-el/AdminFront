@@ -1792,11 +1792,11 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 }
 
 function loadElementData(page, id) {
-	if (id === 0 && cachedInitialData.get(page))
+	if (id === 0 && cachedInitialData.get(page) && currentPageDetails['local-cache-data'])
 		return cachedInitialData.get(page);
 
 	return adminApiRequest('page/' + page + '/data/' + id).then(data => {
-		if (id === 0)
+		if (id === 0 && currentPageDetails['local-cache-data'])
 			cachedInitialData.set(page, data);
 		return data;
 	});
