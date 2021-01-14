@@ -172,7 +172,6 @@ class FormList {
 		replaceTemplateValues(template, id, data.data);
 
 		let form = new FormManager(this.id + '-' + id);
-		await form.build(template, data);
 
 		pageForms.set(this.id + '-' + id, form);
 
@@ -229,6 +228,8 @@ class FormList {
 
 		row.dataset.id = id;
 		this.rowsContainer.appendChild(row);
+
+		await form.build(template, data);
 
 		this.rows.set(id, {id, row, form, isNew, deleted: false});
 		if (isNew)
