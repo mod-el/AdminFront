@@ -732,7 +732,10 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 	});
 }
 
-function getIdFromRequest(request) {
+function getIdFromRequest(request = null) {
+	if (request === null)
+		request = currentAdminPage.split('/');
+
 	let id = 0;
 	if (typeof request[2] !== 'undefined')
 		id = parseInt(request[2]);
