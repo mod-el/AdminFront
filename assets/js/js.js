@@ -378,6 +378,8 @@ window.onpopstate = function (event) {
 			let request = s['request'].split('/');
 
 			let get = {};
+			if (event.target.location.search && event.target.location.search.length > 1)
+				get = objectFromQueryString(event.target.location.search.substr(1));
 
 			sessionStorage.setItem('current-page', request[0]);
 
