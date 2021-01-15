@@ -218,8 +218,7 @@ function adminInit() {
 		if (!r)
 			return false;
 
-		let get = objectFromQueryString();
-		loadAdminPage(currentAdminPage, get, 'replace', true);
+		loadAdminPage(currentAdminPage, objectFromQueryString(), 'replace', true);
 
 		document.addEventListener('notifications', function (event) {
 			let notifications;
@@ -401,7 +400,13 @@ function adminApiRequest(request, payload = {}, options = {}) {
 	if (adminApiToken !== null)
 		headers['X-Access-Token'] = adminApiToken;
 
-	return ajax(adminApiPath + request, {c_id}, payload, {
+	let get = {c_id};
+	if (options.get) {
+		get = {...options.get, ...get};
+		delete options.get;
+	}
+
+	return ajax(adminApiPath + request, get, payload, {
 		'fullResponse': true,
 		'headers': headers,
 		'json': true,
@@ -606,7 +611,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					if (loadFullDetails) {
 						return loadAdminElement(id, get, null, false);
 					} else {
-						return loadPage(adminPrefix + 'template/' + request[0]);
+						return loadPage(adminPrefix + 'template/' + request[0], get);
 					}
 					break;
 			}
@@ -699,7 +704,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 						hideBreadcrumbs();
 
-						return loadPage(adminPrefix + 'template/' + request.join('/'), {ajax: 1});
+						get.ajax = 1;
+						return loadPage(adminPrefix + 'template/' + request.join('/'), get);
 						break;
 					default:
 						// ==== Set page variable ====
@@ -1660,7 +1666,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 		page = currentAdminPage.split('/')[0];
 
 	let templatePromise = loadAdminPage(page + '/edit/' + id, get, history_push, false).then(showLoadingMask);
-	let dataPromise = loadElementData(page, id || 0);
+	let dataPromise = loadElementData(page, id || 0, get);
 
 	return Promise.all([templatePromise, dataPromise]).then(async responses => {
 		// Check privilegi
@@ -1791,13 +1797,14 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 	}).catch(reportAdminError);
 }
 
-function loadElementData(page, id) {
-	if (id === 0 && cachedInitialData.get(page) && currentPageDetails['local-cache-data'])
-		return cachedInitialData.get(page);
+function loadElementData(page, id, get = {}) {
+	let cacheKey = page + '?' + JSON.stringify(get);
+	if (id === 0 && cachedInitialData.get(cacheKey) && currentPageDetails['local-cache-data'])
+		return cachedInitialData.get(cacheKey);
 
-	return adminApiRequest('page/' + page + '/data/' + id).then(data => {
+	return adminApiRequest('page/' + page + '/data/' + id, {}, {get}).then(data => {
 		if (id === 0 && currentPageDetails['local-cache-data'])
-			cachedInitialData.set(page, data);
+			cachedInitialData.set(cacheKey, data);
 		return data;
 	});
 }
