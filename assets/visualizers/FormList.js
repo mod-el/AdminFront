@@ -149,15 +149,17 @@ class FormList {
 		return [];
 	}
 
-	async addLocalRow(id = null, data = null, canDelete = true, historyPush = true) {
+	async addLocalRow(id = null, providedData = null, canDelete = true, historyPush = true) {
 		let template = (await this.template).cloneNode(true);
-		data = JSON.parse(JSON.stringify(data)); // clono per evitare problemi di referenze
+		providedData = JSON.parse(JSON.stringify(providedData)); // clono per evitare problemi di referenze
 
-		let isNew = false;
+		let isNew = false, data = providedData;
 		if (id === null) { // Nuova riga
 			id = 'new' + this.newRows.length;
 			data = await this.basicData;
 			isNew = true;
+			if (providedData !== null)
+				data.data = {...data.data, ...providedData.data};
 		}
 
 		for (let fieldName of Object.keys(data.fields)) {
@@ -235,8 +237,11 @@ class FormList {
 		if (isNew)
 			this.newRows.push(id);
 
-		return changedHtml().then(() => {
+		return changedHtml().then(async () => {
 			if (isNew) {
+				if (providedData !== null)
+					await form.setValues(providedData.data);
+
 				let firstInput = row.querySelector('input, select');
 				if (firstInput) {
 					firstInput.focus();

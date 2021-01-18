@@ -2020,9 +2020,9 @@ function duplicate() {
 	});
 }
 
-function callElementCallback() {
+async function callElementCallback() {
 	if (elementCallback) {
-		elementCallback.call();
+		await elementCallback.call();
 		elementCallback = null;
 	}
 }
