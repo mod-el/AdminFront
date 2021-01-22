@@ -66,13 +66,13 @@ class Tree {
 
 			if (item.privileges['R'] || item.privileges['D']) {
 				let menu = {};
-				if(item.privileges['R']){
+				if (item.privileges['R']) {
 					menu['Vedi / modifica'] = () => {
 						this.editNode(options.level, item.id);
 					};
 				}
 
-				if(item.privileges['R']){
+				if (item.privileges['R']) {
 					menu['Elimina'] = () => {
 						if (!confirm('Sicuro di voler eliminare?'))
 							return;
