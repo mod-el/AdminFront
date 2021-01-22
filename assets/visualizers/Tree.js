@@ -40,18 +40,17 @@ class Tree {
 			node.className = 'tree-node';
 			node.setAttribute('data-id', item.id);
 
-			let edit_node = document.createElement('i');
-			edit_node.className = 'fas fa-edit';
-			edit_node.addEventListener('click', event => {
-				event.preventDefault();
-				event.stopPropagation();
+			if (this.options.privileges['R']) {
+				let edit_node = document.createElement('i');
+				edit_node.className = 'fas fa-edit';
+				edit_node.addEventListener('click', event => {
+					event.preventDefault();
+					event.stopPropagation();
 
-				if (this.options.privileges['U'])
 					this.editNode(options.level, item.id);
-				else
-					alert('Non autorizzato');
-			});
-			node.appendChild(edit_node);
+				});
+				node.appendChild(edit_node);
+			}
 
 			let text = [];
 			for (let field of Object.keys(item.data))
@@ -65,14 +64,25 @@ class Tree {
 				this.selectNode(options.level, item.id);
 			});
 
-			node.ctxMenu({
-				'Elimina': () => {
-					if (!confirm('Sicuro di voler eliminare?'))
-						return;
-
-					this.deleteNode(options.level, item.id);
+			if (this.options.privileges['R'] || this.options.privileges['D']) {
+				let menu = {};
+				if(this.options.privileges['R']){
+					menu['Vedi / modifica'] = () => {
+						this.editNode(options.level, item.id);
+					};
 				}
-			});
+
+				if(this.options.privileges['R']){
+					menu['Elimina'] = () => {
+						if (!confirm('Sicuro di voler eliminare?'))
+							return;
+
+						this.deleteNode(options.level, item.id);
+					};
+				}
+
+				node.ctxMenu(menu);
+			}
 
 			container.appendChild(node);
 		}

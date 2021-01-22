@@ -2353,6 +2353,8 @@ async function openElementInPopup(id, options = {}) {
 		});
 
 		return fillPopup();
+	}).catch(err => {
+		zkPopup(err.toString());
 	});
 }
 
