@@ -40,7 +40,7 @@ class Tree {
 			node.className = 'tree-node';
 			node.setAttribute('data-id', item.id);
 
-			if (this.options.privileges['R']) {
+			if (item.privileges['R']) {
 				let edit_node = document.createElement('i');
 				edit_node.className = 'fas fa-edit';
 				edit_node.addEventListener('click', event => {
@@ -64,15 +64,15 @@ class Tree {
 				this.selectNode(options.level, item.id);
 			});
 
-			if (this.options.privileges['R'] || this.options.privileges['D']) {
+			if (item.privileges['R'] || item.privileges['D']) {
 				let menu = {};
-				if(this.options.privileges['R']){
+				if(item.privileges['R']){
 					menu['Vedi / modifica'] = () => {
 						this.editNode(options.level, item.id);
 					};
 				}
 
-				if(this.options.privileges['R']){
+				if(item.privileges['R']){
 					menu['Elimina'] = () => {
 						if (!confirm('Sicuro di voler eliminare?'))
 							return;
