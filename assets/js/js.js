@@ -1023,7 +1023,7 @@ function refreshToolbarVisibility() {
 	}
 }
 
-async function goToPage(p, sort_by, history_push = true) {
+async function goToPage(p, sort_by = null, history_push = true) {
 	let mainContentDiv = _('main-content');
 
 	let moveBy = mainContentDiv.offsetWidth + 50;
