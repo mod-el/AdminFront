@@ -1878,18 +1878,11 @@ async function save(options = {}) {
 		...options
 	};
 
-	let formNode;
 	if (options.form === 'main') {
-		formNode = _('adminForm');
-
-		let required = [];
 		for (let formName of pageForms.keys()) {
-			let currentRequired = pageForms.get(formName).getRequired();
-			required = required.concat(currentRequired);
+			if (!(await pageForms.get(formName).checkRequired()))
+				return false;
 		}
-
-		if (!checkForm(formNode, required))
-			return false;
 
 		if (saving) {
 			alert('Already saving');
@@ -1899,13 +1892,10 @@ async function save(options = {}) {
 		saving = true;
 		toolbarButtonLoading('save');
 	} else {
-		formNode = _('form-' + options.form);
-
-		let required = pageForms.get(options.form).getRequired();
-		if (!checkForm(formNode, required))
+		if (!(await pageForms.get(options.form).checkRequired()))
 			return false;
 
-		formNode.querySelector('input[type="submit"]').value = 'Attendere...';
+		_('form-' + options.form).querySelector('input[type="submit"]').value = 'Attendere...';
 	}
 
 	resize();
