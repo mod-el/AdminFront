@@ -11,7 +11,6 @@ var pageLoadingHash = '';
 var adminApiToken = null;
 
 var cachedPages = new Map();
-var cachedInitialData = new Map();
 
 var pageActions = new Map();
 
@@ -1803,15 +1802,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 }
 
 function loadElementData(page, id, get = {}) {
-	let cacheKey = page + '?' + JSON.stringify(get);
-	if (id === 0 && cachedInitialData.get(cacheKey) && currentPageDetails['local-cache-data'])
-		return cachedInitialData.get(cacheKey);
-
-	return adminApiRequest('page/' + page + '/data/' + id, {}, {get}).then(data => {
-		if (id === 0 && currentPageDetails['local-cache-data'])
-			cachedInitialData.set(cacheKey, data);
-		return data;
-	});
+	return adminApiRequest('page/' + page + '/data/' + id, {}, {get});
 }
 
 function switchHistoryBox() {
