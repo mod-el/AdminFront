@@ -308,7 +308,7 @@ class Table {
 					});
 					innerDiv.appendChild(fieldNode);
 				} else if (field.price) {
-					innerDiv.innerHTML = makePrice(item.data[fieldName].value);
+					innerDiv.innerHTML = item.data[fieldName].value ? makePrice(item.data[fieldName].value) : '';
 				} else {
 					innerDiv.innerHTML = field.raw ? item.data[fieldName].text : entities(item.data[fieldName].text);
 				}
@@ -351,7 +351,7 @@ class Table {
 
 					if (typeof options.totals[fieldName] !== 'undefined') {
 						if (field.price)
-							innerDiv.innerHTML = makePrice(options.totals[fieldName]);
+							innerDiv.innerHTML = options.totals[fieldName] ? makePrice(options.totals[fieldName]) : '';
 						else
 							innerDiv.innerHTML = entities(options.totals[fieldName]);
 					}
