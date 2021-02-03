@@ -2339,8 +2339,8 @@ async function openElementInPopup(id, options = {}) {
 	});
 }
 
-async function makeDynamicOption(fieldName, page) {
-	let form = pageForms.get('main');
+async function makeDynamicOption(fieldName, page, formName = 'main') {
+	let form = pageForms.get(formName);
 	if (!form.fields.get(fieldName))
 		return;
 
@@ -2348,7 +2348,7 @@ async function makeDynamicOption(fieldName, page) {
 		formName: 'popup',
 		page: page,
 		afterSave: async id => {
-			let form = pageForms.get('main');
+			let form = pageForms.get(formName);
 			let field = form.fields.get(fieldName);
 
 			if (field.options.type === 'select')
