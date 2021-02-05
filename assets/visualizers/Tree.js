@@ -196,13 +196,6 @@ class Tree {
 
 		return openElementInPopup(id, {
 			afterSave: () => {
-				// Se è stato creato un nuovo nodo, svuoto la cache dei dati iniziali per aggiungerne in caso altri
-				if (id === 0) {
-					let cacheKey = currentAdminPage.split('/')[0];
-					if (cachedInitialData.get(cacheKey))
-						cachedInitialData.delete(cacheKey);
-				}
-
 				// Ricarico il livello al quale questo nodo apparteneva
 				return this.reloadLevel(level);
 			}
