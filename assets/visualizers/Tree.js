@@ -194,8 +194,12 @@ class Tree {
 		if (!this.main)
 			return;
 
+		wipeForms();
 		return openElementInPopup(id, {
 			afterSave: () => {
+				// Cancello eventuali residui dai form della pagina
+				wipeForms();
+
 				// Ricarico il livello al quale questo nodo apparteneva
 				return this.reloadLevel(level);
 			}

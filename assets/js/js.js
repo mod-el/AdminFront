@@ -2214,6 +2214,7 @@ function deleteRows(ids) {
 }
 
 async function reloadMainList() {
+	wipeForms();
 	return search(1, {history: false});
 }
 
