@@ -252,7 +252,7 @@ class AdminController extends Controller
 							if (!is_dir($dir))
 								mkdir($dir, 0777, true);
 
-							$title = $request[0] ?? 'export';
+							$title = $this->model->_AdminFront->request[1] ?? 'export';
 
 							$n = 1;
 							while (file_exists($dir . DIRECTORY_SEPARATOR . $title . '-' . $n . '.csv'))
