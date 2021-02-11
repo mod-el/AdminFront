@@ -249,6 +249,9 @@ class AdminController extends Controller
 							header('Content-Disposition: attachment; filename=list.csv');
 
 							$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
+							if (!is_dir($dir))
+								mkdir($dir, 0777, true);
+
 							$title = $request[0] ?? 'export';
 
 							$n = 1;
