@@ -156,7 +156,7 @@ class FormList {
 		let isNew = false, data = providedData;
 		if (id === null) { // Nuova riga
 			id = 'new' + this.newRows.length;
-			data = await this.basicData;
+			data = JSON.parse(JSON.stringify(await this.basicData));
 			isNew = true;
 			if (providedData !== null)
 				data.data = {...data.data, ...providedData.data};
@@ -263,6 +263,9 @@ class FormList {
 		if (row.deleted)
 			return;
 
+		if (pageForms.get(this.id + '-' + id))
+			pageForms.get(this.id + '-' + id).ignore = true;
+
 		row.row.addClass('d-none');
 		row.deleted = true;
 
@@ -276,6 +279,9 @@ class FormList {
 			console.error('Riga non trovata al delete');
 			return;
 		}
+
+		if (pageForms.get(this.id + '-' + id))
+			pageForms.get(this.id + '-' + id).ignore = false;
 
 		row.row.removeClass('d-none');
 		row.deleted = false;

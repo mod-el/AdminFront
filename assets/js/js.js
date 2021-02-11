@@ -1871,7 +1871,8 @@ async function save(options = {}) {
 
 	if (options.form === 'main') {
 		for (let formName of pageForms.keys()) {
-			if (!(await pageForms.get(formName).checkRequired()))
+			let form = pageForms.get(formName);
+			if (!form.ignore && !(await form.checkRequired()))
 				return false;
 		}
 
@@ -1883,7 +1884,8 @@ async function save(options = {}) {
 		saving = true;
 		toolbarButtonLoading('save');
 	} else {
-		if (!(await pageForms.get(options.form).checkRequired()))
+		let form = pageForms.get(options.form);
+		if (!form.ignore && !(await form.checkRequired()))
 			return false;
 
 		_('form-' + options.form).querySelector('input[type="submit"]').value = 'Attendere...';

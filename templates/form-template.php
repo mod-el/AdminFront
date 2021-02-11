@@ -1,5 +1,5 @@
 <?php
-if (isset($this->model->_AdminFront->request[2])) {
+if ($this->model->_Admin->getPageOptions()['visualizer'] === 'FormList' or isset($this->model->_AdminFront->request[2])) {
 	$form->render();
 } else {
 	if ($this->model->isLoaded('Multilang')) {
