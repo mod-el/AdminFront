@@ -5,3 +5,7 @@
 .formlist-row > * {
 	vertical-align: middle;
 }
+
+.formlist-row .rob-field-cont {
+	padding: 0;
+}

@@ -193,6 +193,8 @@ class FormList {
 
 				let rightPart = document.createElement('div');
 				rightPart.className = 'rob-field';
+				rightPart.style.paddingTop = '0';
+				rightPart.style.paddingBottom = '0';
 
 				template.removeAttribute('id');
 				template.className = this.options['visualizer-options']['class'];
