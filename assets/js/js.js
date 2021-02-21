@@ -1820,8 +1820,8 @@ function wipeForms() {
 	historyMgr.wipe();
 }
 
-function newElement(get = {}) {
-	return loadAdminElement(0, get);
+function newElement(get = {}, page = null, history_push = true) {
+	return loadAdminElement(0, get, page, history_push);
 }
 
 function toolbarButtonLoading(name) {
