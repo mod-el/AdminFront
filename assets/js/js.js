@@ -17,6 +17,8 @@ var pageActions = new Map();
 var userCustomizationsCache = {};
 var userCustomizationsBuffer = {};
 
+var adminFilters = {};
+
 var visualizerClasses = new Map();
 var visualizers = new Map();
 
@@ -797,22 +799,22 @@ async function rebuildFilters() {
 	let secondaryForm = _('filtersFormCont');
 	secondaryForm.innerHTML = '<div class="flex-fields-wrap"></div>';
 
-	let filters = await getFiltersFromPageDetails();
+	adminFilters = await getFiltersFromPageDetails();
 
 	let forms = {
 		'primary': form,
 		'secondary': secondaryForm
 	};
 
-	for (let formName of Object.keys(filters)) {
-		for (let filter of filters[formName]) {
+	for (let formName of Object.keys(adminFilters)) {
+		for (let filter of adminFilters[formName]) {
 			let div = document.createElement('div');
 
 			let label = '';
 			if (typeof filter.options['label'] !== 'undefined') {
 				label = filter.options['label'];
-				if (filter.options['attributes']['data-filter-type'] !== '=')
-					label += ' (' + filter.options['attributes']['data-filter-type'] + ')';
+				if (filter.options['adminFilter'].type !== '=')
+					label += ' (' + filter.options['adminFilter'].type + ')';
 			}
 
 			if (formName === 'secondary') {
@@ -828,6 +830,7 @@ async function rebuildFilters() {
 				case 'hidden':
 				case 'date':
 				case 'select':
+				case 'instant-search':
 					filter.addEventListener('change', function () {
 						search();
 					});
@@ -872,10 +875,7 @@ async function getFiltersFromPageDetails() {
 				return;
 
 			let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
-			if (typeof fieldOptions['attributes'] === 'undefined')
-				fieldOptions['attributes'] = {};
-			fieldOptions['attributes']['data-filter'] = filterOptions.filter;
-			fieldOptions['attributes']['data-filter-type'] = filterOptions.type;
+			fieldOptions['adminFilter'] = filterOptions;
 
 			let defaultValue = '';
 			if (typeof fieldOptions.default !== 'undefined')
@@ -886,7 +886,7 @@ async function getFiltersFromPageDetails() {
 				value = filtersValues[filterOptions.filter + '-' + filterOptions.type];
 
 			fieldOptions['value'] = value;
-			fieldOptions['attributes']['data-default'] = defaultValue;
+			fieldOptions['adminFilter'].default = defaultValue;
 
 			let filter;
 			if (fieldOptions.hasOwnProperty('type') && formSignatures.get(fieldOptions.type)) {
@@ -928,13 +928,17 @@ function getFiltersValuesFromStorage() {
 
 async function fillFiltersValues(values) {
 	let promises = [];
-	document.querySelectorAll('[data-filter]').forEach(el => {
-		let k = el.getAttribute('data-filter') + '-' + el.getAttribute('data-filter-type');
-		if (typeof values[k] !== 'undefined')
-			promises.push(el.setValue(values[k], false));
-		else
-			promises.push(el.setValue(null, false));
-	});
+
+	for (let formName of Object.keys(adminFilters)) {
+		for (let filter of adminFilters[formName]) {
+			let k = filter.options['adminFilter'].filter + '-' + filter.options['adminFilter'].type;
+			if (typeof values[k] !== 'undefined')
+				promises.push(filter.setValue(values[k], false));
+			else
+				promises.push(filter.setValue(null, false));
+		}
+	}
+
 	return Promise.all(promises);
 }
 
@@ -1180,25 +1184,27 @@ async function search(page = 1, options = {}) {
 	let filtersValues = {};
 
 	if (visualizer.useFilters) {
-		document.querySelectorAll('[data-filter]').forEach(el => {
-			let v = el.getValue(true);
+		for (let formName of Object.keys(adminFilters)) {
+			for (let filter of adminFilters[formName]) {
+				let v = await filter.getValue();
 
-			filtersValues[el.getAttribute('data-filter') + '-' + el.getAttribute('data-filter-type')] = v;
+				filtersValues[filter.options['adminFilter'].filter + '-' + filter.options['adminFilter'].type] = v;
 
-			if (v === '')
-				return;
+				if (v === '' || v === null)
+					continue;
 
-			if (el.getAttribute('data-filter') === 'zk-all') {
-				searchValue = v;
-				return;
+				if (filter.options['adminFilter'].filter === 'zk-all') {
+					searchValue = v;
+					return;
+				}
+
+				filters.push({
+					'filter': filter.options['adminFilter'].filter,
+					'type': filter.options['adminFilter'].type,
+					'value': v
+				});
 			}
-
-			filters.push({
-				'filter': el.getAttribute('data-filter'),
-				'type': el.getAttribute('data-filter-type'),
-				'value': v
-			});
-		});
+		}
 
 		sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
 	} else {
@@ -1403,9 +1409,12 @@ function searchPageForBreadcrumbs(page, pages, breadcrumbs, parentIdx) {
 
 function filtersReset() {
 	let promises = [];
-	document.querySelectorAll('[data-filter]').forEach(function (el) {
-		promises.push(el.setValue(el.dataset.default, false));
-	});
+
+	for (let formName of Object.keys(adminFilters)) {
+		for (let filter of adminFilters[formName])
+			promises.push(filter.setValue(filter.options['adminFilter'].default, false));
+	}
+
 	return Promise.all(promises).then(search);
 }
 
