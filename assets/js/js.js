@@ -1195,7 +1195,7 @@ async function search(page = 1, options = {}) {
 
 				if (filter.options['adminFilter'].filter === 'zk-all') {
 					searchValue = v;
-					return;
+					continue;
 				}
 
 				filters.push({
