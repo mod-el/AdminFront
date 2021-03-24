@@ -17,6 +17,7 @@ if ($this->model->_Admin->getPageOptions()['visualizer'] === 'FormList' or isset
 
 	foreach ($this->model->_Admin->sublists as $sublistName => $sublist) {
 		echo '<hr />';
+		echo '<b>' . entities($sublist['label']) . '</b><br/>';
 		$this->model->_AdminFront->renderSublist($sublistName);
 	}
 }
