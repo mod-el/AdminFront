@@ -252,6 +252,8 @@ class FormList {
 				}
 			}
 
+			this.refreshLabelsVisibility();
+
 			return id;
 		});
 	}
@@ -273,6 +275,8 @@ class FormList {
 
 		if (historyPush)
 			historyMgr.sublistAppend(this.id, 'delete', id);
+
+		this.refreshLabelsVisibility();
 	}
 
 	async restoreLocalRow(id) {
@@ -287,6 +291,25 @@ class FormList {
 
 		row.row.removeClass('d-none');
 		row.deleted = false;
+
+		this.refreshLabelsVisibility();
+	}
+
+	refreshLabelsVisibility() {
+		let rows = this.getRows();
+		let first = true;
+		for (let row of rows) {
+			if (first) {
+				row.row.querySelectorAll('label').forEach(label => {
+					label.removeClass('d-none');
+				});
+				first = false;
+			} else {
+				row.row.querySelectorAll('label').forEach(label => {
+					label.addClass('d-none');
+				});
+			}
+		}
 	}
 
 	getRows() {
