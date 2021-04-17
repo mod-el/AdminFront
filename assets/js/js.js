@@ -1908,7 +1908,7 @@ async function save(options = {}) {
 		setTimeout(function () { // Gives a little bit of time for the fields to activate their "onchange" events
 			resolve();
 		}, 200);
-	}).then(function () {
+	}).then(async function () {
 		let request = currentAdminPage.split('/');
 		if (options.page === null)
 			options.page = request[0];
@@ -1916,10 +1916,15 @@ async function save(options = {}) {
 			options.id = getIdFromRequest(request);
 
 		let payload = {
-			'data': pageForms.get(options.form).getChangedValues(),
+			'data': {},
 			'version': pageForms.get(options.form).version,
 			'sublists': {}
 		};
+
+		if (options.id === 0) // Al nuovo salvataggio invio tutto
+			payload.data = await pageForms.get(options.form).getValues();
+		else // Altrimenti solo i dati modificati
+			payload.data = pageForms.get(options.form).getChangedValues();
 
 		if (options.sublists) {
 			for (let k of pageSublists.keys()) {
