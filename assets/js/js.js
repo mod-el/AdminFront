@@ -1276,7 +1276,7 @@ async function search(page = 1, options = {}) {
 
 		buildBreadcrumbs();
 
-		if (visualizer.main) {
+		if (visualizer.main && _('results-table-pages')) {
 			if (visualizer.hasPagination) {
 				_('results-table-pages').removeClass('d-none');
 				_('results-table-count').removeClass('d-none');
