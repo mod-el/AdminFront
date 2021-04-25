@@ -1146,15 +1146,18 @@ async function search(page = 1, options = {}) {
 	options = {
 		...{
 			sort_by: null,
+			endpoint: null,
 			history: true,
 			return_payload: false,
 			empty_main: true,
-			visualizer_meta: {}
+			visualizer_meta: {},
+			visualizer: null
 		},
 		...options
 	};
 
 	let request = currentAdminPage.split('/');
+	let endpoint = options.endpoint || request[0];
 
 	if (options.empty_main) {
 		_('main-content').innerHTML = `<div class="px-3 no-overflow">
@@ -1166,7 +1169,7 @@ async function search(page = 1, options = {}) {
 		<div id="main-visualizer-cont"></div>`;
 	}
 
-	let visualizer = visualizers.get(request[0]);
+	let visualizer = options.visualizer || visualizers.get(endpoint);
 	if (options.sort_by === null) {
 		if (visualizer)
 			options.sort_by = visualizer.getSorting(options.visualizer_meta);
@@ -1175,48 +1178,50 @@ async function search(page = 1, options = {}) {
 	}
 
 	if (options.empty_main || !visualizer) {
-		visualizer = await loadVisualizer(currentPageDetails['type'], request[0], _('main-visualizer-cont'), true, currentPageDetails);
-		visualizers.set(request[0], visualizer);
+		visualizer = await loadVisualizer(currentPageDetails['type'], endpoint, _('main-visualizer-cont'), true, currentPageDetails);
+		visualizers.set(endpoint, visualizer);
 	}
 
 	let filters = [];
 	let searchValue = '';
 	let filtersValues = {};
 
-	if (visualizer.useFilters) {
-		for (let formName of Object.keys(adminFilters)) {
-			for (let filter of adminFilters[formName]) {
-				let v = await filter.getValue();
+	if (visualizer.main) {
+		if (visualizer.useFilters) {
+			for (let formName of Object.keys(adminFilters)) {
+				for (let filter of adminFilters[formName]) {
+					let v = await filter.getValue();
 
-				filtersValues[filter.options['adminFilter'].filter + '-' + filter.options['adminFilter'].type] = v;
+					filtersValues[filter.options['adminFilter'].filter + '-' + filter.options['adminFilter'].type] = v;
 
-				if (v === '' || v === null)
-					continue;
+					if (v === '' || v === null)
+						continue;
 
-				if (filter.options['adminFilter'].filter === 'zk-all') {
-					searchValue = v;
-					continue;
+					if (filter.options['adminFilter'].filter === 'zk-all') {
+						searchValue = v;
+						continue;
+					}
+
+					filters.push({
+						'filter': filter.options['adminFilter'].filter,
+						'type': filter.options['adminFilter'].type,
+						'value': v
+					});
 				}
-
-				filters.push({
-					'filter': filter.options['adminFilter'].filter,
-					'type': filter.options['adminFilter'].type,
-					'value': v
-				});
 			}
+
+			sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
+		} else {
+			let form = _('topForm');
+			if (form)
+				form.innerHTML = '';
+
+			let secondaryForm = _('filtersFormCont');
+			if (secondaryForm)
+				secondaryForm.innerHTML = '';
+
+			removePageAction('filters');
 		}
-
-		sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
-	} else {
-		let form = _('topForm');
-		if (form)
-			form.innerHTML = '';
-
-		let secondaryForm = _('filtersFormCont');
-		if (secondaryForm)
-			secondaryForm.innerHTML = '';
-
-		removePageAction('filters');
 	}
 
 	filters = [...filters, ...await visualizer.getSpecialFilters(options.visualizer_meta)];
@@ -1247,7 +1252,7 @@ async function search(page = 1, options = {}) {
 	if (options.return_payload)
 		return payload;
 
-	if (options.history) {
+	if (visualizer.main && options.history) {
 		let get;
 		if (page === null) {
 			get = 'nopag=1';
@@ -1265,30 +1270,33 @@ async function search(page = 1, options = {}) {
 
 	currentPage = page;
 
-	return adminApiRequest('page/' + request[0] + '/search', payload).then(response => {
+	return adminApiRequest('page/' + endpoint + '/search', payload).then(response => {
 		buildBreadcrumbs();
 
-		if (visualizer.hasPagination) {
-			_('results-table-pages').removeClass('d-none');
-			_('results-table-count').removeClass('d-none');
+		if (visualizer.main) {
+			if (visualizer.hasPagination) {
+				_('results-table-pages').removeClass('d-none');
+				_('results-table-count').removeClass('d-none');
 
-			_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
+				_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
-			_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
-			if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0)
-				_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?p=1" onclick="goToPage(1); return false"> ritorna alla paginazione </a>]</span>';
-			else
-				_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
-		} else {
-			_('results-table-pages').addClass('d-none');
-			_('results-table-count').addClass('d-none');
+				_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
+				if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0)
+					_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?p=1" onclick="goToPage(1); return false"> ritorna alla paginazione </a>]</span>';
+				else
+					_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
+			} else {
+				_('results-table-pages').addClass('d-none');
+				_('results-table-count').addClass('d-none');
+			}
 		}
 
 		return visualizer.render(response.list, {
 			...{totals: response.totals},
 			...options.visualizer_meta
 		}).then(() => {
-			_('main-loading').addClass('d-none');
+			if (visualizer.main)
+				_('main-loading').addClass('d-none');
 			return changedHtml();
 		});
 	}).catch(error => reportAdminError(error));

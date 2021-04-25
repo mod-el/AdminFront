@@ -29,12 +29,14 @@ class Table {
 
 		let subHead = head.appendChild(document.createElement('div'));
 
-		let checkboxTd = subHead.appendChild(document.createElement('div'));
-		checkboxTd.className = 'special-cell';
-		checkboxTd.style.padding = '0 5px';
-		checkboxTd.innerHTML = '<input type="checkbox" onchange="if(this.checked) selectAllRows(\'' + this.id + '\', 1); else selectAllRows(\'' + this.id + '\', 0)"/>';
+		if (!this.options.toPick) {
+			let checkboxTd = subHead.appendChild(document.createElement('div'));
+			checkboxTd.className = 'special-cell';
+			checkboxTd.style.padding = '0 5px';
+			checkboxTd.innerHTML = '<input type="checkbox" onchange="if(this.checked) selectAllRows(\'' + this.id + '\', 1); else selectAllRows(\'' + this.id + '\', 0)"/>';
+		}
 
-		if (renderDeleteCell) {
+		if (renderDeleteCell && !this.options.toPick) {
 			let deleteTd = subHead.appendChild(document.createElement('div'));
 			deleteTd.className = 'special-cell';
 		}
@@ -142,7 +144,7 @@ class Table {
 		/**************************/
 
 		let draggable = this.options['custom-order'];
-		if (this.sortedBy.length > 0)
+		if (this.sortedBy.length > 0 || this.options.toPick)
 			draggable = false;
 
 		let body = document.createElement('div');
@@ -191,8 +193,12 @@ class Table {
 				innerRow.setAttribute('data-onclick', item.onclick);
 
 			innerRow.addEventListener('click', event => {
-				if (event.button === 0)
-					adminRowClicked(innerRow);
+				if (event.button === 0) {
+					if (this.options.toPick)
+						this.options.toPick.call(innerRow, item.id);
+					else
+						adminRowClicked(innerRow);
+				}
 			});
 
 			if (item.background)
@@ -200,35 +206,37 @@ class Table {
 			if (item.color)
 				innerRow.style.color = item.color;
 
-			let checkboxCell = innerRow.appendChild(document.createElement('div'));
-			checkboxCell.className = 'special-cell';
-			checkboxCell.addEventListener('mousedown', event => {
-				event.stopPropagation();
-			});
-			checkboxCell.addEventListener('mouseup', event => {
-				event.stopPropagation();
-				releaseRowsSelection();
-			});
-			checkboxCell.addEventListener('click', function (event) {
-				event.stopPropagation();
-
-				let check = this.firstElementChild.firstElementChild;
-				check.getValue().then(v => {
-					if (v)
-						check.setValue(0);
-					else
-						check.setValue(1);
+			if (!this.options.toPick) {
+				let checkboxCell = innerRow.appendChild(document.createElement('div'));
+				checkboxCell.className = 'special-cell';
+				checkboxCell.addEventListener('mousedown', event => {
+					event.stopPropagation();
 				});
-			});
-			checkboxCell = checkboxCell.appendChild(document.createElement('div'));
-			checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
+				checkboxCell.addEventListener('mouseup', event => {
+					event.stopPropagation();
+					releaseRowsSelection();
+				});
+				checkboxCell.addEventListener('click', function (event) {
+					event.stopPropagation();
+
+					let check = this.firstElementChild.firstElementChild;
+					check.getValue().then(v => {
+						if (v)
+							check.setValue(0);
+						else
+							check.setValue(1);
+					});
+				});
+				checkboxCell = checkboxCell.appendChild(document.createElement('div'));
+				checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
+			}
 
 			if (this.main) {
 				if (selectedRows.indexOf(item.id) !== -1)
 					checkboxCell.querySelector('input').checked = true;
 			}
 
-			if (renderDeleteCell) {
+			if (renderDeleteCell && !this.options.toPick) {
 				let deleteCell = innerRow.appendChild(document.createElement('div'));
 				deleteCell.className = 'special-cell';
 				deleteCell.addEventListener('mousedown', event => {

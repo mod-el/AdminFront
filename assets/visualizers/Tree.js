@@ -40,7 +40,17 @@ class Tree {
 			node.className = 'tree-node';
 			node.setAttribute('data-id', item.id);
 
-			if (item.privileges['R']) {
+			if (this.options.toPick) {
+				let edit_node = document.createElement('i');
+				edit_node.className = 'fas fa-check-circle';
+				edit_node.addEventListener('click', event => {
+					event.preventDefault();
+					event.stopPropagation();
+
+					this.options.toPick.call(node, item.id);
+				});
+				node.appendChild(edit_node);
+			} else if (item.privileges['R']) {
 				let edit_node = document.createElement('i');
 				edit_node.className = 'fas fa-edit';
 				edit_node.addEventListener('click', event => {
@@ -64,7 +74,7 @@ class Tree {
 				this.selectNode(options.level, item.id);
 			});
 
-			if (item.privileges['R'] || item.privileges['D']) {
+			if ((item.privileges['R'] || item.privileges['D']) && !this.options.toPick) {
 				let menu = {};
 				if (item.privileges['R']) {
 					menu['Vedi / modifica'] = () => {
@@ -87,7 +97,7 @@ class Tree {
 			container.appendChild(node);
 		}
 
-		if (this.options.privileges['C']) {
+		if (this.options.privileges['C'] && !this.options.toPick) {
 			let node = document.createElement('div');
 			node.className = 'tree-node';
 			node.innerHTML = '<i class="fas fa-plus"></i> <span>Nuovo</span>';
@@ -181,7 +191,9 @@ class Tree {
 
 		this.getLevelContainer(level + 1, true).loading();
 
-		return search(1, {
+		return search(null, {
+			visualizer: this,
+			endpoint: this.options.endpoint,
 			empty_main: false,
 			visualizer_meta: {
 				level: level + 1,
@@ -216,7 +228,9 @@ class Tree {
 		if (level > 1 && parent === null)
 			throw 'Parent can\'t be null for levels other than the first one';
 
-		return search(1, {
+		return search(null, {
+			visualizer: this,
+			endpoint: this.options.endpoint,
 			empty_main: false,
 			visualizer_meta: {
 				level: level,
