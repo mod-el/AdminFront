@@ -1271,7 +1271,7 @@ async function search(page = 1, options = {}) {
 	currentPage = page;
 
 	return adminApiRequest('page/' + endpoint + '/search', payload).then(response => {
-		if (endpoint !== currentAdminPage.split('/')[0]) // Nel frattempo è cambiata pagina?
+		if (visualizer.main && endpoint !== currentAdminPage.split('/')[0]) // Nel frattempo è cambiata pagina?
 			return;
 
 		buildBreadcrumbs();
