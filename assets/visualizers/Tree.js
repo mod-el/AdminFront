@@ -9,6 +9,7 @@ class Tree {
 		this.options['visualizer-options'] = {
 			field: 'parent',
 			separator: ' | ',
+			selectedOnTop: true,
 			...(options['visualizer-options'] || {})
 		};
 
@@ -183,10 +184,15 @@ class Tree {
 		let columnBefore = this.getLevelContainer(level);
 		let nodes = columnBefore.querySelectorAll('.tree-node');
 		for (let node of nodes) {
-			if (node.getAttribute('data-id') == id)
+			if (node.getAttribute('data-id') == id) {
 				node.addClass('selected');
-			else
+				if (this.options['visualizer-options'].selectedOnTop)
+					node.addClass('on-top');
+			} else {
 				node.removeClass('selected');
+				if (this.options['visualizer-options'].selectedOnTop)
+					node.removeClass('on-top');
+			}
 		}
 
 		this.getLevelContainer(level + 1, true).loading();

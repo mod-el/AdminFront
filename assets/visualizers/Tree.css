@@ -30,6 +30,9 @@
 
 .tree-node.selected {
 	background: var(--color-light);
+}
+
+.tree-node.on-top {
 	order: -1;
 }
 
