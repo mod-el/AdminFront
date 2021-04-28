@@ -1231,7 +1231,7 @@ async function search(page = 1, options = {}) {
 		'filters': filters
 	};
 
-	if (page === null)
+	if (page === null || !visualizer.hasPagination)
 		payload['per-page'] = 0;
 	else
 		payload['page'] = page;
