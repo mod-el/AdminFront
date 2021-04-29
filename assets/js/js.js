@@ -2285,6 +2285,21 @@ function replaceTemplateValues(cont, id, data) {
 				v = '';
 		}
 
+		if (typeof v !== 'string') {
+			if (v.toString)
+				v = v.toString();
+			else
+				v = '';
+		}
+
+		// Encoding special characters
+		v = v.replace(/[\u00A0-\u9999<>\&]/g, function (i) {
+			return '&#' + i.charCodeAt(0) + ';';
+		});
+
+		// nl2br
+		v = v.replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br/>$2');
+
 		let regex = new RegExp('\\[' + k + '\\]', 'g');
 		cont.innerHTML = cont.innerHTML.replace(regex, v);
 	}
