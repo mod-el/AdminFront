@@ -1,3 +1,8 @@
+.tree-container {
+	white-space: nowrap;
+	overflow-x: auto;
+}
+
 .tree-column {
 	padding: 10px;
 	vertical-align: top;

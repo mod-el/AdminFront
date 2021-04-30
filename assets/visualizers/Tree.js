@@ -32,6 +32,8 @@ class Tree {
 			...options
 		};
 
+		this.container.addClass('tree-container');
+
 		let container = this.getLevelContainer(options.level, options.drop);
 		container.dataset.parent = options.parent || '';
 		container.innerHTML = '';
