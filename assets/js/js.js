@@ -1763,7 +1763,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 			handleItemsNavigation(responses[1]);
 
 		let mainContent = _('main-content');
-		replaceTemplateValues(mainContent, id, responses[1].data, responses[1].fields);
+		await replaceTemplateValues(mainContent, id, responses[1].data, responses[1].fields);
 
 		let form = new FormManager('main');
 		pageForms.set('main', form);
@@ -2265,7 +2265,7 @@ async function loadVisualizer(visualizerName, visualizerId, container, main, opt
 	return new (visualizerClass)(visualizerId, container, main, options);
 }
 
-function replaceTemplateValues(cont, id, data, fields = {}) {
+async function replaceTemplateValues(cont, id, data, fields = {}) {
 	let keys = ['id', ...Object.keys(data)];
 	for (let k of keys) {
 		let v = '';
@@ -2292,7 +2292,7 @@ function replaceTemplateValues(cont, id, data, fields = {}) {
 		for (let match of matches) {
 			if (match[2]) { // Custom function?
 				if (typeof window[match[2]] === 'function') {
-					v = window[match[2]].call(null, v);
+					v = await window[match[2]].call(null, v);
 				} else {
 					alert('Function ' + match[2] + ' does not exist');
 					continue;
@@ -2400,7 +2400,7 @@ async function openElementInPopup(id, options = {}) {
 		saveButtonCont.innerHTML = '<input type="submit" value="Salva" class="btn btn-primary"/>';
 		popupForm.appendChild(saveButtonCont);
 
-		replaceTemplateValues(popupForm, 0, responses[1].data, responses[1].fields);
+		await replaceTemplateValues(popupForm, 0, responses[1].data, responses[1].fields);
 
 		let form = new FormManager(options.formName);
 		pageForms.set(options.formName, form);
