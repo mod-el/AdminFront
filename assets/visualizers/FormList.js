@@ -171,7 +171,7 @@ class FormList {
 			}
 		}
 
-		replaceTemplateValues(template, id, data.data);
+		replaceTemplateValues(template, id, data.data, data.fields);
 
 		let form = new FormManager(this.id + '-' + id);
 

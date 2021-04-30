@@ -1763,7 +1763,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 			handleItemsNavigation(responses[1]);
 
 		let mainContent = _('main-content');
-		replaceTemplateValues(mainContent, id, responses[1].data);
+		replaceTemplateValues(mainContent, id, responses[1].data, responses[1].fields);
 
 		let form = new FormManager('main');
 		pageForms.set('main', form);
@@ -2265,7 +2265,7 @@ async function loadVisualizer(visualizerName, visualizerId, container, main, opt
 	return new (visualizerClass)(visualizerId, container, main, options);
 }
 
-function replaceTemplateValues(cont, id, data) {
+function replaceTemplateValues(cont, id, data, fields = {}) {
 	let keys = ['id', ...Object.keys(data)];
 	for (let k of keys) {
 		let v = '';
@@ -2285,23 +2285,85 @@ function replaceTemplateValues(cont, id, data) {
 				v = '';
 		}
 
-		if (typeof v !== 'string') {
-			if (v.toString)
-				v = v.toString();
-			else
-				v = '';
+		let html = cont.innerHTML;
+		let regex = new RegExp('\\[' + k + '(\\|([a-z0-9_]+))?\\]', 'ig');
+
+		let matches = html.matchAll(regex);
+		for (let match of matches) {
+			if (match[2]) { // Custom function?
+				if (typeof window[match[2]] === 'function') {
+					v = window[match[2]].call(null, v);
+				} else {
+					alert('Function ' + match[2] + ' does not exist');
+					continue;
+				}
+			} else {
+				let field = null;
+				if (typeof fields[k] !== 'undefined')
+					field = fields[k];
+
+				v = formatValueForTemplate(v, field);
+			}
+
+			let singleRegex = new RegExp(escapeRegExp(match[0]), 'g');
+			cont.innerHTML = cont.innerHTML.replace(singleRegex, v);
 		}
 
-		// Encoding special characters
-		v = v.replace(/[\u00A0-\u9999<>\&]/g, function (i) {
-			return '&#' + i.charCodeAt(0) + ';';
-		});
-
-		// nl2br
-		v = v.replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br/>$2');
-
-		let regex = new RegExp('\\[' + k + '\\]', 'g');
 		cont.innerHTML = cont.innerHTML.replace(regex, v);
+	}
+}
+
+function formatValueForTemplate(v, field = null) {
+	let type = 'text';
+	if (field && field.type)
+		type = field.type;
+
+	switch (type) {
+		case 'date':
+			if (v)
+				return v.substr(8, 2) + '/' + v.substr(5, 2) + '/' + v.substr(0, 4);
+			else
+				return '';
+
+		case 'datetime':
+			if (v)
+				return v.substr(8, 2) + '/' + v.substr(5, 2) + '/' + v.substr(0, 4) + ' ' + v.substr(11);
+			else
+				return '';
+
+		case 'select':
+		case 'radio':
+			let option = field.options.some(option => {
+				return option.id == v;
+			});
+
+			if (option)
+				return entities(option.text);
+
+			return '';
+
+		case 'checkbox':
+			return v ? 'S&igrave;' : 'No';
+
+		case 'ckeditor':
+		case 'custom':
+			return v;
+
+		default:
+			if (typeof v !== 'string') {
+				if (v.toString)
+					v = v.toString();
+				else
+					v = '';
+			}
+
+			// Encoding special characters
+			v = entities(v);
+
+			// nl2br
+			v = v.replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1<br/>$2');
+
+			return v;
 	}
 }
 
@@ -2338,7 +2400,7 @@ async function openElementInPopup(id, options = {}) {
 		saveButtonCont.innerHTML = '<input type="submit" value="Salva" class="btn btn-primary"/>';
 		popupForm.appendChild(saveButtonCont);
 
-		replaceTemplateValues(popupForm, 0, responses[1].data);
+		replaceTemplateValues(popupForm, 0, responses[1].data, responses[1].fields);
 
 		let form = new FormManager(options.formName);
 		pageForms.set(options.formName, form);
