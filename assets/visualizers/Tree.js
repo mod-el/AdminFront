@@ -10,6 +10,7 @@ class Tree {
 			field: 'parent',
 			separator: ' | ',
 			selectedOnTop: true,
+			singleColumn: false,
 			...(options['visualizer-options'] || {})
 		};
 
@@ -27,7 +28,8 @@ class Tree {
 		options = {
 			...{
 				level: 1,
-				drop: true
+				drop: true,
+				breadcrumbs: []
 			},
 			...options
 		};
@@ -36,7 +38,29 @@ class Tree {
 
 		let container = this.getLevelContainer(options.level, options.drop);
 		container.dataset.parent = options.parent || '';
+		container.dataset.breadcrumbs = JSON.stringify(options.breadcrumbs);
 		container.innerHTML = '';
+
+		if (this.options['visualizer-options'].singleColumn && options.breadcrumbs.length) {
+			let breadcrumbsNode = document.createElement('div');
+			breadcrumbsNode.className = 'tree-node selected';
+			breadcrumbsNode.innerHTML = options.breadcrumbs.map(item => item.text).join(' -&gt; ');
+			container.appendChild(breadcrumbsNode);
+
+			let backNode = document.createElement('div');
+			backNode.className = 'tree-node';
+			backNode.innerHTML = `<i class="fas fa-arrow-left"></i> <span>Indietro</span>`;
+
+			backNode.addEventListener('click', event => {
+				let parent = null;
+				if (options.breadcrumbs.length > 1)
+					parent = options.breadcrumbs[options.breadcrumbs.length - 2].id;
+
+				this.selectNode(1, parent, options.breadcrumbs.slice(0, -1));
+			});
+
+			container.appendChild(backNode);
+		}
 
 		for (let item of list) {
 			let node = document.createElement('div');
@@ -74,7 +98,12 @@ class Tree {
 			node.appendChild(node_text);
 
 			node.addEventListener('click', event => {
-				this.selectNode(options.level, item.id);
+				let newBreadcrumbs = [...options.breadcrumbs];
+				newBreadcrumbs.push({
+					id: item.id,
+					text: node_text.innerHTML
+				});
+				this.selectNode(options.level, item.id, newBreadcrumbs);
 			});
 
 			if ((item.privileges['R'] || item.privileges['D']) && !this.options.toPick) {
@@ -155,6 +184,8 @@ class Tree {
 
 	getLevelContainer(level, dropSubsequents = false) {
 		level = parseInt(level);
+		if (this.options['visualizer-options'].singleColumn)
+			level = 1;
 
 		let mainColumn = null;
 		for (let cont of this.container.querySelectorAll('[data-tree-column]')) {
@@ -182,7 +213,7 @@ class Tree {
 		return subcolumn;
 	}
 
-	async selectNode(level, id) {
+	async selectNode(level, id, breadcrumbs) {
 		let columnBefore = this.getLevelContainer(level);
 		let nodes = columnBefore.querySelectorAll('.tree-node');
 		for (let node of nodes) {
@@ -205,7 +236,8 @@ class Tree {
 			empty_main: false,
 			visualizer_meta: {
 				level: level + 1,
-				parent: id
+				parent: id,
+				breadcrumbs: breadcrumbs
 			}
 		});
 	}
@@ -233,6 +265,10 @@ class Tree {
 		if (column.dataset.parent)
 			parent = parseInt(column.dataset.parent);
 
+		let breadcrumbs = [];
+		if (column.dataset.breadcrumbs)
+			breadcrumbs = JSON.parse(column.dataset.breadcrumbs);
+
 		if (level > 1 && parent === null)
 			throw 'Parent can\'t be null for levels other than the first one';
 
@@ -240,10 +276,7 @@ class Tree {
 			visualizer: this,
 			endpoint: this.options.endpoint,
 			empty_main: false,
-			visualizer_meta: {
-				level: level,
-				parent: parent
-			}
+			visualizer_meta: {level, parent, breadcrumbs}
 		});
 	}
 
