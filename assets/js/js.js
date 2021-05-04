@@ -592,6 +592,8 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 		wipePageActions();
 
+		currentAdminPage = request.join('/');
+
 		if (typeof request[1] !== 'undefined') {
 			currentAdminPage = request.join('/');
 
@@ -687,7 +689,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			}
 
 			return Promise.all(loadingPromises).then(() => {
-				currentAdminPage = request.join('/');
 				selectedRows = [];
 
 				selectFromMainMenu(request);
@@ -709,7 +710,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 						get.ajax = 1;
 						return loadPage(adminPrefix + 'template/' + request.join('/'), get);
-						break;
 					default:
 						// ==== Set page variable ====
 						if (typeof get['nopag'] !== 'undefined') {
@@ -724,7 +724,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 						// ==== First search ====
 						return search(currentPage, {history: history_push});
-						break;
 				}
 			});
 		}
