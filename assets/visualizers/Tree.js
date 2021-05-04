@@ -36,17 +36,40 @@ class Tree {
 
 		this.container.addClass('tree-container');
 
+		if (this.options['visualizer-options'].singleColumn) {
+			let breadcrumbsNode = this.container.querySelector('.tree-breadcrumbs');
+			if (!breadcrumbsNode) {
+				breadcrumbsNode = document.createElement('div');
+				breadcrumbsNode.className = 'tree-breadcrumbs';
+				this.container.appendChild(breadcrumbsNode);
+			}
+
+			breadcrumbsNode.innerHTML = '';
+			if (options.breadcrumbs.length) {
+				let rootNode = document.createElement('div');
+				rootNode.addEventListener('click', event => {
+					this.selectNode(1, null, []);
+				});
+				rootNode.textContent = 'Root';
+				breadcrumbsNode.appendChild(rootNode);
+
+				for (let [idx, step] of options.breadcrumbs.entries()) {
+					let stepNode = document.createElement('div');
+					stepNode.addEventListener('click', event => {
+						this.selectNode(1, step.id, options.breadcrumbs.slice(0, idx + 1));
+					});
+					stepNode.textContent = step.text;
+					breadcrumbsNode.appendChild(stepNode);
+				}
+			}
+		}
+
 		let container = this.getLevelContainer(options.level, options.drop);
 		container.dataset.parent = options.parent || '';
 		container.dataset.breadcrumbs = JSON.stringify(options.breadcrumbs);
 		container.innerHTML = '';
 
 		if (this.options['visualizer-options'].singleColumn && options.breadcrumbs.length) {
-			let breadcrumbsNode = document.createElement('div');
-			breadcrumbsNode.className = 'tree-node selected';
-			breadcrumbsNode.innerHTML = options.breadcrumbs.map(item => item.text).join(' -&gt; ');
-			container.appendChild(breadcrumbsNode);
-
 			let backNode = document.createElement('div');
 			backNode.className = 'tree-node';
 			backNode.innerHTML = `<i class="fas fa-arrow-left"></i> <span>Indietro</span>`;
@@ -62,21 +85,34 @@ class Tree {
 			container.appendChild(backNode);
 		}
 
+		if (this.options.toPick && options.parent) {
+			let pickNode = document.createElement('div');
+			pickNode.className = 'tree-node';
+			pickNode.innerHTML = `<i class="fas fa-check-circle"></i> <span>[scegli]</span>`;
+			pickNode.addEventListener('click', event => {
+				event.preventDefault();
+				event.stopPropagation();
+
+				this.options.toPick.call(pickNode, options.parent);
+			});
+			container.appendChild(pickNode);
+		}
+
 		for (let item of list) {
 			let node = document.createElement('div');
 			node.className = 'tree-node';
 			node.setAttribute('data-id', item.id);
 
 			if (this.options.toPick) {
-				let edit_node = document.createElement('i');
-				edit_node.className = 'fas fa-check-circle';
-				edit_node.addEventListener('click', event => {
+				let pickNode = document.createElement('i');
+				pickNode.className = 'fas fa-check-circle';
+				pickNode.addEventListener('click', event => {
 					event.preventDefault();
 					event.stopPropagation();
 
 					this.options.toPick.call(node, item.id);
 				});
-				node.appendChild(edit_node);
+				node.appendChild(pickNode);
 			} else if (item.privileges['R']) {
 				let edit_node = document.createElement('i');
 				edit_node.className = 'fas fa-edit';

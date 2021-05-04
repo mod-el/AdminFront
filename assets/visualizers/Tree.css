@@ -3,6 +3,21 @@
 	overflow-x: auto;
 }
 
+.tree-breadcrumbs {
+	padding-top: 5px;
+	padding-left: 13px;
+}
+
+.tree-breadcrumbs > div {
+	display: inline-block;
+	background: var(--color-light);
+	cursor: pointer;
+	color: #fff;
+	padding: 2px 10px;
+	border-radius: 12px;
+	margin-right: 10px;
+}
+
 .tree-column {
 	padding: 10px;
 	vertical-align: top;
@@ -35,12 +50,9 @@
 
 .tree-node.selected {
 	background: var(--color-light);
+	color: #fff;
 }
 
 .tree-node.on-top {
 	order: -1;
-}
-
-.tree-node.selected {
-	color: #fff;
 }
