@@ -862,6 +862,8 @@ async function getFiltersFromPageDetails() {
 	let filtersArrangement = await getFiltersListFromStorage();
 	let filtersValues = getFiltersValuesFromStorage();
 
+	let filtersForm = new FormManager('filters');
+
 	let filters = {
 		'primary': [],
 		'secondary': []
@@ -895,6 +897,7 @@ async function getFiltersFromPageDetails() {
 				filter = new Field('filter-' + idx, fieldOptions);
 			}
 
+			filtersForm.add(filter);
 			filters[form].push(filter);
 			idx++;
 		});
