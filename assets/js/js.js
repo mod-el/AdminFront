@@ -1840,6 +1840,8 @@ function wipeForms() {
 	pageForms.clear();
 	pageSublists.clear();
 	historyMgr.wipe();
+	if (reloadingOptionsCache)
+		reloadingOptionsCache.clear();
 }
 
 function newElement(get = {}, page = null, history_push = true) {
@@ -2466,7 +2468,7 @@ async function makeDynamicOption(fieldName, page, formName = 'main') {
 			let field = form.fields.get(fieldName);
 
 			if (field.options.type === 'select')
-				await field.reloadOptions();
+				await field.reloadOptions(null, null, true, false);
 
 			await field.setValue(id);
 		}
