@@ -309,18 +309,36 @@ class Tree {
 
 		wipeForms();
 
-		let afterSave = () => {
-			// Cancello eventuali residui dai form della pagina
-			wipeForms();
+		if (this.options['visualizer-options'].singleColumn) {
+			let container = this.container.querySelector('.tree-detail-container');
 
-			// Ricarico il livello al quale questo nodo apparteneva
-			return this.reloadLevel(level);
-		};
+			return openElementInContainer(id, container, {
+				formName: 'main',
+				afterSave: async () => {
+					// Cancello eventuali residui dai form della pagina
+					wipeForms();
 
-		if (this.options['visualizer-options'].singleColumn)
-			return openElementInContainer(id, this.container.querySelector('.tree-detail-container'), {formName: 'main', afterSave});
-		else
-			return openElementInPopup(id, {afterSave});
+					// Ricarico il livello al quale questo nodo apparteneva
+					await this.reloadLevel(level);
+
+					// Ricarico l'elemento
+					await this.editNode(level, id);
+
+					// Mostro il messaggio di successo
+					inPageMessage('Salvataggio correttamente effettuato.', 'success', container);
+				}
+			});
+		} else {
+			return openElementInPopup(id, {
+				afterSave: async () => {
+					// Cancello eventuali residui dai form della pagina
+					wipeForms();
+
+					// Ricarico il livello al quale questo nodo apparteneva
+					return this.reloadLevel(level);
+				}
+			});
+		}
 	}
 
 	async reloadLevel(level) {

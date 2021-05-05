@@ -2000,12 +2000,21 @@ async function save(options = {}) {
 	});
 }
 
-function inPageMessage(text, className) {
+function inPageMessage(text, className, container = null) {
+	if (container === null)
+		container = _('main-content');
+	if (!container)
+		return;
+
 	let div = document.createElement('div');
 	div.className = 'alert alert-' + className + ' alert-dismissible fade show';
 	div.setAttribute('role', 'alert');
 	div.innerHTML = text + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
-	_('main-content').insertBefore(div, _('main-content').firstChild);
+
+	if (container.firstChild)
+		container.insertBefore(div, container.firstChild);
+	else
+		container.appendChild(div);
 }
 
 function setLoadingBar(percentage) {
