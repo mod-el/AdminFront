@@ -367,7 +367,7 @@ class Tree {
 	}
 
 	async deleteNode(level, id) {
-		document.body.style.cursor = 'pointer';
+		document.body.style.cursor = 'wait';
 
 		let request = currentAdminPage.split('/');
 		return adminApiRequest('page/' + request[0] + '/delete', {ids: [id]}).then(() => {
