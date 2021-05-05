@@ -156,7 +156,7 @@ class Tree {
 				let newBreadcrumbs = [...options.breadcrumbs];
 				newBreadcrumbs.push({
 					id: item.id,
-					text: node_text.innerHTML
+					text: node_text.textContent
 				});
 				this.selectNode(options.level, item.id, newBreadcrumbs);
 			});
