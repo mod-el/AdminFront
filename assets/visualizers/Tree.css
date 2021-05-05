@@ -1,6 +1,7 @@
 .tree-container {
 	white-space: nowrap;
 	overflow-x: auto;
+	display: flex;
 }
 
 .tree-breadcrumbs {
@@ -21,7 +22,7 @@
 .tree-column {
 	padding: 10px;
 	vertical-align: top;
-	display: inline-block;
+	flex: 0 0 auto;
 }
 
 .tree-subcolumn {
@@ -55,4 +56,11 @@
 
 .tree-node.on-top {
 	order: -1;
+}
+
+.tree-detail-container {
+	white-space: normal;
+	flex: 1 1 auto;
+	box-sizing: border-box;
+	padding: 15px;
 }

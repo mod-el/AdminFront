@@ -1911,9 +1911,10 @@ async function save(options = {}) {
 		let form = pageForms.get(options.form);
 		if (!form.ignore && !(await form.checkRequired()))
 			return false;
-
-		_('form-' + options.form).querySelector('input[type="submit"]').value = 'Attendere...';
 	}
+
+	if (_('form-' + options.form))
+		_('form-' + options.form).querySelector('input[type="submit"]').value = 'Attendere...';
 
 	resize();
 
@@ -2378,10 +2379,10 @@ function formatValueForTemplate(v, field = null) {
 	}
 }
 
-async function openElementInPopup(id, options = {}) {
+async function openElementInContainer(id, container, options = {}) {
 	options = {
 		...{
-			formName: 'popup',
+			formName: null,
 			page: currentAdminPage.split('/')[0],
 			save: null,
 			afterSave: null
@@ -2389,35 +2390,32 @@ async function openElementInPopup(id, options = {}) {
 		...options
 	};
 
+	if (!options.formName) {
+		alert('Specify a valid form name');
+		return;
+	}
+
+	container.innerHTML = '<form id="form-' + options.formName + '" action="" method="post"><img src="' + PATH + 'model/Output/files/loading.gif" alt="Attendere"/></form>';
+
 	let templatePromise = loadPage(adminPrefix + 'template/' + options.page, {ajax: ''}, {}, {fill_main: false});
 	let dataPromise = loadElementData(options.page, id);
-	let popupPromise = zkPopup('<form id="form-' + options.formName + '" action="" method="post"><img src="' + PATH + 'model/Output/files/loading.gif" alt="Attendere"/></form>', {
-		onClose: () => {
-			if (options.formName === 'main') {
-				wipeForms();
-			} else {
-				if (pageForms.get(options.formName))
-					pageForms.delete(options.formName);
-			}
-		}
-	});
 
-	return Promise.all([templatePromise, dataPromise, popupPromise]).then(async responses => {
-		let popupForm = _('form-' + options.formName);
-		popupForm.innerHTML = responses[0];
+	return Promise.all([templatePromise, dataPromise]).then(async responses => {
+		let containerForm = _('form-' + options.formName);
+		containerForm.innerHTML = responses[0];
 
 		let saveButtonCont = document.createElement('div');
 		saveButtonCont.className = 'text-center pt-2';
 		saveButtonCont.innerHTML = '<input type="submit" value="Salva" class="btn btn-primary"/>';
-		popupForm.appendChild(saveButtonCont);
+		containerForm.appendChild(saveButtonCont);
 
-		await replaceTemplateValues(popupForm, 0, responses[1].data, responses[1].fields);
+		await replaceTemplateValues(containerForm, 0, responses[1].data, responses[1].fields);
 
 		let form = new FormManager(options.formName);
 		pageForms.set(options.formName, form);
-		await form.build(popupForm, responses[1]);
+		await form.build(containerForm, responses[1]);
 
-		popupForm.addEventListener('submit', async event => {
+		containerForm.addEventListener('submit', async event => {
 			event.preventDefault();
 
 			let newId;
@@ -2435,8 +2433,6 @@ async function openElementInPopup(id, options = {}) {
 
 			if (options.afterSave)
 				await options.afterSave(newId);
-
-			zkPopupClose();
 		});
 
 		Array.from(document.querySelectorAll('#popup-real input')).some(field => {
@@ -2448,6 +2444,45 @@ async function openElementInPopup(id, options = {}) {
 			}
 			return false;
 		});
+	}).catch(err => {
+		container.innerHTML = err.toString();
+		throw err;
+	});
+}
+
+function clearElementInContainer(formName) {
+	if (formName === 'main') {
+		wipeForms();
+	} else {
+		if (pageForms.get(formName))
+			pageForms.delete(formName);
+	}
+}
+
+async function openElementInPopup(id, options = {}) {
+	options = {
+		...{
+			formName: 'popup',
+			page: currentAdminPage.split('/')[0],
+			save: null,
+			afterSave: null
+		},
+		...options
+	};
+
+	zkPopup('', {
+		onClose: () => {
+			clearElementInContainer(options.formName);
+		}
+	}).then(async () => {
+		let oldAfterSave = options.afterSave;
+		options.afterSave = async id => {
+			if (oldAfterSave)
+				await oldAfterSave(id);
+			zkPopupClose();
+		};
+
+		await openElementInContainer(id, _('popup-real'), options);
 
 		return fillPopup();
 	}).catch(err => {

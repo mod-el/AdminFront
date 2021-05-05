@@ -34,8 +34,6 @@ class Tree {
 			...options
 		};
 
-		this.container.addClass('tree-container');
-
 		if (this.options['visualizer-options'].singleColumn) {
 			let breadcrumbsNode = this.container.querySelector('.tree-breadcrumbs');
 			if (!breadcrumbsNode) {
@@ -64,10 +62,31 @@ class Tree {
 			}
 		}
 
-		let container = this.getLevelContainer(options.level, options.drop);
-		container.dataset.parent = options.parent || '';
-		container.dataset.breadcrumbs = JSON.stringify(options.breadcrumbs);
-		container.innerHTML = '';
+		let treeContainer = this.container.querySelector('.tree-container');
+		if (!treeContainer) {
+			treeContainer = document.createElement('div');
+			treeContainer.className = 'tree-container';
+			this.container.appendChild(treeContainer);
+		}
+
+		let levelContainer = this.getLevelContainer(options.level, options.drop);
+		levelContainer.dataset.parent = options.parent || '';
+		levelContainer.dataset.breadcrumbs = JSON.stringify(options.breadcrumbs);
+		levelContainer.innerHTML = '';
+
+		if (this.options['visualizer-options'].singleColumn) {
+			let treeDetailContainer = treeContainer.querySelector('.tree-detail-container');
+			if (!treeDetailContainer) {
+				treeDetailContainer = document.createElement('div');
+				treeDetailContainer.className = 'tree-detail-container';
+				treeContainer.appendChild(treeDetailContainer);
+			}
+
+			if (treeDetailContainer.innerHTML !== '') {
+				treeDetailContainer.innerHTML = '';
+				wipeForms();
+			}
+		}
 
 		if (this.options['visualizer-options'].singleColumn && options.breadcrumbs.length) {
 			let backNode = document.createElement('div');
@@ -82,7 +101,7 @@ class Tree {
 				this.selectNode(1, parent, options.breadcrumbs.slice(0, -1));
 			});
 
-			container.appendChild(backNode);
+			levelContainer.appendChild(backNode);
 		}
 
 		if (this.options.toPick && options.parent) {
@@ -95,7 +114,7 @@ class Tree {
 
 				this.options.toPick.call(pickNode, options.parent);
 			});
-			container.appendChild(pickNode);
+			levelContainer.appendChild(pickNode);
 		}
 
 		for (let item of list) {
@@ -162,7 +181,7 @@ class Tree {
 				node.ctxMenu(menu);
 			}
 
-			container.appendChild(node);
+			levelContainer.appendChild(node);
 		}
 
 		if (this.options.privileges['C'] && !this.options.toPick) {
@@ -172,12 +191,14 @@ class Tree {
 
 			node.addEventListener('click', event => {
 				this.editNode(options.level, 0).then(() => {
-					if (options.parent)
-						pageForms.get('popup').fields.get(this.options['visualizer-options'].field).setValue(options.parent);
+					if (options.parent) {
+						let formName = this.options['visualizer-options'].singleColumn ? 'main' : 'popup';
+						pageForms.get(formName).fields.get(this.options['visualizer-options'].field).setValue(options.parent);
+					}
 				});
 			});
 
-			container.appendChild(node);
+			levelContainer.appendChild(node);
 		}
 	}
 
@@ -223,8 +244,12 @@ class Tree {
 		if (this.options['visualizer-options'].singleColumn)
 			level = 1;
 
+		let treeContainer = this.container.querySelector('.tree-container');
+		if (!treeContainer)
+			return null;
+
 		let mainColumn = null;
-		for (let cont of this.container.querySelectorAll('[data-tree-column]')) {
+		for (let cont of treeContainer.querySelectorAll('[data-tree-column]')) {
 			let contLevel = parseInt(cont.getAttribute('data-tree-column'));
 			if (dropSubsequents && contLevel > level)
 				cont.remove();
@@ -237,7 +262,7 @@ class Tree {
 			mainColumn = document.createElement('div');
 			mainColumn.className = 'tree-column';
 			mainColumn.setAttribute('data-tree-column', level);
-			this.container.appendChild(mainColumn);
+			treeContainer.appendChild(mainColumn);
 
 			subcolumn = document.createElement('div');
 			subcolumn.className = 'tree-subcolumn';
@@ -283,18 +308,25 @@ class Tree {
 			return;
 
 		wipeForms();
-		return openElementInPopup(id, {
-			afterSave: () => {
-				// Cancello eventuali residui dai form della pagina
-				wipeForms();
 
-				// Ricarico il livello al quale questo nodo apparteneva
-				return this.reloadLevel(level);
-			}
-		});
+		let afterSave = () => {
+			// Cancello eventuali residui dai form della pagina
+			wipeForms();
+
+			// Ricarico il livello al quale questo nodo apparteneva
+			return this.reloadLevel(level);
+		};
+
+		if (this.options['visualizer-options'].singleColumn)
+			return openElementInContainer(id, this.container.querySelector('.tree-detail-container'), {formName: 'main', afterSave});
+		else
+			return openElementInPopup(id, {afterSave});
 	}
 
 	async reloadLevel(level) {
+		if (this.options['visualizer-options'].singleColumn)
+			level = 1;
+
 		let column = this.getLevelContainer(level, true).loading();
 
 		let parent = null;
