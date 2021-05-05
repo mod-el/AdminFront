@@ -1771,36 +1771,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 		pageForms.set('main', form);
 		await form.build(mainContent, responses[1]);
 
-		let sublistsPromises = [];
-
-		for (let sublist of responses[1].sublists) {
-			let sublistCont = mainContent.querySelector('[data-sublistplaceholder="' + sublist.name + '"]');
-			if (!sublistCont)
-				continue;
-
-			sublistsPromises.push(new Promise(async (resolve, reject) => {
-				try {
-					if (sublist.name === page)
-						throw 'You cannot name a sublist like the main page';
-
-					let visualizer = await loadVisualizer(sublist.visualizer, sublist.name, sublistCont, false, {
-						"fields": sublist.fields,
-						"privileges": sublist.privileges,
-						"visualizer-options": sublist['visualizer-options'],
-					});
-
-					pageSublists.set(sublist.name, visualizer);
-
-					await visualizer.render(sublist.list);
-
-					resolve();
-				} catch (e) {
-					reject(e);
-				}
-			}));
-		}
-
-		await Promise.all(sublistsPromises);
+		await renderSublists(responses[1].sublists, mainContent);
 
 		for (let warning of responses[1].warnings)
 			inPageMessage(warning, 'warning');
@@ -1821,6 +1792,39 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 			return false;
 		});
 	}).catch(reportAdminError);
+}
+
+async function renderSublists(sublists, container) {
+	let sublistsPromises = [];
+
+	for (let sublist of sublists) {
+		let sublistCont = container.querySelector('[data-sublistplaceholder="' + sublist.name + '"]');
+		if (!sublistCont)
+			continue;
+
+		sublistsPromises.push(new Promise(async (resolve, reject) => {
+			try {
+				if (sublist.name === currentAdminPage.split('/')[0])
+					throw 'You cannot name a sublist like the main page';
+
+				let visualizer = await loadVisualizer(sublist.visualizer, sublist.name, sublistCont, false, {
+					"fields": sublist.fields,
+					"privileges": sublist.privileges,
+					"visualizer-options": sublist['visualizer-options'],
+				});
+
+				pageSublists.set(sublist.name, visualizer);
+
+				await visualizer.render(sublist.list);
+
+				resolve();
+			} catch (e) {
+				reject(e);
+			}
+		}));
+	}
+
+	return Promise.all(sublistsPromises);
 }
 
 function loadElementData(page, id, get = {}) {
@@ -2415,6 +2419,8 @@ async function openElementInContainer(id, container, options = {}) {
 		pageForms.set(options.formName, form);
 		await form.build(containerForm, responses[1]);
 
+		await renderSublists(responses[1].sublists, containerForm);
+
 		containerForm.addEventListener('submit', async event => {
 			event.preventDefault();
 
@@ -2425,7 +2431,6 @@ async function openElementInContainer(id, container, options = {}) {
 				newId = await save({
 					form: options.formName,
 					load_element: false,
-					sublists: false,
 					page: options.page,
 					id: id
 				});
