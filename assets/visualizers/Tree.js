@@ -314,7 +314,7 @@ class Tree {
 
 			return openElementInContainer(id, container, {
 				formName: 'main',
-				afterSave: async () => {
+				afterSave: async newId => {
 					// Cancello eventuali residui dai form della pagina
 					wipeForms();
 
@@ -322,7 +322,7 @@ class Tree {
 					await this.reloadLevel(level);
 
 					// Ricarico l'elemento
-					await this.editNode(level, id);
+					await this.editNode(level, newId);
 
 					// Mostro il messaggio di successo
 					inPageMessage('Salvataggio correttamente effettuato.', 'success', container);
