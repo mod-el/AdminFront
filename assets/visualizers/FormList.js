@@ -300,12 +300,12 @@ class FormList {
 		let first = true;
 		for (let row of rows) {
 			if (first) {
-				row.row.querySelectorAll('label').forEach(label => {
+				row.row.querySelectorAll('label[data-auto]').forEach(label => {
 					label.removeClass('d-none');
 				});
 				first = false;
 			} else {
-				row.row.querySelectorAll('label').forEach(label => {
+				row.row.querySelectorAll('label[data-auto]').forEach(label => {
 					label.addClass('d-none');
 				});
 			}
