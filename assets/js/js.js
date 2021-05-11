@@ -1767,7 +1767,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 		let mainContent = _('main-content');
 		await replaceTemplateValues(mainContent, id, responses[1].data, responses[1].fields);
 
-		let form = new FormManager('main');
+		let form = new FormManager('main', {updateAdminHistory: true});
 		pageForms.set('main', form);
 		await form.build(mainContent, responses[1]);
 

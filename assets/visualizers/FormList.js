@@ -173,7 +173,7 @@ class FormList {
 
 		await replaceTemplateValues(template, id, data.data, data.fields);
 
-		let form = new FormManager(this.id + '-' + id);
+		let form = new FormManager(this.id + '-' + id, {updateAdminHistory: true});
 
 		pageForms.set(this.id + '-' + id, form);
 
