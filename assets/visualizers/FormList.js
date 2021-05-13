@@ -235,7 +235,8 @@ class FormList {
 
 		await form.build(template, data);
 
-		this.rows.set(id, {id, row, form, isNew, deleted: false});
+		let rowObj = {id, row, form, isNew, deleted: false};
+		this.rows.set(id, rowObj);
 		if (isNew)
 			this.newRows.push(id);
 
@@ -254,7 +255,7 @@ class FormList {
 
 			this.refreshLabelsVisibility();
 
-			return id;
+			return rowObj;
 		});
 	}
 
