@@ -312,6 +312,8 @@ class Tree {
 		if (this.options['visualizer-options'].singleColumn) {
 			let container = this.container.querySelector('.tree-detail-container');
 
+			_('main-content').scrollTo(0, 0);
+
 			return openElementInContainer(id, container, {
 				formName: 'main',
 				afterSave: async newId => {
