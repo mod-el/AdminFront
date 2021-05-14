@@ -82,7 +82,7 @@ class Tree {
 				treeContainer.appendChild(treeDetailContainer);
 			}
 
-			if (treeDetailContainer.innerHTML !== '') {
+			if (options.parent === null && treeDetailContainer.innerHTML !== '') {
 				treeDetailContainer.innerHTML = '';
 				wipeForms();
 			}
@@ -135,12 +135,14 @@ class Tree {
 			} else if (item.privileges['R']) {
 				let edit_node = document.createElement('i');
 				edit_node.className = 'fas fa-edit';
-				edit_node.addEventListener('click', event => {
-					event.preventDefault();
-					event.stopPropagation();
+				if (!this.options['visualizer-options'].singleColumn) {
+					edit_node.addEventListener('click', event => {
+						event.preventDefault();
+						event.stopPropagation();
 
-					this.editNode(options.level, item.id);
-				});
+						this.editNode(options.level, item.id);
+					});
+				}
 				node.appendChild(edit_node);
 			}
 
@@ -291,7 +293,8 @@ class Tree {
 
 		this.getLevelContainer(level + 1, true).loading();
 
-		return search(null, {
+		let promises = [];
+		promises.push(search(null, {
 			visualizer: this,
 			endpoint: this.options.endpoint,
 			empty_main: false,
@@ -300,7 +303,12 @@ class Tree {
 				parent: id,
 				breadcrumbs: breadcrumbs
 			}
-		});
+		}));
+
+		if (this.options['visualizer-options'].singleColumn && id)
+			promises.push(this.editNode(level, id));
+
+		return Promise.all(promises);
 	}
 
 	async editNode(level, id) {
