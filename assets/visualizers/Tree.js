@@ -171,7 +171,13 @@ class Tree {
 					};
 				}
 
-				if (item.privileges['R']) {
+				if (item.privileges['U']) {
+					menu['Sposta'] = () => {
+						this.moveNode(options.level, item.id);
+					};
+				}
+
+				if (item.privileges['D']) {
 					menu['Elimina'] = () => {
 						if (!confirm('Sicuro di voler eliminare?'))
 							return;
@@ -388,6 +394,48 @@ class Tree {
 			reportAdminError(error);
 		}).finally(() => {
 			document.body.style.cursor = 'auto';
+		});
+	}
+
+	async moveNode(level, sourceId) {
+		return zkPopup(`<div id="move-node-${this.id}"></div>`).then(() => {
+			let cont = _('move-node-' + this.id);
+
+			let options = JSON.parse(JSON.stringify(this.options));
+			options.toPick = async targetId => {
+				if (!confirm('Sicuro di voler spostare dentro questa categoria?'))
+					return;
+
+				try {
+					document.body.style.cursor = 'wait';
+					await adminApiRequest('page/' + this.options.endpoint + '/save/' + sourceId, {
+						'data': {
+							[this.options['visualizer-options'].field]: targetId
+						}
+					});
+
+					await this.reloadLevel(level);
+
+					zkPopupClose();
+				} catch (e) {
+					alert(e);
+				} finally {
+					document.body.style.cursor = 'auto';
+				}
+			};
+
+			return loadVisualizer('Tree', 'move-node-' + this.id, cont, false, options);
+		}).then(visualizer => {
+			return search(null, {
+				visualizer: visualizer,
+				endpoint: this.options.endpoint,
+				empty_main: false,
+				visualizer_meta: {
+					level: 1,
+					parent: null,
+					breadcrumbs: []
+				}
+			});
 		});
 	}
 }
