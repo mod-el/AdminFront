@@ -186,6 +186,14 @@ class Tree {
 					};
 				}
 
+				if (this.options['visualizer-options'].contextMenu) {
+					for (let menuItem of this.options['visualizer-options'].contextMenu) {
+						menu[menuItem.label] = () => {
+							window[menuItem.function].call(this, options, item);
+						};
+					}
+				}
+
 				node.ctxMenu(menu);
 			}
 
