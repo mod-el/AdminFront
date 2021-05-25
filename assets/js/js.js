@@ -2246,6 +2246,8 @@ function deleteRows(ids) {
 	let request = currentAdminPage.split('/');
 	return adminApiRequest('page/' + request[0] + '/delete', {ids}).then(() => {
 		wipeForms();
+		if (usingChecks)
+			selectedRows = [];
 
 		if (request.length === 1)
 			reloadMainList();
