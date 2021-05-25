@@ -229,11 +229,11 @@ class Table {
 				});
 				checkboxCell = checkboxCell.appendChild(document.createElement('div'));
 				checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
-			}
 
-			if (this.main) {
-				if (selectedRows.indexOf(item.id) !== -1)
-					checkboxCell.querySelector('input').checked = true;
+				if (this.main) {
+					if (selectedRows.indexOf(item.id) !== -1)
+						checkboxCell.querySelector('input').checked = true;
+				}
 			}
 
 			if (renderDeleteCell && !this.options.toPick) {
@@ -704,7 +704,6 @@ function autoReadableColor(bg) {
 			break;
 		default:
 			return null;
-			break;
 	}
 
 	r = parseInt(r, 16);
