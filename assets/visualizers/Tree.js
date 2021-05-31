@@ -104,7 +104,7 @@ class Tree {
 			levelContainer.appendChild(backNode);
 		}
 
-		if (this.options.toPick && options.parent) {
+		if (this.options.toPick && (this.options.allowRootPick || options.parent)) {
 			let pickNode = document.createElement('div');
 			pickNode.className = 'tree-node';
 			pickNode.innerHTML = `<i class="fas fa-check-circle"></i> <span>[scegli]</span>`;
@@ -410,6 +410,7 @@ class Tree {
 			let cont = _('move-node-' + this.id);
 
 			let options = JSON.parse(JSON.stringify(this.options));
+			options.allowRootPick = true;
 			options.toPick = async targetId => {
 				if (!confirm('Sicuro di voler spostare dentro questa categoria?'))
 					return;
