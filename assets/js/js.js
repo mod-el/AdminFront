@@ -365,14 +365,19 @@ window.onpopstate = function (event) {
 			if (typeof s['filters'] === 'undefined')
 				s['filters'] = {};
 
-			fillFiltersValues(s['filters']).then(() => {
+			fillFiltersValues(s['filters']).then(async () => {
 				if (typeof s['p'] !== 'undefined' && s['p'] !== currentPage) {
+					if (typeof s['per_page'] !== 'undefined')
+						await _('changePerPage').setValue(s['per_page'], false);
 					goToPage(s['p'], s['sort_by'], false);
 				} else {
-					search(currentPage, {
+					let search_options = {
 						sort_by: s['sort_by'],
 						history: false
-					});
+					};
+					if (typeof s['per_page'] !== 'undefined')
+						search_options.perPage = s['per_page'];
+					search(currentPage, search_options);
 				}
 			});
 		} else {
@@ -611,14 +616,10 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 				case 'edit':
 					let id = getIdFromRequest(request);
 
-					// ==== Basic actions ====
-
-					if (loadFullDetails) {
+					if (loadFullDetails)
 						return loadAdminElement(id, get, null, false);
-					} else {
+					else
 						return loadPage(adminPrefix + 'template/' + request[0], get);
-					}
-					break;
 			}
 		} else {
 			if (sessionStorage.getItem('current-page') !== request[0])
@@ -1158,7 +1159,7 @@ async function search(page = 1, options = {}) {
 		...options
 	};
 
-	if (options.per_page === 20)
+	if (options.per_page === currentPageDetails.default_per_page)
 		options.per_page = null;
 
 	let request = currentAdminPage.split('/');
@@ -1273,6 +1274,7 @@ async function search(page = 1, options = {}) {
 		historyPush(request, get, replace, {
 			'filters': filtersValues,
 			'p': page,
+			'per_page': options.per_page || null,
 			'sort_by': options.sort_by
 		});
 	}
@@ -1292,9 +1294,18 @@ async function search(page = 1, options = {}) {
 
 				_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
-				_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div> <span class="nowrap pl-2"><select id="changePerPage" style="width: auto"><option value="10">10 per pagina</option><option value="20" selected>20 per pagina</option><option value="50">50 per pagina</option><option value="100">100 per pagina</option><option value="200">200 per pagina</option><option value="500">500 per pagina</option><option value="0">Nessuna paginazione</option></select></span>';
-				if (typeof payload['per-page'] !== 'undefined')
-					_('changePerPage').setValue(payload['per-page'], false);
+				let paginationOptions = [10, 20, 50, 100, 200, 500];
+				if (currentPageDetails.default_per_page && !paginationOptions.includes(currentPageDetails.default_per_page))
+					paginationOptions.push(currentPageDetails.default_per_page);
+				paginationOptions.sort((a, b) => a - b);
+				paginationOptions.push(0);
+
+				let paginationOptionsStrings = [];
+				for (let itemsPerPage of paginationOptions)
+					paginationOptionsStrings.push(`<option value="${itemsPerPage}">${itemsPerPage ? itemsPerPage + ' per pagina' : 'Nessuna paginazione'}</option>`);
+
+				_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div> <span class="nowrap pl-2"><select id="changePerPage" style="width: auto">' + paginationOptionsStrings.join('') + '</select></span>';
+				_('changePerPage').setValue(payload['per-page'] || currentPageDetails.default_per_page, false);
 				_('changePerPage').addEventListener('change', async () => {
 					let v = await _('changePerPage').getValue();
 					v = parseInt(v);
@@ -1303,7 +1314,7 @@ async function search(page = 1, options = {}) {
 
 					if (v === 0) {
 						if (!confirm('Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?')) {
-							await _('changePerPage').setValue('20');
+							await _('changePerPage').setValue(currentPageDetails.default_per_page);
 							return;
 						}
 					}
