@@ -711,10 +711,15 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 						get.ajax = 1;
 						return loadPage(adminPrefix + 'template/' + request.join('/'), get);
 					default:
-						// ==== Set page variable ====
-						if (typeof get['nopag'] !== 'undefined') {
-							currentPage = null;
-						} else if (typeof get['p'] !== 'undefined') {
+						let search_options = {history: history_push};
+
+						if (typeof get['perPage'] !== 'undefined') {
+							let perPage = parseInt(get['perPage']);
+							if (!isNaN(perPage) && perPage >= 0)
+								search_options.per_page = perPage;
+						}
+
+						if (typeof get['p'] !== 'undefined') {
 							currentPage = parseInt(get['p']);
 							if (isNaN(currentPage) || currentPage < 1)
 								currentPage = 1;
@@ -723,7 +728,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 						}
 
 						// ==== First search ====
-						return search(currentPage, {history: history_push});
+						return search(currentPage, search_options);
 				}
 			});
 		}
@@ -1035,11 +1040,9 @@ async function goToPage(p, sort_by = null, history_push = true) {
 	if (p > currentPage)
 		moveBy *= -1;
 
-	let get = objectFromQueryString();
-	if (typeof get['goTo'] !== 'undefined')
-		delete get['goTo'];
-
-	get['p'] = p;
+	let perPage = null;
+	if (_('changePerPage'))
+		perPage = parseInt(await _('changePerPage').getValue());
 
 	new Promise(resolve => {
 		if (p !== currentPage) {
@@ -1053,7 +1056,7 @@ async function goToPage(p, sort_by = null, history_push = true) {
 		_('main-content').style.display = 'none';
 		_('main-loading').removeClass('d-none');
 
-		return search(p, {sort_by: sort_by, history: history_push});
+		return search(p, {sort_by: sort_by, per_page: perPage, history: history_push});
 	}).then(() => {
 		_('main-content').style.display = 'block';
 		_('main-loading').addClass('d-none');
@@ -1068,10 +1071,6 @@ async function goToPage(p, sort_by = null, history_push = true) {
 			setTimeout(resolve, 300);
 		});
 	});
-}
-
-async function allInOnePage() {
-	return search(null);
 }
 
 var lightboxOldParent = false;
@@ -1153,10 +1152,14 @@ async function search(page = 1, options = {}) {
 			return_payload: false,
 			empty_main: true,
 			visualizer_meta: {},
-			visualizer: null
+			visualizer: null,
+			per_page: null
 		},
 		...options
 	};
+
+	if (options.per_page === 20)
+		options.per_page = null;
 
 	let request = currentAdminPage.split('/');
 	let endpoint = options.endpoint || request[0];
@@ -1233,9 +1236,13 @@ async function search(page = 1, options = {}) {
 		'filters': filters
 	};
 
-	if (page === null || !visualizer.hasPagination)
-		payload['per-page'] = 0;
-	else
+	if (!visualizer.hasPagination)
+		options.per_page = 0;
+
+	if (options.per_page !== null)
+		payload['per-page'] = options.per_page;
+
+	if (payload['per-page'] !== 0)
 		payload['page'] = page;
 
 	if (visualizer.useFilters) {
@@ -1255,12 +1262,12 @@ async function search(page = 1, options = {}) {
 		return payload;
 
 	if (visualizer.main && options.history) {
-		let get;
-		if (page === null) {
-			get = 'nopag=1';
-		} else {
-			get = 'p=' + page;
-		}
+		let get = {};
+		if (page !== null)
+			get.p = page;
+		if (options.per_page !== null)
+			get.perPage = options.per_page;
+		get = queryStringFromObject(get);
 
 		let replace = (typeof options.history === 'string' && options.history === 'replace');
 		historyPush(request, get, replace, {
@@ -1285,11 +1292,23 @@ async function search(page = 1, options = {}) {
 
 				_('results-table-pages').innerHTML = getPaginationHtml(response.pages, response.current);
 
-				_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div>';
-				if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] === 0)
-					_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?p=1" onclick="goToPage(1); return false"> ritorna alla paginazione </a>]</span>';
-				else
-					_('results-table-count').innerHTML += '<span class="nowrap">[<a href="?nopag=1" onclick="if(confirm(\'Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?\')) allInOnePage(); return false"> tutti su una pagina </a>]</span>';
+				_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div> <span class="nowrap pl-2"><select id="changePerPage" style="width: auto"><option value="10">10 per pagina</option><option value="20" selected>20 per pagina</option><option value="50">50 per pagina</option><option value="100">100 per pagina</option><option value="200">200 per pagina</option><option value="500">500 per pagina</option><option value="0">Nessuna paginazione</option></select></span>';
+				if (typeof payload['per-page'] !== 'undefined')
+					_('changePerPage').setValue(payload['per-page'], false);
+				_('changePerPage').addEventListener('change', async () => {
+					let v = await _('changePerPage').getValue();
+					v = parseInt(v);
+					if (isNaN(v))
+						v = null;
+
+					if (v === 0) {
+						if (!confirm('Caricare tutti i risultati in una sola pagina potrebbe causare problemi di performance con tabelle molto grosse, confermi?')) {
+							await _('changePerPage').setValue('20');
+							return;
+						}
+					}
+					return search(1, {per_page: v});
+				});
 			} else {
 				_('results-table-pages').addClass('d-none');
 				_('results-table-count').addClass('d-none');
