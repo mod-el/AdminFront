@@ -332,8 +332,12 @@ class Table {
 			let innerRow = row.appendChild(document.createElement('div'));
 			innerRow.className = 'results-table-row';
 
+			let initialWidth = 30;
+			if (renderDeleteCell && !this.options.toPick)
+				initialWidth += 30;
+
 			let textDivCont = innerRow.appendChild(document.createElement('div'));
-			textDivCont.style.width = '60px';
+			textDivCont.style.width = initialWidth + 'px';
 
 			let textDiv = textDivCont.appendChild(document.createElement('div'));
 			textDiv.className = 'bold text-right';
