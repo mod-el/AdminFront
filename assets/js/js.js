@@ -2390,7 +2390,7 @@ function formatValueForTemplate(v, field = null) {
 
 		case 'select':
 		case 'radio':
-			let option = field.options.some(option => {
+			let option = field.options.find(option => {
 				return option.id == v;
 			});
 
