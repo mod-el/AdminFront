@@ -1,4 +1,9 @@
 <?php
+if (!$form) {
+	echo 'Can\'t find neither a custom template nor a form to render; fix your admin page configuration';
+	return;
+}
+
 if ($this->model->_Admin->getPageOptions()['visualizer'] === 'FormList' or isset($this->model->_AdminFront->request[2])) {
 	$form->render();
 } else {
