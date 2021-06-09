@@ -1305,7 +1305,14 @@ async function search(page = 1, options = {}) {
 					paginationOptionsStrings.push(`<option value="${itemsPerPage}">${itemsPerPage ? itemsPerPage + ' per pagina' : 'Nessuna paginazione'}</option>`);
 
 				_('results-table-count').innerHTML = '<div>' + response.tot + ' risultati presenti</div> <span class="nowrap pl-2"><select id="changePerPage" style="width: auto">' + paginationOptionsStrings.join('') + '</select></span>';
-				_('changePerPage').setValue(payload['per-page'] || currentPageDetails.default_per_page, false);
+
+				let perPage;
+				if (typeof payload['per-page'] !== 'undefined' && payload['per-page'] !== null)
+					perPage = payload['per-page'];
+				else
+					perPage = currentPageDetails.default_per_page;
+
+				_('changePerPage').setValue(perPage, false);
 				_('changePerPage').addEventListener('change', async () => {
 					let v = await _('changePerPage').getValue();
 					v = parseInt(v);
