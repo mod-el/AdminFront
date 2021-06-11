@@ -307,12 +307,12 @@ class Table {
 				let innerDiv = div.appendChild(document.createElement('div'));
 				if (field.editable) {
 					innerDiv.innerHTML = '';
-					let fieldClass = new Field(fieldName, {...field.editable, value: item.data[fieldName].value, label: null});
+					let fieldObj = buildFormField(fieldName, {...field.editable, value: item.data[fieldName].value, label: null});
 
-					let fieldNode = await fieldClass.render();
+					let fieldNode = await fieldObj.render();
 					fieldNode.setAttribute('data-editable', rowCount.toString());
-					fieldClass.addEventListener('change', () => {
-						saveEditableField(item.id, fieldClass, fieldNode);
+					fieldObj.addEventListener('change', () => {
+						saveEditableField(item.id, fieldObj, fieldNode);
 					});
 					innerDiv.appendChild(fieldNode);
 				} else if (field.price) {
