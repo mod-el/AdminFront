@@ -209,14 +209,15 @@ class AdminController extends Controller
 					if ($payload === null)
 						die('Payload errato');
 
-					$where = $this->model->_Admin->makeSearchQuery(
+					$searchQuery = $this->model->_Admin->makeSearchQuery(
 						$payload['search'] ?? '',
 						$payload['filters'] ?? [],
 						$payload['search-fields'] ?? []
 					);
 
 					$options = [
-						'where' => $where,
+						'where' => $searchQuery['where'],
+						'joins' => $searchQuery['joins'],
 					];
 					if (isset($payload['page']))
 						$options['p'] = $payload['page'];
