@@ -895,13 +895,21 @@ async function getFiltersFromPageDetails() {
 			fieldOptions['value'] = value;
 			fieldOptions['adminFilter'].default = defaultValue;
 
-			let filter;
-			if (fieldOptions.hasOwnProperty('type') && formSignatures.get(fieldOptions.type)) {
-				let fieldClass = formSignatures.get(fieldOptions.type);
-				filter = new fieldClass('filter-' + idx, fieldOptions);
-			} else {
-				filter = new Field('filter-' + idx, fieldOptions);
+			if (filterOptions.type === 'empty') {
+				fieldOptions.type = 'select';
+				fieldOptions.options = [
+					{
+						id: 1,
+						text: 'Sì'
+					},
+					{
+						id: 0,
+						text: 'No'
+					}
+				];
 			}
+
+			let filter = buildFormField('filter-' + idx, fieldOptions);
 
 			filtersForm.add(filter);
 			filters[form].push(filter);
