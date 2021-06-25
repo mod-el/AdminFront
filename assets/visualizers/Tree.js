@@ -122,6 +122,12 @@ class Tree {
 			node.className = 'tree-node';
 			node.setAttribute('data-id', item.id);
 
+			if (item.background)
+				node.style.background = item.background;
+
+			if (item.color)
+				node.style.color = item.color;
+
 			if (this.options.toPick) {
 				let pickNode = document.createElement('i');
 				pickNode.className = 'fas fa-check-circle';
