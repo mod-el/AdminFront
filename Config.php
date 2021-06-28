@@ -215,7 +215,11 @@ $config = ' . var_export($config, true) . ';
 		if ($this->model->moduleExists('Multilang') and !$this->model->isLoaded('Multilang'))
 			$this->model->load('Multilang');
 
-		$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php';
+		$adminConfigFolder = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront';
+		if (!is_dir($adminConfigFolder))
+			mkdir($adminConfigFolder, 0777, true);
+
+		$adminDictionaryFile = $adminConfigFolder . DIRECTORY_SEPARATOR . 'dictionary.php';
 
 		$dictionary = [];
 		if (file_exists($adminDictionaryFile))
