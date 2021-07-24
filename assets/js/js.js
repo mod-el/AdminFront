@@ -2343,13 +2343,13 @@ async function replaceTemplateValues(cont, id, data, fields = {}) {
 		if (v === null)
 			v = '';
 
-		if (typeof v === 'object') {
+		if (v !== null && typeof v === 'object') {
 			// Multilang?
 			if (typeof v['it'] !== 'undefined')
 				v = v['it'];
 
 			// Instant search?
-			if (typeof v === 'object' && typeof v['id'] !== 'undefined')
+			if (v !== null && typeof v === 'object' && typeof v['id'] !== 'undefined')
 				v = v['id'];
 
 			// Still object?
