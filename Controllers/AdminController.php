@@ -82,8 +82,9 @@ class AdminController extends Controller
 						if (!$element)
 							die();
 
-						if (isset($this->model->_Admin->sublists[$this->model->_AdminFront->request[2]])) {
-							$sublist = $this->model->_Admin->sublists[$this->model->_AdminFront->request[2]];
+						$sublists = $this->model->_Admin->getSublists();
+						if (isset($sublists[$this->model->_AdminFront->request[2]])) {
+							$sublist = $sublists[$this->model->_AdminFront->request[2]];
 							$relationshipOptions = $element->getChildrenOptions($sublist['relationship']);
 
 							$sublistItem = $element->create($sublist['relationship']);
@@ -281,12 +282,10 @@ class AdminController extends Controller
 								'name' => $title . '-' . $n,
 								'link' => PATH . 'model/AdminFront/data/temp-csv/' . $title . '-' . $n . '.csv',
 							];
-							break;
 					}
 					break;
 				default:
 					throw new \Exception('Unrecognized action');
-					break;
 			}
 		} catch (\Exception $e) {
 			die(getErr($e));
