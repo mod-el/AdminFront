@@ -1736,6 +1736,11 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 	if (page === null)
 		page = currentAdminPage.split('/')[0];
 
+	if (checkBeforePageChange())
+		historyMgr.wipe(); // Evita di richiederlo in loadAdminPage
+	else
+		return false;
+
 	let templatePromise = loadAdminPage(page + '/edit/' + id, get, history_push, false).then(showLoadingMask);
 	let dataPromise = loadElementData(page, id || 0, get);
 
