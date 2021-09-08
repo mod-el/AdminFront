@@ -91,6 +91,9 @@ class AdminController extends Controller
 							if (!$sublistItem)
 								die();
 
+							if (!empty($sublist['template']))
+								$templatePath = $sublist['template'];
+
 							$form = $sublistItem->getForm();
 							$form->remove($relationshipOptions['field']);
 							$form->options['render-only-placeholders'] = true;
