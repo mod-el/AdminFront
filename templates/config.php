@@ -49,8 +49,8 @@
 		<tr>
 			<td>Dates format:</td>
 			<td><input name="dateFormat" value="<?= entities($config['dateFormat']) ?>"/></td>
-			<td>Login phrase 1:</td>
-			<td><input name="stringaLogin1" value="<?= entities($config['stringaLogin1']) ?>"/></td>
+			<td>Login phrase:</td>
+			<td><input name="stringaLogin" value="<?= entities($config['stringaLogin']) ?>"/></td>
 		</tr>
 		<tr>
 			<td>Currencies format:</td>
@@ -62,8 +62,10 @@
 					<option value="pp"<?= $config['priceFormat'] == 'pp' ? ' selected' : '' ?>>&euro; 1234.00</option>
 				</select>
 			</td>
-			<td>Login phrase 2:</td>
-			<td><input name="stringaLogin2" value="<?= entities($config['stringaLogin2']) ?>"/></td>
+			<td colspan="2">
+				<input type="checkbox" name="enableHistoryNavigation" id="enableHistoryNavigation"<?= $config['enableHistoryNavigation'] ? ' checked' : '' ?>/>
+				<label for="enableHistoryNavigation">Enable history navigation</label>
+			</td>
 		</tr>
 	</table>
 

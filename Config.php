@@ -63,6 +63,14 @@ class Config extends Module_Config
 			$assets = [];
 		}
 
+		if ($config and isset($config['stringaLogin1'])) { // Vecchia versione
+			$config['stringaLogin'] = $config['stringaLogin1'];
+			$config['enableHistoryNavigation'] = true;
+			unset($config['stringaLogin1']);
+			unset($config['stringaLogin2']);
+			$this->saveConfig('config', $config);
+		}
+
 		$md5 = [
 			json_encode($adminCache['rules']),
 		];
@@ -104,8 +112,8 @@ class Config extends Module_Config
 		if (isset($data['hide-menu'])) $config['hide-menu'] = $data['hide-menu'];
 		if (isset($data['dateFormat'])) $config['dateFormat'] = $data['dateFormat'];
 		if (isset($data['priceFormat'])) $config['priceFormat'] = $data['priceFormat'];
-		if (isset($data['stringaLogin1'])) $config['stringaLogin1'] = $data['stringaLogin1'];
-		if (isset($data['stringaLogin2'])) $config['stringaLogin2'] = $data['stringaLogin2'];
+		if (isset($data['stringaLogin'])) $config['stringaLogin'] = $data['stringaLogin'];
+		$config['enableHistoryNavigation'] = isset($data['enableHistoryNavigation']);
 
 		if ($this->model->isLoaded('Output')) {
 			$headerTemplate = $this->model->_Output->findTemplateFile('header', $config['template']);
