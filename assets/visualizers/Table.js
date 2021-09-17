@@ -42,7 +42,7 @@ class Table {
 		}
 
 		let columns = await this.getColumns();
-		let widths = await this.getWidths();
+		let widths = this.main ? await this.getWidths() : {};
 
 		for (let fieldName of columns) {
 			let field = this.options['fields'][fieldName];
@@ -415,6 +415,8 @@ class Table {
 	}
 
 	async saveColumnWidth(column, w) {
+		if (!this.main)
+			return;
 		let widths = await this.getWidths();
 		widths[column] = w;
 		return saveUserCustomization('widths-' + this.id, widths);
@@ -549,7 +551,7 @@ window.addEventListener('mouseup', event => {
 	releaseRowsSelection();
 
 	if (columnResizing !== false) {
-		if (columnResizing.endW !== false)
+		if (columnResizing.endW !== false && visualizers.get(columnResizing.table))
 			visualizers.get(columnResizing.table).saveColumnWidth(columnResizing.k, columnResizing.endW);
 		columnResizing = false;
 	}
@@ -577,7 +579,7 @@ function autoResizeColumns(table, column) {
 			});
 		}
 
-		if (startW !== maxW)
+		if (startW !== maxW && visualizers.get(table))
 			visualizers.get(table).saveColumnWidth(column, maxW);
 	} else {
 		let cells = document.querySelectorAll('.table-head[data-table="' + table + '"] div[data-column]');
