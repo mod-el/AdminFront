@@ -466,23 +466,25 @@ window.addEventListener('beforeunload', function (event) {
 	return message;
 });
 
-window.addEventListener('keydown', function (event) {
-	switch (event.keyCode) {
-		case 90: // CTRL+Z
-			if (event.ctrlKey) {
-				historyMgr.stepBack();
-				event.preventDefault();
-			}
-			break;
-		case 89: // CTRL+Y
-			if (event.ctrlKey) {
-				historyMgr.stepForward();
-				event.preventDefault();
-			}
-			break;
+if (enableHistoryNavigation) {
+	window.addEventListener('keydown', function (event) {
+		switch (event.keyCode) {
+			case 90: // CTRL+Z
+				if (event.ctrlKey) {
+					event.preventDefault();
+					historyMgr.stepBack();
+				}
+				break;
 
-	}
-});
+			case 89: // CTRL+Y
+				if (event.ctrlKey) {
+					event.preventDefault();
+					historyMgr.stepForward();
+				}
+				break;
+		}
+	});
+}
 
 /*
  Loads a page using fetch; if specified fills the main div with the content when the response comes; it returns a Promise with the returned content
