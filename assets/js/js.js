@@ -319,9 +319,29 @@ window.addEventListener('load', function () {
 		resize();
 	});
 
-	let keepAlive = setInterval(() => {
+	setInterval(() => {
 		adminApiRequest('keep-alive');
 	}, 30000);
+
+	if (enableHistoryNavigation) {
+		window.addEventListener('keydown', function (event) {
+			switch (event.keyCode) {
+				case 90: // CTRL+Z
+					if (event.ctrlKey) {
+						event.preventDefault();
+						historyMgr.stepBack();
+					}
+					break;
+
+				case 89: // CTRL+Y
+					if (event.ctrlKey) {
+						event.preventDefault();
+						historyMgr.stepForward();
+					}
+					break;
+			}
+		});
+	}
 });
 
 // TODO: disattivo temporaneamente sw
@@ -465,26 +485,6 @@ window.addEventListener('beforeunload', function (event) {
 
 	return message;
 });
-
-if (enableHistoryNavigation) {
-	window.addEventListener('keydown', function (event) {
-		switch (event.keyCode) {
-			case 90: // CTRL+Z
-				if (event.ctrlKey) {
-					event.preventDefault();
-					historyMgr.stepBack();
-				}
-				break;
-
-			case 89: // CTRL+Y
-				if (event.ctrlKey) {
-					event.preventDefault();
-					historyMgr.stepForward();
-				}
-				break;
-		}
-	});
-}
 
 /*
  Loads a page using fetch; if specified fills the main div with the content when the response comes; it returns a Promise with the returned content
