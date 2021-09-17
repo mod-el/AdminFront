@@ -71,20 +71,24 @@ class FormList {
 			this.container.appendChild(addButtonRow);
 
 		this.template = new Promise(async (resolve, reject) => {
-			let templateDiv = document.createElement('div');
-			templateDiv.id = 'formlist-template-' + this.id;
-			templateDiv.className = 'formlist-template';
+			try {
+				let templateDiv = document.createElement('div');
+				templateDiv.id = 'formlist-template-' + this.id;
+				templateDiv.className = 'formlist-template';
 
-			let templateUrl = adminPrefix + 'template/';
-			let get = {ajax: ''};
-			if (this.main)
-				templateUrl += this.id;
-			else
-				templateUrl += currentAdminPage.split('/')[0] + '/' + this.id;
+				let templateUrl = adminPrefix + 'template/';
+				let get = {ajax: ''};
+				if (this.main)
+					templateUrl += this.id;
+				else
+					templateUrl += currentAdminPage.split('/')[0] + '/' + this.id;
 
-			templateDiv.innerHTML = await loadPage(templateUrl, get, {}, {fill_main: false});
+				templateDiv.innerHTML = await loadPage(templateUrl, get, {}, {fill_main: false});
 
-			resolve(templateDiv);
+				resolve(templateDiv);
+			} catch (e) {
+				reject(e);
+			}
 		});
 
 		if (this.main) {
@@ -239,6 +243,9 @@ class FormList {
 		this.rows.set(id, rowObj);
 		if (isNew)
 			this.newRows.push(id);
+
+		let checkScripts = splitScripts(template.innerHTML);
+		eval(checkScripts.js)
 
 		return changedHtml().then(async () => {
 			if (isNew) {
