@@ -28,7 +28,7 @@
 		'dateFormat' => $config['dateFormat'] ?? 'd/m/Y',
 		'priceFormat' => $config['priceFormat'] ?? 'vd',
 		'stringaLogin' => $config['stringaLogin'] ?? '',
-		'enableHistoryNavigation' => $config['enableHistoryNavigation'] ?? false,
+		'enableHistoryNavigation' => $config['enableHistoryNavigation'] ?? true,
 	];
 	?>
 	<hr/>
