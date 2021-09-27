@@ -1,4 +1,6 @@
 class Tree {
+	pinned = [];
+
 	// Standard visualizers method
 	constructor(visualizerId, container, main, options) {
 		this.id = visualizerId;
@@ -35,10 +37,12 @@ class Tree {
 		};
 
 		if (this.options['visualizer-options'].singleColumn) {
+			this.renderPinnedNodes();
+
 			let breadcrumbsNode = this.container.querySelector('.tree-breadcrumbs');
 			if (!breadcrumbsNode) {
 				breadcrumbsNode = document.createElement('div');
-				breadcrumbsNode.className = 'tree-breadcrumbs';
+				breadcrumbsNode.className = 'tree-labels tree-breadcrumbs';
 				this.container.appendChild(breadcrumbsNode);
 			}
 
@@ -53,7 +57,7 @@ class Tree {
 
 				for (let [idx, step] of options.breadcrumbs.entries()) {
 					let stepNode = document.createElement('div');
-					stepNode.addEventListener('click', event => {
+					stepNode.addEventListener('click', () => {
 						this.selectNode(1, step.id, options.breadcrumbs.slice(0, idx + 1));
 					});
 					stepNode.textContent = step.text;
@@ -86,22 +90,22 @@ class Tree {
 				treeDetailContainer.innerHTML = '';
 				wipeForms();
 			}
-		}
 
-		if (this.options['visualizer-options'].singleColumn && options.breadcrumbs.length) {
-			let backNode = document.createElement('div');
-			backNode.className = 'tree-node';
-			backNode.innerHTML = `<i class="fas fa-arrow-left"></i> <span>Indietro</span>`;
+			if (options.breadcrumbs.length) {
+				let backNode = document.createElement('div');
+				backNode.className = 'tree-node';
+				backNode.innerHTML = `<i class="fas fa-arrow-left"></i> <span>Indietro</span>`;
 
-			backNode.addEventListener('click', event => {
-				let parent = null;
-				if (options.breadcrumbs.length > 1)
-					parent = options.breadcrumbs[options.breadcrumbs.length - 2].id;
+				backNode.addEventListener('click', event => {
+					let parent = null;
+					if (options.breadcrumbs.length > 1)
+						parent = options.breadcrumbs[options.breadcrumbs.length - 2].id;
 
-				this.selectNode(1, parent, options.breadcrumbs.slice(0, -1));
-			});
+					this.selectNode(1, parent, options.breadcrumbs.slice(0, -1));
+				});
 
-			levelContainer.appendChild(backNode);
+				levelContainer.appendChild(backNode);
+			}
 		}
 
 		if (this.options.toPick && (this.options.allowRootPick || options.parent)) {
@@ -169,8 +173,27 @@ class Tree {
 				this.selectNode(options.level, item.id, newBreadcrumbs);
 			});
 
-			if ((item.privileges['R'] || item.privileges['D']) && !this.options.toPick) {
-				let menu = {};
+			let menu = {};
+
+			if (this.options['visualizer-options'].singleColumn) {
+				menu['Pin'] = () => {
+					let newBreadcrumbs = [...options.breadcrumbs];
+					newBreadcrumbs.push({
+						id: item.id,
+						text: node_text.textContent
+					});
+
+					this.pinned.push({
+						id: item.id,
+						text: node_text.textContent,
+						breadcrumbs: newBreadcrumbs
+					});
+
+					this.renderPinnedNodes();
+				};
+			}
+
+			if (!this.options.toPick) {
 				if (item.privileges['R']) {
 					menu['Vedi / modifica'] = () => {
 						this.editNode(options.level, item.id);
@@ -199,9 +222,10 @@ class Tree {
 						};
 					}
 				}
-
-				node.ctxMenu(menu);
 			}
+
+			if (Object.keys(menu).length)
+				node.ctxMenu(menu);
 
 			levelContainer.appendChild(node);
 		}
@@ -294,6 +318,40 @@ class Tree {
 		}
 
 		return subcolumn;
+	}
+
+	renderPinnedNodes() {
+		let pinnedsNode = this.container.querySelector('.tree-pinneds');
+
+		if (this.pinned.length) {
+			if (!pinnedsNode) {
+				pinnedsNode = document.createElement('div');
+				pinnedsNode.className = 'tree-labels tree-pinneds';
+				this.container.insertBefore(pinnedsNode, this.container.firstElementChild);
+			}
+
+			pinnedsNode.innerHTML = '';
+			for (let [idx, pinned] of this.pinned.entries()) {
+				let pinnedNode = document.createElement('div');
+				pinnedNode.addEventListener('click', () => {
+					this.selectNode(1, pinned.id, pinned.breadcrumbs);
+				});
+				pinnedNode.textContent = pinned.text;
+
+				pinnedNode.ctxMenu({
+					"Rimuovi": () => {
+						console.log(this.pinned);
+						this.pinned.splice(idx, 1);
+						console.log(this.pinned);
+						this.renderPinnedNodes();
+					}
+				});
+
+				pinnedsNode.appendChild(pinnedNode);
+			}
+		} else if (pinnedsNode) {
+			pinnedsNode.remove();
+		}
 	}
 
 	async selectNode(level, id, breadcrumbs) {
