@@ -11,7 +11,7 @@ class Tree {
 		this.options['visualizer-options'] = {
 			field: 'parent',
 			separator: ' | ',
-			selectedOnTop: true,
+			selectedOnTop: false,
 			singleColumn: false,
 			...(options['visualizer-options'] || {})
 		};
