@@ -85,19 +85,23 @@ class AdminController extends Controller
 						$sublists = $this->model->_Admin->getSublists();
 						if (isset($sublists[$this->model->_AdminFront->request[2]])) {
 							$sublist = $sublists[$this->model->_AdminFront->request[2]];
-							$relationshipOptions = $element->getChildrenOptions($sublist['relationship']);
+							if ($sublist['custom']) {
+								$form = is_callable($sublist['custom']['form']) ? $sublist['custom']['form']() : $sublist['custom']['form'];
+							} else {
+								$relationshipOptions = $element->getChildrenOptions($sublist['relationship']);
 
-							$sublistItem = $element->create($sublist['relationship']);
-							if (!$sublistItem)
-								die();
+								$sublistItem = $element->create($sublist['relationship']);
+								if (!$sublistItem)
+									die();
 
-							if (!empty($sublist['template']))
-								$templatePath = $sublist['template'];
+								if (!empty($sublist['template']))
+									$templatePath = $sublist['template'];
 
-							$form = $sublistItem->getForm();
-							$form->remove($relationshipOptions['field']);
+								$form = $sublistItem->getForm();
+								$form->remove($relationshipOptions['field']);
+							}
+
 							$form->options['render-only-placeholders'] = true;
-
 							$this->model->inject('form', $form);
 						} else {
 							$this->model->inject('form', $this->model->_Admin->getForm());
