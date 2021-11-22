@@ -11,8 +11,10 @@ class FormList {
 			"class": 'flex-fields formlist-row',
 			"add-button": true,
 			"add-button-position": 'after',
-			"on-add": null, // TODO
-			"on-delete": null, // TODO
+			"on-add": null,
+			"on-delete": null,
+			"on-restore": null,
+			"on-change": null,
 			...(options['visualizer-options'] || {})
 		};
 
@@ -252,6 +254,9 @@ class FormList {
 				if (providedData !== null)
 					await form.setValues(providedData.data);
 
+				await this.callHook('add', id);
+				await this.callHook('change', id);
+
 				let firstInput = row.querySelector('input, select');
 				if (firstInput) {
 					firstInput.focus();
@@ -285,6 +290,9 @@ class FormList {
 			historyMgr.sublistAppend(this.id, 'delete', id);
 
 		this.refreshLabelsVisibility();
+
+		await this.callHook('delete', id);
+		await this.callHook('change', id);
 	}
 
 	async restoreLocalRow(id) {
@@ -301,6 +309,22 @@ class FormList {
 		row.deleted = false;
 
 		this.refreshLabelsVisibility();
+
+		await this.callHook('restore', id);
+		await this.callHook('change', id);
+	}
+
+	async callHook(hook, id) {
+		if (this.options['visualizer-options']['on-' + hook]) {
+			switch (typeof this.options['visualizer-options']['on-' + hook]) {
+				case 'function':
+					await this.options['visualizer-options']['on-' + hook].call(this, id);
+					break;
+				case 'string':
+					await eval(this.options['visualizer-options']['on-' + hook]);
+					break;
+			}
+		}
 	}
 
 	refreshLabelsVisibility() {
