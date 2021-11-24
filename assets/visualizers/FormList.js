@@ -11,10 +11,10 @@ class FormList {
 			"class": 'flex-fields formlist-row',
 			"add-button": true,
 			"add-button-position": 'after',
-			"on-add": null,
-			"on-delete": null,
-			"on-restore": null,
-			"on-change": null,
+			"onadd": null,
+			"ondelete": null,
+			"onrestore": null,
+			"onchange": null,
 			...(options['visualizer-options'] || {})
 		};
 
@@ -315,13 +315,13 @@ class FormList {
 	}
 
 	async callHook(hook, id) {
-		if (this.options['visualizer-options']['on-' + hook]) {
-			switch (typeof this.options['visualizer-options']['on-' + hook]) {
+		if (this.options['visualizer-options']['on' + hook]) {
+			switch (typeof this.options['visualizer-options']['on' + hook]) {
 				case 'function':
-					await this.options['visualizer-options']['on-' + hook].call(this, id);
+					await this.options['visualizer-options']['on' + hook].call(this, id);
 					break;
 				case 'string':
-					await eval(this.options['visualizer-options']['on-' + hook]);
+					await eval(this.options['visualizer-options']['on' + hook]);
 					break;
 			}
 		}
