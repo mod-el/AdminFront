@@ -2538,7 +2538,7 @@ async function openElementInPopup(id, options = {}) {
 		...options
 	};
 
-	zkPopup('', {
+	return zkPopup('', {
 		onClose: () => {
 			clearElementInContainer(options.formName);
 		}
