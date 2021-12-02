@@ -214,9 +214,11 @@ class Tree {
 						this.deleteNode(options.level, item.id);
 					};
 				}
+			}
 
-				if (this.options['visualizer-options'].contextMenu) {
-					for (let menuItem of this.options['visualizer-options'].contextMenu) {
+			if (this.options['visualizer-options'].contextMenu) {
+				for (let menuItem of this.options['visualizer-options'].contextMenu) {
+					if (!this.options.toPick || menuItem.visible_in_pick) {
 						menu[menuItem.label] = () => {
 							window[menuItem.function].call(this, options, item);
 						};
