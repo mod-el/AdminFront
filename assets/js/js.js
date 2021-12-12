@@ -1521,6 +1521,9 @@ function manageFilters() {
 
 		switch (filter.type) {
 			case 'number':
+			case 'date':
+			case 'time':
+			case 'datetime':
 				appendRadioToFiltersSelection(selection, 'type', name, '<', '&lt;');
 				appendRadioToFiltersSelection(selection, 'type', name, '<=', '&lt;=');
 				appendRadioToFiltersSelection(selection, 'type', name, '>', '&gt;');
