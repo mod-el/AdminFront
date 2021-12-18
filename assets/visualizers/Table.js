@@ -315,8 +315,6 @@ class Table {
 						saveEditableField(item.id, fieldObj, fieldNode);
 					});
 					innerDiv.appendChild(fieldNode);
-				} else if (field.price) {
-					innerDiv.innerHTML = item.data[fieldName].value ? makePrice(item.data[fieldName].value) : '';
 				} else {
 					innerDiv.innerHTML = field.raw ? item.data[fieldName].text : entities(item.data[fieldName].text);
 				}
