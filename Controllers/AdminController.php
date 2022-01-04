@@ -24,6 +24,8 @@ class AdminController extends Controller
 		$this->model->load('ContextMenu');
 		$this->model->load('CSRF');
 
+		$this->model->_Admin->loadUserModule();
+
 		if ($this->model->moduleExists('Dashboard'))
 			$this->model->load('Dashboard');
 		if ($this->model->moduleExists('CkEditor'))
