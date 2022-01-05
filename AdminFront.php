@@ -6,12 +6,9 @@ use Model\Form\Form;
 
 class AdminFront extends Module
 {
-	/** @var string */
-	public $url;
-	/** @var array */
-	public $request;
-	/** @var array */
-	private $dictionary = null;
+	public string $url;
+	public array $request;
+	private array $dictionary;
 
 	/**
 	 *
@@ -54,7 +51,7 @@ class AdminFront extends Module
 		$this->url = $paths[$rule]['path'];
 
 		$realRequest = $this->getAdminRequest($request, $this->url);
-		if ($realRequest === false)
+		if ($realRequest === null)
 			return null;
 
 		$this->request = $realRequest;
@@ -85,9 +82,9 @@ class AdminFront extends Module
 	 *
 	 * @param array $request
 	 * @param string $path
-	 * @return array|bool
+	 * @return array|null
 	 */
-	private function getAdminRequest(array $request, string $path)
+	private function getAdminRequest(array $request, string $path): ?array
 	{
 		if (empty($path))
 			return $request;
@@ -96,13 +93,13 @@ class AdminFront extends Module
 		foreach ($path as $p) {
 			$shift = array_shift($request);
 			if ($shift !== $p)
-				return false;
+				return null;
 		}
 		return $request;
 	}
 
 	/**
-	 * @param string|bool $controller
+	 * @param string|null $controller
 	 * @param null|string $id
 	 * @param array $tags
 	 * @param array $opt
@@ -113,16 +110,14 @@ class AdminFront extends Module
 		switch ($controller) {
 			case 'AdminLogin':
 				return ($this->url ? $this->url . '/' : '') . 'login';
-				break;
+
 			default:
 				return null;
-				break;
 		}
 	}
 
 	/**
 	 * @return string
-	 * @throws \Model\Core\Exception
 	 */
 	public function getUrlPrefix(): string
 	{
@@ -176,7 +171,7 @@ class AdminFront extends Module
 	 */
 	private function getDictionary(): array
 	{
-		if ($this->dictionary === null) {
+		if (!isset($this->dictionary)) {
 			$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php';
 
 			$dictionary = [];

@@ -8,10 +8,7 @@ use Model\Csv\AdminBridge;
 
 class AdminController extends Controller
 {
-	/** @var Module */
-	private $templateModule;
-	/** @var string */
-	private $templateModuleName;
+	private string $templateModuleName;
 
 	public function init()
 	{
@@ -37,8 +34,9 @@ class AdminController extends Controller
 			$this->model->_Multilang->setLang($_COOKIE['admin-lang']);
 
 		$this->templateModuleName = $this->model->_AdminFront->getTemplateModule();
-		$this->templateModule = $this->model->load($this->templateModuleName);
 		$this->model->viewOptions['template-module'] = $this->templateModuleName;
+
+		$this->model->load($this->templateModuleName);
 	}
 
 	public function get()
