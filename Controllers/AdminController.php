@@ -21,6 +21,7 @@ class AdminController extends Controller
 		$this->model->load('ContextMenu');
 		$this->model->load('CSRF');
 
+		$this->model->_Admin->setPath($this->model->_AdminFront->url);
 		$this->model->_Admin->loadUserModule();
 
 		if ($this->model->moduleExists('Dashboard'))
@@ -202,7 +203,7 @@ class AdminController extends Controller
 					]);
 
 					return 'ok';
-					break;
+
 				case 'export':
 					if (!isset($_GET['step'], $_POST['rows'], $_POST['payload']) or !is_numeric($_POST['rows']))
 						die('Dati errati');
@@ -210,7 +211,6 @@ class AdminController extends Controller
 					if (!isset($this->model->_AdminFront->request[1]))
 						die('URL errato');
 
-					$this->model->_Admin->setPath($this->model->_AdminFront->url);
 					$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
 
 					$payload = json_decode($_POST['payload'], true);
