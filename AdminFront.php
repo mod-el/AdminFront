@@ -6,7 +6,7 @@ use Model\Form\Form;
 
 class AdminFront extends Module
 {
-	public string $url;
+	public string $url = '';
 	public array $request;
 	private array $dictionary;
 
