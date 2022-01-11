@@ -668,7 +668,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 					}
 
 					addPageAction('filters', {
-						'fa-icon': 'fas fa-filter',
+						'fa-icon': 'fab fa-wpforms',
 						'text': 'Filtri',
 						'action': 'switchFiltersForm(this)',
 					});
