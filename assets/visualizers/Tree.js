@@ -16,7 +16,8 @@ class Tree {
 			...(options['visualizer-options'] || {})
 		};
 
-		this.useFilters = false;
+		this.useFilters = true;
+		this.forceTableOnSearch = true;
 		this.hasPagination = false;
 
 		if (this.main) {

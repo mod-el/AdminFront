@@ -19,6 +19,7 @@ class FormList {
 		};
 
 		this.useFilters = true;
+		this.forceTableOnSearch = false;
 		this.hasPagination = true;
 
 		this.rows = new Map();

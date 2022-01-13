@@ -10,6 +10,7 @@ class Table {
 		this.options = options;
 
 		this.useFilters = true;
+		this.forceTableOnSearch = false;
 		this.hasPagination = true;
 
 		this.sortedBy = [];
@@ -376,6 +377,8 @@ class Table {
 
 	// Standard visualizers method
 	async getFieldsToRetrieve() {
+		if (this.options['visualizer-options'].fields_in_search)
+			return this.options['visualizer-options'].fields_in_search;
 		return getUserCustomization('columns-' + this.id);
 	}
 
@@ -421,6 +424,9 @@ class Table {
 	}
 
 	async getColumns() {
+		if (this.options['visualizer-options'].fields_in_search)
+			return this.options['visualizer-options'].fields_in_search;
+
 		let columns = await getUserCustomization('columns-' + this.id);
 
 		if (columns === null)
@@ -432,6 +438,11 @@ class Table {
 	async customizeColumns() {
 		if (typeof this.options['fields'] === 'undefined')
 			return;
+
+		if (this.options['visualizer-options'].fields_in_search) {
+			alert('Questa è una pagina temporanea di ricerca, non è possibile personalizzare le colonne');
+			return;
+		}
 
 		let fieldset = document.createElement('fieldset');
 		fieldset.className = 'p-3';

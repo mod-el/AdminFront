@@ -1186,6 +1186,37 @@ async function search(page = 1, options = {}) {
 	}
 
 	let visualizer = options.visualizer || visualizers.get(endpoint);
+
+	let filters = [];
+	let searchValue = '';
+	let filtersValues = {};
+
+	if (!visualizer || visualizer.main) {
+		for (let formName of Object.keys(adminFilters)) {
+			for (let filter of adminFilters[formName]) {
+				let v = await filter.getValue();
+
+				filtersValues[filter.options['adminFilter'].filter + '-' + filter.options['adminFilter'].type] = v;
+
+				if (v === '' || v === null)
+					continue;
+
+				if (filter.options['adminFilter'].filter === 'zk-all') {
+					searchValue = v;
+					continue;
+				}
+
+				filters.push({
+					'filter': filter.options['adminFilter'].filter,
+					'type': filter.options['adminFilter'].type,
+					'value': v
+				});
+			}
+		}
+
+		sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
+	}
+
 	if (options.sort_by === null) {
 		if (visualizer)
 			options.sort_by = visualizer.getSorting(options.visualizer_meta);
@@ -1195,49 +1226,21 @@ async function search(page = 1, options = {}) {
 
 	if (options.empty_main || !visualizer) {
 		visualizer = await loadVisualizer(currentPageDetails['type'], endpoint, _('main-visualizer-cont'), true, currentPageDetails);
+		if (visualizer.forceTableOnSearch && (searchValue || filters.length))
+			visualizer = await loadVisualizer('Table', endpoint, _('main-visualizer-cont'), true, currentPageDetails);
 		visualizers.set(endpoint, visualizer);
 	}
 
-	let filters = [];
-	let searchValue = '';
-	let filtersValues = {};
+	if (visualizer.main && !visualizer.useFilters) {
+		let form = _('topForm');
+		if (form)
+			form.innerHTML = '';
 
-	if (visualizer.main) {
-		if (visualizer.useFilters) {
-			for (let formName of Object.keys(adminFilters)) {
-				for (let filter of adminFilters[formName]) {
-					let v = await filter.getValue();
+		let secondaryForm = _('filtersFormCont');
+		if (secondaryForm)
+			secondaryForm.innerHTML = '';
 
-					filtersValues[filter.options['adminFilter'].filter + '-' + filter.options['adminFilter'].type] = v;
-
-					if (v === '' || v === null)
-						continue;
-
-					if (filter.options['adminFilter'].filter === 'zk-all') {
-						searchValue = v;
-						continue;
-					}
-
-					filters.push({
-						'filter': filter.options['adminFilter'].filter,
-						'type': filter.options['adminFilter'].type,
-						'value': v
-					});
-				}
-			}
-
-			sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
-		} else {
-			let form = _('topForm');
-			if (form)
-				form.innerHTML = '';
-
-			let secondaryForm = _('filtersFormCont');
-			if (secondaryForm)
-				secondaryForm.innerHTML = '';
-
-			removePageAction('filters');
-		}
+		removePageAction('filters');
 	}
 
 	filters = [...filters, ...await visualizer.getSpecialFilters(options.visualizer_meta)];
