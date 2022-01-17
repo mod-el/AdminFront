@@ -660,7 +660,7 @@ async function saveEditableField(id, field, node) {
 		if (!response.id)
 			throw 'Risposta server errata';
 
-		reloadMainList().then(() => {
+		return reloadMainList(true).then(() => {
 			let nextField = _('[data-editable="' + nextRow + '"][name="' + field.name + '"]');
 			if (nextField) {
 				if (nextField.nodeName.toLowerCase() !== 'input' && nextField.nodeName.toLowerCase() !== 'select')

@@ -2318,9 +2318,16 @@ function deleteRows(ids) {
 	});
 }
 
-async function reloadMainList() {
+async function reloadMainList(keep_page = false) {
 	wipeForms();
-	return search(1, {history: false});
+
+	let options = {history: false};
+	if (_('changePerPage')) {
+		let v = await _('changePerPage').getValue();
+		options.per_page = parseInt(v);
+	}
+
+	return search(keep_page ? currentPage : 1, options);
 }
 
 function getMainVisualizer() {
