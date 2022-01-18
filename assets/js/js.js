@@ -2189,8 +2189,9 @@ async function saveUserCustomization(k, v) {
 						'X-Access-Token': adminApiToken
 					}
 				}).then(r => {
-					if (r !== 'ok')
+					if (!r.success)
 						throw r;
+
 					resolve();
 				});
 			};
@@ -2207,7 +2208,7 @@ async function deleteUserCustomization(k) {
 			'X-Access-Token': adminApiToken
 		}
 	}).then(r => {
-		if (r !== 'ok')
+		if (!r.success)
 			throw r;
 
 		if (typeof userCustomizationsCache[k] !== 'undefined')

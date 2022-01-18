@@ -176,6 +176,23 @@ class AdminController extends Controller
 	{
 		try {
 			switch ($this->model->_AdminFront->request[0] ?? null) {
+				case 'save-dashboard-layout':
+					if (!isset($_POST['layout']))
+						die('Wrong data');
+
+					$layout = json_decode($_POST['layout'], true);
+					if ($layout === null)
+						die('Corrupted layout data');
+
+					if (!$this->model->moduleExists('Dashboard'))
+						die('Il modulo Dashboard non è installato');
+
+					$this->model->_Dashboard->saveNewLayout($layout);
+
+					return [
+						'success' => true,
+					];
+
 				case 'save-user-customization':
 					if (!isset($_GET['k'], $_POST['v']))
 						die('Wrong data');
@@ -189,8 +206,10 @@ class AdminController extends Controller
 						'value' => $_POST['v'],
 					]);
 
-					return 'ok';
-					break;
+					return [
+						'success' => true,
+					];
+
 				case 'delete-user-customization':
 					if (!isset($_GET['k']))
 						die('Wrong data');
@@ -202,7 +221,9 @@ class AdminController extends Controller
 						'key' => $_GET['k'],
 					]);
 
-					return 'ok';
+					return [
+						'success' => true,
+					];
 
 				case 'export':
 					if (!isset($_GET['step'], $_POST['rows'], $_POST['payload']) or !is_numeric($_POST['rows']))
@@ -289,8 +310,12 @@ class AdminController extends Controller
 								'name' => $title . '-' . $n,
 								'link' => PATH . 'model/AdminFront/data/temp-csv/' . $title . '-' . $n . '.csv',
 							];
+
+						default:
+							throw new \Exception('Unknown export step');
 					}
 					break;
+
 				default:
 					throw new \Exception('Unrecognized action');
 			}
