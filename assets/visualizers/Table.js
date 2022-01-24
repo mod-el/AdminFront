@@ -231,10 +231,8 @@ class Table {
 
 				let checkbox = checkboxCell.querySelector('input');
 
-				if (this.main) {
-					if (this.selectedRows.indexOf(item.id) !== -1)
-						checkbox.checked = true;
-				}
+				if (this.selectedRows.indexOf(item.id) !== -1)
+					checkbox.checked = true;
 
 				checkbox.addEventListener('change', () => {
 					this.selectRow(item.id, checkbox.checked ? 1 : 0);
