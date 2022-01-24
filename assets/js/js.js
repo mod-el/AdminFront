@@ -4,7 +4,6 @@ var currentAdminPage = false;
 var currentPageDetails = {};
 var runtimeLoadedJs = new Map();
 var runtimeLoadedCss = [];
-var selectedRows = [];
 var currentPage = 1;
 var searchCounter = 0;
 var pageLoadingHash = '';
@@ -692,8 +691,6 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 			}
 
 			return Promise.all(loadingPromises).then(() => {
-				selectedRows = [];
-
 				selectFromMainMenu(request);
 
 				if (window.innerWidth < 800)
@@ -1217,17 +1214,19 @@ async function search(page = 1, options = {}) {
 		sessionStorage.setItem('filters-values', JSON.stringify(filtersValues));
 	}
 
-	if (options.sort_by === null) {
-		if (visualizer)
-			options.sort_by = visualizer.getSorting(options.visualizer_meta);
-		else
-			options.sort_by = [];
-	}
+	if (options.sort_by === null)
+		options.sort_by = visualizer ? visualizer.getSorting(options.visualizer_meta) : [];
 
 	if (options.empty_main || !visualizer) {
+		let currentSelectedRows = (visualizer && visualizer.hasOwnProperty('selectedRows')) ? getMainVisualizer().selectedRows : [];
+
 		visualizer = await loadVisualizer(currentPageDetails['type'], endpoint, _('main-visualizer-cont'), true, currentPageDetails);
 		if (visualizer.forceTableOnSearch && (searchValue || filters.length))
 			visualizer = await loadVisualizer('Table', endpoint, _('main-visualizer-cont'), true, currentPageDetails);
+
+		if (visualizer.hasOwnProperty('selectedRows'))
+			visualizer.selectedRows = currentSelectedRows;
+
 		visualizers.set(endpoint, visualizer);
 	}
 
@@ -2216,18 +2215,6 @@ async function deleteUserCustomization(k) {
 	});
 }
 
-function selectRow(id, enable) {
-	id = parseInt(id);
-	let k = selectedRows.indexOf(id);
-	if (k !== -1) {
-		if (!enable)
-			selectedRows.splice(k, 1);
-	} else {
-		if (enable)
-			selectedRows.push(id);
-	}
-}
-
 async function exportPopup(step) {
 	switch (step) {
 		case 1:
@@ -2276,7 +2263,7 @@ function checkForExport(rowsNumber, payload) {
 function deleteRows(ids) {
 	let usingChecks = false;
 	if (typeof ids === 'undefined') {
-		ids = selectedRows;
+		ids = getMainVisualizer().selectedRows;
 		usingChecks = true;
 	}
 	if (ids.length === 0) {
@@ -2306,12 +2293,12 @@ function deleteRows(ids) {
 	return adminApiRequest('page/' + request[0] + '/delete', {ids}).then(() => {
 		wipeForms();
 		if (usingChecks)
-			selectedRows = [];
+			getMainVisualizer().selectedRows = [];
 
 		if (request.length === 1)
-			reloadMainList();
+			return reloadMainList();
 		else
-			loadAdminPage(request[0]);
+			return loadAdminPage(request[0]);
 	}).catch(error => {
 		reportAdminError(error);
 	}).finally(() => {

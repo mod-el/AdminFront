@@ -13,6 +13,7 @@ class Table {
 		this.forceTableOnSearch = false;
 		this.hasPagination = true;
 
+		this.selectedRows = [];
 		this.sortedBy = [];
 	}
 
@@ -226,12 +227,18 @@ class Table {
 					});
 				});
 				checkboxCell = checkboxCell.appendChild(document.createElement('div'));
-				checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onchange="selectRow(\'' + item.id + '\', this.checked ? 1 : 0)" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
+				checkboxCell.innerHTML = '<input type="checkbox" value="1" id="row-checkbox-' + item.id + '" data-id="' + item.id + '" onclick="event.stopPropagation()" onmousedown="if(event.shiftKey){ holdRowsSelection(this); } event.stopPropagation()" onmouseover="if(holdingRowsSelection!==null) this.setValue(holdingRowsSelection)" onkeydown="moveBetweenRows(this, event.keyCode)"/>';
+
+				let checkbox = checkboxCell.querySelector('input');
 
 				if (this.main) {
-					if (selectedRows.indexOf(item.id) !== -1)
-						checkboxCell.querySelector('input').checked = true;
+					if (this.selectedRows.indexOf(item.id) !== -1)
+						checkbox.checked = true;
 				}
+
+				checkbox.addEventListener('change', () => {
+					this.selectRow(item.id, checkbox.checked ? 1 : 0);
+				});
 			}
 
 			if (renderDeleteCell && !this.options.toPick) {
@@ -430,6 +437,21 @@ class Table {
 			columns = this.options['default-fields'];
 
 		return columns;
+	}
+
+	selectRow(id, enable) {
+		id = parseInt(id);
+		let k = this.selectedRows.indexOf(id);
+		if (k !== -1) {
+			if (!enable)
+				this.selectedRows.splice(k, 1);
+		} else {
+			if (enable)
+				this.selectedRows.push(id);
+		}
+
+		if (this.options.onSelect)
+			this.options.onSelect.call(this, this.selectedRows);
 	}
 
 	async customizeColumns() {
