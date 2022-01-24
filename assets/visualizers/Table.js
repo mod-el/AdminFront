@@ -222,10 +222,7 @@ class Table {
 
 					let check = this.firstElementChild.firstElementChild;
 					check.getValue().then(v => {
-						if (v)
-							check.setValue(0);
-						else
-							check.setValue(1);
+						check.setValue(v ? 0 : 1);
 					});
 				});
 				checkboxCell = checkboxCell.appendChild(document.createElement('div'));
@@ -611,11 +608,11 @@ function releaseRowsSelection() {
 }
 
 function moveBetweenRows(checkbox, keyCode) {
-	var id = checkbox.getAttribute('data-id');
-	var row = document.querySelector('.results-table-row[data-id="' + id + '"]');
+	let id = checkbox.getAttribute('data-id');
+	let row = document.querySelector('.results-table-row[data-id="' + id + '"]');
 	if (!row)
 		return;
-	var n = row.getAttribute('data-n');
+	let n = row.getAttribute('data-n');
 
 	switch (keyCode) {
 		case 38:
@@ -626,22 +623,20 @@ function moveBetweenRows(checkbox, keyCode) {
 			break;
 		default:
 			return;
-			break;
 	}
 
-	var nextRow = document.querySelector('.results-table-row[data-n="' + n + '"]');
+	let nextRow = document.querySelector('.results-table-row[data-n="' + n + '"]');
 	if (!nextRow)
 		return;
 
-	var nextId = nextRow.getAttribute('data-id');
-	var nextCheckbox = document.getElementById('row-checkbox-' + nextId);
+	let nextId = nextRow.getAttribute('data-id');
+	let nextCheckbox = document.getElementById('row-checkbox-' + nextId);
 	nextCheckbox.focus();
 }
 
-function selectAllRows(id, enable) {
-	_('.results-table[data-table="' + id + '"]').querySelectorAll('[id^="row-checkbox-"]').forEach(checkbox => {
-		checkbox.setValue(enable);
-	});
+async function selectAllRows(id, enable) {
+	for (let checkbox of _('.results-table[data-table="' + id + '"]').querySelectorAll('[id^="row-checkbox-"]'))
+		await checkbox.setValue(enable);
 }
 
 async function saveEditableField(id, field, node) {
