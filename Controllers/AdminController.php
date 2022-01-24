@@ -63,7 +63,7 @@ class AdminController extends Controller
 						'error' => getErr($e),
 					];
 				}
-				break;
+
 			case 'template':
 				if ($this->model->_AdminFront->request[1] ?? null) {
 					$this->model->viewOptions['cacheTemplate'] = true;
@@ -98,7 +98,7 @@ class AdminController extends Controller
 								if (!empty($sublist['template']))
 									$templatePath = $sublist['template'];
 
-								$form = $sublistItem->getForm();
+								$form = $sublistItem->getForm(true);
 								$form->remove(!empty($relationshipOptions['assoc']) ? $relationshipOptions['assoc']['parent'] : $relationshipOptions['field']);
 							}
 
@@ -158,12 +158,14 @@ class AdminController extends Controller
 					$this->model->viewOptions['showLayout'] = false;
 				}
 				break;
+
 			case 'export':
 				$this->model->viewOptions['showLayout'] = false;
 				$this->model->viewOptions['cacheTemplate'] = true;
 				$this->model->viewOptions['template-module'] = 'AdminFront';
 				$this->model->viewOptions['template'] = 'export-popup';
 				break;
+
 			default:
 				$this->model->viewOptions['showLayout'] = false;
 				$this->model->viewOptions['cacheTemplate'] = true;
