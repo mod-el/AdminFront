@@ -44,7 +44,7 @@ class Table {
 		}
 
 		let columns = await this.getColumns();
-		let widths = this.main ? await this.getWidths() : {};
+		let widths = await this.getWidths();
 
 		for (let fieldName of columns) {
 			let field = this.options['fields'][fieldName];
@@ -410,6 +410,11 @@ class Table {
 	}
 
 	async getWidths() {
+		if (this.options['visualizer-options'].widths)
+			return this.options['visualizer-options'].widths;
+
+		if (!this.main)
+			return {};
 		let widths = await getUserCustomization('widths-' + this.id);
 		if (widths)
 			return widths;
@@ -448,8 +453,8 @@ class Table {
 				this.selectedRows.push(id);
 		}
 
-		if (this.options.onSelect)
-			this.options.onSelect.call(this, this.selectedRows);
+		if (this.options['visualizer-options'].onSelect)
+			this.options['visualizer-options'].onSelect.call(this, this.selectedRows);
 	}
 
 	async customizeColumns() {
