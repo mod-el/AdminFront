@@ -302,8 +302,17 @@ class Table {
 					div.addEventListener('mouseup', event => {
 						event.stopPropagation();
 					});
-					div.addEventListener('click', event => {
+					div.addEventListener('click', async event => {
 						event.stopPropagation();
+
+						// Full row is not clickable, I select the row instead
+						if (!item.id || !item.privileges['R']) {
+							let selectionCheckbox = innerRow.querySelector('.special-cell input[type="checkbox"]');
+							if (selectionCheckbox) {
+								let currentValue = await selectionCheckbox.getValue();
+								await selectionCheckbox.setValue(currentValue ? 0 : 1)
+							}
+						}
 					});
 				}
 
