@@ -5,6 +5,7 @@ use Model\Core\Module_Config;
 class Config extends Module_Config
 {
 	public $configurable = true;
+	public $hasCleanUp = true;
 
 	/**
 	 * @throws \Model\Core\Exception
@@ -246,6 +247,20 @@ $config = ' . var_export($config, true) . ';
 			return $this->model->_Multilang->checkAndInsertWords('admin', $words);
 		else
 			return $w;
+	}
+
+	/**
+	 * Clean up of all temporary csv files older than an hour
+	 */
+	public function cleanUp()
+	{
+		if (is_dir(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv')) {
+			$files = glob(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv' . DIRECTORY_SEPARATOR . '*');
+			foreach ($files as $f) {
+				if (time() - filemtime($f) > 3600)
+					unlink($f);
+			}
+		}
 	}
 
 	/**
