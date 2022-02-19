@@ -156,6 +156,8 @@ $config = ' . var_export($config, true) . ';
 	 */
 	public function init(?array $data = null): bool
 	{
+		if ($this->model->isCLI())
+			return true;
 		if ($data === null)
 			return false;
 
@@ -281,5 +283,10 @@ ADD COLUMN `password` VARCHAR(250) NOT NULL AFTER `old_password`;');
 			}
 		}
 		return true;
+	}
+
+	public function getConfigData(): ?array
+	{
+		return [];
 	}
 }
