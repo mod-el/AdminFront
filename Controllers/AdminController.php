@@ -329,8 +329,7 @@ class AdminController extends Controller
 
 	private function getAuth(): array
 	{
-		$auth = new Auth($this->model);
-		$token = $auth->getToken();
+		$token = Auth::getToken();
 		if (!$token)
 			$this->model->error('Invalid auth token', ['code' => 401]);
 
