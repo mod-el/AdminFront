@@ -58,10 +58,10 @@ class HistoryManager {
 			if (sublist) {
 				switch (el.action) {
 					case 'new':
-						sublist.deleteLocalRow(el.id, false);
+						await sublist.deleteLocalRow(el.id, false);
 						break;
 					case 'delete':
-						sublist.restoreLocalRow(el.id);
+						await sublist.restoreLocalRow(el.id);
 						break;
 				}
 			}
@@ -96,10 +96,10 @@ class HistoryManager {
 			if (sublist) {
 				switch (el.action) {
 					case 'new':
-						sublist.restoreLocalRow(el.id);
+						await sublist.restoreLocalRow(el.id);
 						break;
 					case 'delete':
-						sublist.deleteLocalRow(el.id, false);
+						await sublist.deleteLocalRow(el.id, false);
 						break;
 				}
 			}
@@ -284,13 +284,15 @@ async function login() {
 	let form = _('login');
 	let username = await form['username'].getValue();
 	let password = await form['password'].getValue();
+	let cp_token = await form['cp_token'].getValue();
 
 	form.style.display = 'none';
 
 	return adminApiRequest('user/login', {
-		'path': adminPath,
-		'username': username,
-		'password': password
+		path: adminPath,
+		username,
+		password,
+		cp_token
 	}).then(r => {
 		setCookie('admin-user', r.token, 365 * 10, getAdminCookiePath());
 		adminApiToken = r.token;
@@ -427,16 +429,19 @@ function adminApiRequest(request, payload = {}, options = {}) {
 	if (adminApiToken !== null)
 		headers['X-Access-Token'] = adminApiToken;
 
-	let get = {c_id};
+	let get = {};
 	if (options.get) {
-		get = {...options.get, ...get};
+		get = options.get;
 		delete options.get;
 	}
 
+	if ((Object.values(payload).length > 0 || options.method === 'POST') && !payload.cp_token)
+		payload.cp_token = cp_token;
+
 	return ajax(adminApiPath + request, get, payload, {
-		'fullResponse': true,
-		'headers': headers,
-		'json': true,
+		fullResponse: true,
+		headers: headers,
+		json: true,
 		...options
 	}).then(response => {
 		return response.text().then(text => {
@@ -444,13 +449,13 @@ function adminApiRequest(request, payload = {}, options = {}) {
 				let resp = JSON.parse(text);
 
 				return {
-					'status': response.status,
-					'body': resp
+					status: response.status,
+					body: resp
 				};
 			} catch (e) {
 				return {
-					'status': response.status,
-					'body': text
+					status: response.status,
+					body: text
 				};
 			}
 		});
@@ -459,11 +464,10 @@ function adminApiRequest(request, payload = {}, options = {}) {
 			throw response.body;
 
 		if (response.status !== 200) {
-			if (typeof response.body.error !== 'undefined') {
+			if (typeof response.body.error !== 'undefined')
 				throw response.body.error;
-			} else {
+			else
 				throw 'Invalid response from server';
-			}
 		}
 
 		return response.body;
@@ -1993,9 +1997,10 @@ async function save(options = {}) {
 			options.id = getIdFromRequest(request);
 
 		let payload = {
-			'data': {},
-			'version': pageForms.get(options.form).version,
-			'sublists': {}
+			data: {},
+			version: pageForms.get(options.form).version,
+			cp_token: pageForms.get(options.form).cp_token,
+			sublists: {}
 		};
 
 		if (options.id === 0) // Al nuovo salvataggio invio tutto
@@ -2015,18 +2020,7 @@ async function save(options = {}) {
 		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0 && options.no_data_alert)
 			throw 'Nessun dato modificato';
 
-		return adminApiRequest('page/' + options.page + '/save/' + options.id, payload, {
-			/*'onprogress': function (event) { // TODO: al momento non supportato in fetch
-				let percentage;
-				if (event.total === 0) {
-					percentage = 0;
-				} else {
-					percentage = Math.round(event.loaded / event.total * 100);
-				}
-
-				setLoadingBar(percentage);
-			}*/
-		}).then(response => {
+		return adminApiRequest('page/' + options.page + '/save/' + options.id, payload).then(response => {
 			if (!response.id)
 				throw 'Risposta server errata';
 
@@ -2090,7 +2084,7 @@ function duplicate() {
 	toolbarButtonLoading('duplicate');
 
 	let request = currentAdminPage.split('/');
-	return adminApiRequest('page/' + request[0] + '/duplicate/' + request[2], {method: 'POST'}).then(r => {
+	return adminApiRequest('page/' + request[0] + '/duplicate/' + request[2], {}, {method: 'POST'}).then(r => {
 		if (r.id) {
 			window.open(adminPrefix + request[0] + '/edit/' + r.id);
 		} else {

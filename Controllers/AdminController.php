@@ -4,6 +4,7 @@ use Model\Admin\Auth;
 use Model\Core\Autoloader;
 use Model\Core\Controller;
 use Model\Core\Module;
+use Model\CSRF\CSRF;
 use Model\Csv\AdminBridge;
 
 class AdminController extends Controller
@@ -19,7 +20,6 @@ class AdminController extends Controller
 		$this->model->load('Popup');
 		$this->model->load('Form');
 		$this->model->load('ContextMenu');
-		$this->model->load('CSRF');
 
 		$this->model->_Admin->setPath($this->model->_AdminFront->url);
 		$this->model->_Admin->loadUserModule();
@@ -170,6 +170,7 @@ class AdminController extends Controller
 				$this->model->viewOptions['showLayout'] = false;
 				$this->model->viewOptions['cacheTemplate'] = true;
 				$this->model->viewOptions['template'] = 'shell';
+				$this->model->inject('cp_token', CSRF::getToken('admin.api'));
 				break;
 		}
 	}

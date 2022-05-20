@@ -11,5 +11,6 @@ class AdminLoginController extends Controller
 		$this->model->viewOptions['template-module'] = $templateModule;
 		$this->model->viewOptions['showLayout'] = false;
 		$this->model->viewOptions['template'] = 'login';
+		$this->model->viewOptions['cacheTemplate'] = false;
 	}
 }
