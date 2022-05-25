@@ -3,7 +3,6 @@
 use Model\Admin\Auth;
 use Model\Core\Autoloader;
 use Model\Core\Controller;
-use Model\Core\Module;
 use Model\CSRF\CSRF;
 use Model\Csv\AdminBridge;
 
