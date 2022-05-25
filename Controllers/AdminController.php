@@ -71,13 +71,13 @@ class AdminController extends Controller
 					$this->model->_Admin->setPath($this->model->_AdminFront->url);
 					$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
 
-					$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . DIRECTORY_SEPARATOR : '';
+					$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . '/' : '';
 
 					$forceLoad = false;
 					$templatePath = $dir . $this->model->_AdminFront->request[1];
 					if (isset($this->model->_AdminFront->request[2])) {
 						$forceLoad = true;
-						$templatePath .= DIRECTORY_SEPARATOR . $this->model->_AdminFront->request[2];
+						$templatePath .= '/' . $this->model->_AdminFront->request[2];
 
 						$element = $this->model->_Admin->getElement();
 						if (!$element)
