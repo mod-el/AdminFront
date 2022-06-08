@@ -888,7 +888,9 @@ async function getFiltersFromPageDetails() {
 			fieldOptions['adminFilter'] = filterOptions;
 
 			let defaultValue = '';
-			if (typeof fieldOptions.default !== 'undefined')
+			if (typeof fieldOptions['adminFilter'].default !== 'undefined')
+				defaultValue = fieldOptions['adminFilter'].default;
+			else if (typeof fieldOptions.default !== 'undefined')
 				defaultValue = fieldOptions.default;
 
 			let value = defaultValue;
