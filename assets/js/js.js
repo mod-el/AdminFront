@@ -2238,6 +2238,8 @@ async function exportPopup(step) {
 
 async function exportNextStep(exportPayload, searchPayload) {
 	let loadingBar = _('export-loading-bar');
+	if (!loadingBar)
+		return;
 
 	let response = await ajax(adminPrefix + 'export/' + currentAdminPage.split('/')[0], {step: 3}, {
 		id: loadingBar.dataset.id,
@@ -2247,10 +2249,23 @@ async function exportNextStep(exportPayload, searchPayload) {
 
 	loadingBar.firstElementChild.style.width = response.percentage + '%';
 
-	if (response.status === 'finished')
+	if (response.status === 'finished') {
+		_('exporter-result').innerHTML = 'Se il download non parte in automatico, <a href="' + response.file + '" target="_blank">cliccare qui</a>';
 		window.open(response.file);
-	else
+	} else {
 		return exportNextStep(exportPayload, searchPayload);
+	}
+}
+
+async function filterFormatOptions(select) {
+	let form = select.form;
+	let format = await select.getValue();
+	for (let option of form.querySelectorAll('[data-format-option]')) {
+		if (option.getAttribute('data-format-option') === format)
+			option.removeClass('d-none');
+		else
+			option.addClass('d-none');
+	}
 }
 
 function deleteRows(ids) {

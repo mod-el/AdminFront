@@ -239,7 +239,7 @@ class AdminController extends Controller
 					$exportPayload = json_decode($_POST['exportPayload'], true, 512, JSON_THROW_ON_ERROR);
 					$searchPayload = json_decode($_POST['searchPayload'], true, 512, JSON_THROW_ON_ERROR);
 
-					$provider = new ExportProvider($this->model->_Admin, $searchPayload);
+					$provider = new ExportProvider($this->model->_Admin, $exportPayload, $searchPayload);
 
 					$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
 					if (!is_dir($dir))
