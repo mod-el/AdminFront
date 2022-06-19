@@ -252,14 +252,14 @@ $config = ' . var_export($config, true) . ';
 	}
 
 	/**
-	 * Clean up of all temporary csv files older than an hour
+	 * Clean up of all temporary exported files older than 12 hours
 	 */
 	public function cleanUp()
 	{
 		if (is_dir(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv')) {
 			$files = glob(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv' . DIRECTORY_SEPARATOR . '*');
 			foreach ($files as $f) {
-				if (time() - filemtime($f) > 3600)
+				if (!is_dir($f) and time() - filemtime($f) > 3600 * 12)
 					unlink($f);
 			}
 		}
