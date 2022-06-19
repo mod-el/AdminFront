@@ -4,7 +4,7 @@ use Model\Admin\Auth;
 use Model\Core\Autoloader;
 use Model\Core\Controller;
 use Model\CSRF\CSRF;
-use Model\Csv\AdminBridge;
+use Model\Admin\ExportProvider;
 
 class AdminController extends Controller
 {
@@ -228,7 +228,7 @@ class AdminController extends Controller
 					];
 
 				case 'export':
-					if (!isset($_GET['step'], $_POST['rows'], $_POST['payload']) or !is_numeric($_POST['rows']))
+					if (!isset($_GET['step'], $_POST['exportPayload'], $_POST['searchPayload']))
 						die('Dati errati');
 
 					if (!isset($this->model->_AdminFront->request[1]))
@@ -236,35 +236,23 @@ class AdminController extends Controller
 
 					$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
 
-					$payload = json_decode($_POST['payload'], true);
-					if ($payload === null)
-						die('Payload errato');
+					$exportPayload = json_decode($_POST['exportPayload'], true, 512, JSON_THROW_ON_ERROR);
+					$searchPayload = json_decode($_POST['searchPayload'], true, 512, JSON_THROW_ON_ERROR);
 
-					$searchQuery = $this->model->_Admin->makeSearchQuery(
-						$payload['search'] ?? '',
-						$payload['filters'] ?? [],
-						$payload['search-fields'] ?? []
-					);
+					$provider = new ExportProvider($this->model->_Admin, $searchPayload);
 
-					$options = [
-						'where' => $searchQuery['where'],
-						'joins' => $searchQuery['joins'],
-					];
-					if (isset($payload['page']))
-						$options['p'] = $payload['page'];
-					if (isset($payload['go-to']))
-						$options['goTo'] = $payload['go-to'];
-					if (isset($payload['per-page']))
-						$options['perPage'] = $payload['per-page'];
-					if (isset($payload['sort-by']))
-						$options['sortBy'] = $payload['sort-by'];
-
-					$list = $this->model->_Admin->getList($options);
+					$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
+					if (!is_dir($dir))
+						mkdir($dir, 0777, true);
 
 					switch ($_GET['step']) {
 						case 2:
-							$this->model->inject('tot', $list['tot']);
-							$this->model->inject('rows', $_POST['rows']);
+							if (!class_exists('\\Model\\Exporter\\Exporter'))
+								throw new \Exception('Please install model/exporter via composer');
+
+							$exportId = \Model\Exporter\Exporter::beginExport($provider, $dir, $exportPayload['format'], $exportPayload['paginate'], $exportPayload);
+
+							$this->model->inject('exportId', $exportId);
 
 							$this->model->viewOptions['showLayout'] = false;
 							$this->model->viewOptions['cacheTemplate'] = true;
@@ -275,43 +263,16 @@ class AdminController extends Controller
 							if ($this->model->moduleExists('Log'))
 								$this->model->_Log->disableAutoLog();
 
-							ini_set('max_execution_time', '0');
+							$response = \Model\Exporter\Exporter::next($provider, $_POST['id']);
 
-							header('Content-Type: application/csv');
-							header('Content-Disposition: attachment; filename=list.csv');
-
-							$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
-							if (!is_dir($dir))
-								mkdir($dir, 0777, true);
-
-							$title = $this->model->_AdminFront->request[1] ?? 'export';
-
-							$n = 1;
-							while (file_exists($dir . DIRECTORY_SEPARATOR . $title . '-' . $n . '.csv'))
-								$n++;
-
-							$filePath = 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv' . DIRECTORY_SEPARATOR . $title . '-' . $n . '.csv';
-
-							$totalFields = $this->model->_Admin->getColumnsList();
-							$columnNames = (count($payload['fields'] ?? []) > 0) ? $payload['fields'] : $totalFields['default'];
-
-							$columns = [];
-							foreach ($columnNames as $columnName) {
-								if (isset($totalFields['fields'][$columnName]))
-									$columns[$columnName] = $totalFields['fields'][$columnName];
+							if ($response['status'] === 'finished') {
+								$response['percentage'] = 100;
+								$response['file'] = PATH . substr($response['file'], strlen(INCLUDE_PATH));
+							} else {
+								$response['percentage'] = round($response['current'] / $response['tot'] * 100);
 							}
 
-							$csvAdminBridge = new AdminBridge($this->model);
-							$csvAdminBridge->export($list['list'], $columns, [
-								'target' => INCLUDE_PATH . $filePath,
-								'delimiter' => ';',
-								'charset' => 'ISO-8859-1',
-							]);
-
-							return [
-								'name' => $title . '-' . $n,
-								'link' => PATH . 'model/AdminFront/data/temp-csv/' . $title . '-' . $n . '.csv',
-							];
+							return $response;
 
 						default:
 							throw new \Exception('Unknown export step');

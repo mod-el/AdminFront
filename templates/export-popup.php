@@ -4,13 +4,20 @@
 		switch ($_GET['step']) {
 			case 1:
 				?>
-				<h2>Numero massimo di righe per CSV:</h2>
-				<p><i>"0" per un unico csv senza limiti</i></p>
-				<div class="rob-field-cont">
-					<div class="rob-field" style="width: 50%">
-						<input type="number" name="rows-number" value="3000" step="1"/>
+				<h2>Esportazione</h2>
+				<div class="flex-fields">
+					<div>
+						Formato<br/>
+						<select name="format">
+							<option value="csv">CSV</option>
+						</select>
 					</div>
-					<div class="rob-field" style="width: 50%">
+					<div>
+						Righe per pagina<br/>
+						<input type="number" name="paginate" value="100"/>
+					</div>
+					<div>
+						<br/>
 						<input type="submit" value="Genera"/>
 					</div>
 				</div>
@@ -18,23 +25,26 @@
 				break;
 			case 2:
 				?>
-				<h2>Generazione CSV</h2>
-				<?php
-				for ($c = 0; $c < $tot; $c += $rows) {
-					$max = $c + $rows;
-					if ($max > $tot)
-						$max = $tot;
+				<style>
+					#export-loading-bar {
+						margin-top: 10px;
+						height: 30px;
+						border: solid #2693FF 1px;
+						border-radius: 5px;
+					}
 
-					$pag = floor($c / $rows) + 1;
-					?>
-					<div class="pad5 grid">
-						<div class="w9">
-							Righe da <?= $c + 1 ?> a <?= $max ?>
-						</div>
-						<div class="w3" data-csvpage="<?= $pag ?>" data-csvexecuted="0"></div>
-					</div>
-					<?php
-				}
+					#export-loading-bar > div {
+						height: 30px;
+						background: #2693FF;
+						transition: width 0.4s ease-out;
+					}
+				</style>
+
+				<h2>Esportazione in corso</h2>
+				<div id="export-loading-bar" data-id="<?= $exportId ?>">
+					<div style="width: 0%"></div>
+				</div>
+				<?php
 				break;
 		}
 		?>

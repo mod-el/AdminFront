@@ -664,7 +664,7 @@ async function loadAdminPage(request, get = {}, history_push = true, loadFullDet
 
 					if (currentPageDetails.export) {
 						addPageAction('export', {
-							'fa-icon': 'fab fa-wpforms',
+							'fa-icon': 'fas fa-download',
 							'text': 'Esporta',
 							'action': `exportPopup(1)`,
 						});
@@ -2219,41 +2219,38 @@ async function exportPopup(step) {
 				get: {step}
 			});
 		case 2:
-			let rowsNumber = await _('export-form')['rows-number'].getValue();
-			let payload = await search(null, {history: false, empty_main: false, return_payload: true});
+			let form = _('export-form');
+			let exportPayload = await form.getValues();
+			let searchPayload = await search(null, {history: false, empty_main: false, return_payload: true});
+
 			return zkPopup({
 				url: adminPrefix + 'export/' + currentAdminPage.split('/')[0],
 				get: {step},
 				post: {
-					rows: rowsNumber,
-					payload: JSON.stringify(payload)
+					exportPayload: JSON.stringify(exportPayload),
+					searchPayload: JSON.stringify(searchPayload)
 				}
 			}).then(() => {
-				checkForExport(rowsNumber, payload);
+				return exportNextStep(exportPayload, searchPayload);
 			});
 	}
 }
 
-function checkForExport(rowsNumber, payload) {
-	let div = document.querySelector('[data-csvpage][data-csvexecuted="0"]');
-	if (div) {
-		div.loading();
-		payload['per-page'] = rowsNumber;
-		payload['page'] = parseInt(div.getAttribute('data-csvpage'));
-		return ajax(adminPrefix + 'export/' + currentAdminPage.split('/')[0], {step: 3}, {
-			rows: rowsNumber,
-			payload: JSON.stringify(payload)
-		}, {'rows-number': rowsNumber}).then(r => {
-			if (typeof r === 'object') {
-				div.innerHTML = '[<a href="' + r.link + '" target="_blank"> ' + r.name + ' </a>]';
-				div.setAttribute('data-csvexecuted', '1');
-				checkForExport(rowsNumber, payload);
-			} else {
-				div.innerHTML = 'Errore.';
-				reportAdminError(r);
-			}
-		});
-	}
+async function exportNextStep(exportPayload, searchPayload) {
+	let loadingBar = _('export-loading-bar');
+
+	let response = await ajax(adminPrefix + 'export/' + currentAdminPage.split('/')[0], {step: 3}, {
+		id: loadingBar.dataset.id,
+		exportPayload: JSON.stringify(exportPayload),
+		searchPayload: JSON.stringify(searchPayload)
+	});
+
+	loadingBar.firstElementChild.style.width = response.percentage + '%';
+
+	if (response.status === 'finished')
+		window.open(response.file);
+	else
+		return exportNextStep(exportPayload, searchPayload);
 }
 
 function deleteRows(ids) {
