@@ -2247,6 +2247,11 @@ async function exportNextStep(exportPayload, searchPayload) {
 		searchPayload: JSON.stringify(searchPayload)
 	});
 
+	if (typeof response === 'string') {
+		alert(response);
+		return;
+	}
+
 	loadingBar.firstElementChild.style.width = response.percentage + '%';
 
 	if (response.status === 'finished') {

@@ -10,7 +10,8 @@
 						Formato<br/>
 						<select name="format" onchange="filterFormatOptions(this)">
 							<option value="csv">CSV</option>
-							<!--<option value="xlsx">Excel</option>-->
+							<option value="xlsx">Excel</option>
+							<option value="html">HTML</option>
 						</select>
 					</div>
 					<div>
