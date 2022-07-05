@@ -2585,7 +2585,7 @@ async function makeDynamicOption(fieldName, page, formName = 'main') {
 			let field = form.fields.get(fieldName);
 
 			if (field.options.type === 'select')
-				await field.reloadOptions(null, null, true, false);
+				await field.reloadOptions(null, true, false);
 
 			await field.setValue(id);
 		}
