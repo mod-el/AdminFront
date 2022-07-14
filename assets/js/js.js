@@ -2352,19 +2352,19 @@ async function loadVisualizer(visualizerName, visualizerId, container, main, opt
 }
 
 async function replaceTemplateValues(cont, id, data, fields = {}) {
-	let keys = ['id', ...Object.keys(data)];
+	data.id = id;
+	let keys = Object.keys(data);
 	for (let k of keys) {
 		let v = '';
-		if (k === 'id') {
+		if (k === 'id')
 			v = id;
-		} else {
+		else
 			v = data[k];
-		}
 
 		if (v === null)
 			v = '';
 
-		if (v !== null && typeof v === 'object') {
+		if (typeof v === 'object') {
 			// Multilang?
 			if (typeof v['it'] !== 'undefined')
 				v = v['it'];
@@ -2403,6 +2403,14 @@ async function replaceTemplateValues(cont, id, data, fields = {}) {
 		}
 
 		cont.innerHTML = cont.innerHTML.replace(regex, v);
+	}
+
+	for (let conditionalCont of cont.querySelectorAll('[data-model-if]')) {
+		let response = (function (code, data) {
+			return eval(code);
+		}).call(conditionalCont, conditionalCont.getAttribute('data-model-if'), data);
+		if (!response)
+			conditionalCont.remove();
 	}
 }
 
