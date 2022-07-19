@@ -413,10 +413,10 @@ class FormList {
 			return;
 
 		toolbarButtonLoading('save');
-		let data = this.getSave();
+		let list = this.getSave();
 		this.saving = true;
 
-		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', data).then(() => {
+		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', {list}).then(() => {
 			return this.reload();
 		}).catch(error => {
 			reportAdminError(error);
