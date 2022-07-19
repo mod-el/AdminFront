@@ -1857,7 +1857,10 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 	}).catch(reportAdminError);
 }
 
-async function renderSublists(sublists, container) {
+async function renderSublists(sublists, container, prefix = '') {
+	if (prefix)
+		prefix += '/';
+
 	let sublistsPromises = [];
 
 	for (let sublist of sublists) {
@@ -1870,17 +1873,18 @@ async function renderSublists(sublists, container) {
 				if (sublist.name === currentAdminPage.split('/')[0])
 					throw 'You cannot name a sublist like the main page';
 
-				let visualizer = await loadVisualizer(sublist.visualizer, sublist.name, sublistCont, false, {
+				let visualizer = await loadVisualizer(sublist.visualizer, prefix + sublist.name, sublistCont, false, {
 					"fields": sublist.fields,
 					"privileges": sublist.privileges,
 					"visualizer-options": sublist['visualizer-options'],
+					"sublists": sublist.sublists,
 				});
 
-				pageSublists.set(sublist.name, visualizer);
+				pageSublists.set(prefix + sublist.name, visualizer);
 
 				await visualizer.render(sublist.list);
 
-				resolve();
+				resolve(visualizer);
 			} catch (e) {
 				reject(e);
 			}
@@ -2001,8 +2005,7 @@ async function save(options = {}) {
 		let payload = {
 			data: {},
 			version: pageForms.get(options.form).version,
-			cp_token: pageForms.get(options.form).cp_token,
-			sublists: {}
+			cp_token: pageForms.get(options.form).cp_token
 		};
 
 		if (options.id === 0) // Al nuovo salvataggio invio tutto
@@ -2011,15 +2014,17 @@ async function save(options = {}) {
 			payload.data = pageForms.get(options.form).getChangedValues();
 
 		if (options.sublists) {
-			for (let k of pageSublists.keys()) {
-				let sublist = pageSublists.get(k);
+			for (let [k, sublist] of pageSublists.entries()) {
+				if (k.includes('/')) // Non è una delle sublist principali
+					continue;
+
 				let sublistChanges = sublist.getSave();
-				if (sublistChanges.create.length || Object.keys(sublistChanges.update).length || sublistChanges.delete.length)
-					payload.sublists[k] = sublistChanges;
+				if (sublistChanges !== null)
+					payload.data[k] = sublistChanges;
 			}
 		}
 
-		if (Object.keys(payload.data).length === 0 && Object.keys(payload.sublists).length === 0 && options.no_data_alert)
+		if (Object.keys(payload.data).length === 0 && options.no_data_alert)
 			throw 'Nessun dato modificato';
 
 		return adminApiRequest('page/' + options.page + '/save/' + options.id, payload).then(response => {

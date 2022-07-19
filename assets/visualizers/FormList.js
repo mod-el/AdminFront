@@ -60,7 +60,7 @@ class FormList {
 			addButtonRow.style.cursor = 'pointer';
 			addButtonRow.innerHTML = `<div class="rob-field" style="width: 30px"></div><div class="rob-field" style="width: calc(100% - 30px)">` + (this.options['visualizer-options']['add-button'] === true ? '<i class="fas fa-plus" aria-hidden="true"></i> Aggiungi' : this.options['visualizer-options']['add-button']) + `</div>`;
 			addButtonRow.addEventListener('click', () => {
-				this.addLocalRow();
+				this.addLocalRow(null, this.options.sublists || []);
 			})
 		}
 
@@ -84,7 +84,7 @@ class FormList {
 				if (this.main)
 					templateUrl += this.id;
 				else
-					templateUrl += currentAdminPage.split('/')[0] + '/' + this.id;
+					templateUrl += currentAdminPage.split('/')[0] + '/' + this.id.replace(/\/(new)?[0-9]+\//g, '/'); // Le sublist annidate hanno il formato nome1/12/nome2/23/nome3 quindi rimuovo gli id per ottenere il percorso da chiedere
 
 				templateDiv.innerHTML = await loadPage(templateUrl, get, {}, {fill_main: false});
 
@@ -104,7 +104,8 @@ class FormList {
 
 				resolve({
 					fields: this.options.fields,
-					data: defaultData
+					data: defaultData,
+					sublists: []
 				});
 			});
 		}
@@ -119,7 +120,14 @@ class FormList {
 				for (let k of Object.keys(item.data))
 					data[k] = (item.data[k] && typeof item.data[k] === 'object' && item.data[k].hasOwnProperty('value')) ? item.data[k].value : item.data[k];
 
-				await this.addLocalRow(item.id, {
+				let itemSublists = [];
+				if (this.options.sublists) {
+					itemSublists = JSON.parse(JSON.stringify(this.options.sublists));
+					for (let [itemSublistName, itemSublist] of Object.entries(item.sublists))
+						itemSublists.find(s => s.name === itemSublistName).list = itemSublist;
+				}
+
+				await this.addLocalRow(item.id, itemSublists, {
 					data,
 					fields: (await this.basicData).fields
 				}, item.privileges ? item.privileges['D'] : true, false);
@@ -156,7 +164,7 @@ class FormList {
 		return [];
 	}
 
-	async addLocalRow(id = null, providedData = null, canDelete = true, historyPush = true) {
+	async addLocalRow(id = null, sublists = [], providedData = null, canDelete = true, historyPush = true) {
 		let template = (await this.template).cloneNode(true);
 		providedData = JSON.parse(JSON.stringify(providedData)); // clono per evitare problemi di referenze
 
@@ -186,6 +194,8 @@ class FormList {
 
 		if (historyPush)
 			historyMgr.sublistAppend(this.id, 'new', id);
+
+		let renderedSublists = await renderSublists(sublists, template, this.id + '/' + id);
 
 		let row;
 
@@ -242,7 +252,14 @@ class FormList {
 
 		await form.build(template, data);
 
-		let rowObj = {id, row, form, isNew, deleted: false};
+		let rowObj = {
+			id,
+			row,
+			form,
+			isNew,
+			sublists: renderedSublists,
+			deleted: false,
+		};
 		this.rows.set(id, rowObj);
 		if (isNew)
 			this.newRows.push(id);
@@ -356,50 +373,35 @@ class FormList {
 		return arr;
 	}
 
-	getNewRowsSave() {
-		let response = [];
-		for (let id of this.newRows) {
-			let row = this.rows.get(id);
-			if (!row || row.deleted)
+	getSave() {
+		let list = [], atLeastOneChange = false;
+		for (let [id, row] of this.rows.entries()) {
+			if (row.deleted) {
+				if (!row.isNew)
+					atLeastOneChange = true;
 				continue;
-			response.push(row.form.getChangedValues());
-		}
-
-		return response;
-	}
-
-	getExistingRowsSave() {
-		let response = {};
-		for (let id of this.rows.keys()) {
-			let row = this.rows.get(id);
-			if (row.isNew || row.deleted)
-				continue;
+			}
 
 			let changed = row.form.getChangedValues();
-			if (Object.keys(changed).length)
-				response[id] = changed;
+			if (Object.keys(changed).length || row.isNew)
+				atLeastOneChange = true;
+
+			if (!row.isNew)
+				changed.id = id;
+
+			for (let sublist of row.sublists) {
+				let name = sublist.id.split('/').pop();
+				let sublistChanged = sublist.getSave();
+				if (sublistChanged !== null) {
+					atLeastOneChange = true;
+					changed[name] = sublistChanged;
+				}
+			}
+
+			list.push(changed);
 		}
 
-		return response;
-	}
-
-	getDeletedRows() {
-		let response = [];
-		for (let id of this.rows.keys()) {
-			let row = this.rows.get(id);
-			if (!row.isNew && row.deleted)
-				response.push(id);
-		}
-
-		return response;
-	}
-
-	getSave() {
-		return {
-			create: this.getNewRowsSave(),
-			update: this.getExistingRowsSave(),
-			delete: this.getDeletedRows()
-		};
+		return atLeastOneChange ? list : null;
 	}
 
 	async save() {

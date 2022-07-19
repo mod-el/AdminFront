@@ -1,5 +1,6 @@
 <?php namespace Model\AdminFront\Controllers;
 
+use Model\Admin\AdminPage;
 use Model\Admin\Auth;
 use Model\Core\Autoloader;
 use Model\Core\Controller;
@@ -64,48 +65,80 @@ class AdminController extends Controller
 				}
 
 			case 'template':
-				if ($this->model->_AdminFront->request[1] ?? null) {
+				$request = $this->model->_AdminFront->request;
+
+				if ($request[1] ?? null) {
 					$this->model->viewOptions['cacheTemplate'] = true;
 
 					$this->model->_Admin->setPath($this->model->_AdminFront->url);
-					$this->model->_Admin->setPage($this->model->_AdminFront->request[1]);
+					$this->model->_Admin->setPage($request[1]);
 
 					$dir = $this->model->_AdminFront->url ? $this->model->_AdminFront->url . '/' : '';
 
 					$forceLoad = false;
-					$templatePath = $dir . $this->model->_AdminFront->request[1];
-					if (isset($this->model->_AdminFront->request[2])) {
+					$templatePath = $dir . $request[1];
+					if (count($request) > 2) { // Sublist
 						$forceLoad = true;
-						$templatePath .= '/' . $this->model->_AdminFront->request[2];
 
-						$element = $this->model->_Admin->getElement();
-						if (!$element)
-							die();
+						$currentAdminPage = $this->model->_Admin->page;
+						$currentPageOptions = $this->model->_Admin->getPageOptions($currentAdminPage);
+						$currentElement = $this->model->_Admin->getElement();
+						if (!$currentElement)
+							die('Main element not found');
 
-						$sublists = $this->model->_Admin->getSublists();
-						if (isset($sublists[$this->model->_AdminFront->request[2]])) {
-							$sublist = $sublists[$this->model->_AdminFront->request[2]];
-							if ($sublist['custom']) {
-								$form = is_callable($sublist['custom']['form']) ? $sublist['custom']['form']() : $sublist['custom']['form'];
-							} else {
-								$relationshipOptions = $element->getChildrenOptions($sublist['relationship']);
+						$formFound = null;
+						foreach ($request as $reqIdx => $reqSegment) {
+							if ($reqIdx <= 1)
+								continue;
 
-								$sublistItem = $element->create($sublist['relationship']);
+							$templatePath .= '/' . $reqSegment;
+
+							$sublists = $this->model->_Admin->getSublists($currentPageOptions);
+							if (isset($sublists[$reqSegment])) {
+								$sublist = $sublists[$reqSegment];
+
+								$sublistItem = $currentElement->create($sublist['relationship']);
 								if (!$sublistItem)
 									die();
 
-								if (!empty($sublist['template']))
-									$templatePath = $sublist['template'];
+								if ($reqIdx === count($request) - 1) { // Last segment
+									if ($sublist['custom']) {
+										$formFound = is_callable($sublist['custom']['form']) ? $sublist['custom']['form']() : $sublist['custom']['form'];
+									} else {
+										$relationshipOptions = $currentElement->getChildrenOptions($sublist['relationship']);
 
-								$form = $sublistItem->getForm(true);
-								$form->remove(!empty($relationshipOptions['assoc']) ? $relationshipOptions['assoc']['parent'] : $relationshipOptions['field']);
+										if (!empty($sublist['template']))
+											$templatePath = $sublist['template'];
+
+										$formFound = $sublistItem->getForm(true);
+										$formFound->remove(!empty($relationshipOptions['assoc']) ? $relationshipOptions['assoc']['parent'] : $relationshipOptions['field']);
+									}
+
+									$formFound->options['render-only-placeholders'] = true;
+								} else {
+									if ($sublist['admin-page']) {
+										$sublistAdminPageClassName = Autoloader::searchFile('AdminPage', $sublist['admin-page']);
+										if (!$sublistAdminPageClassName)
+											$this->model->error('AdminPage ' . $sublist['admin-page'] . ' not found');
+
+										/** @var AdminPage $sublistAdminPage */
+										$currentAdminPage = new $sublistAdminPageClassName($this->model);
+										$currentPageOptions = $this->model->_Admin->getPageOptions($currentAdminPage);
+
+										$currentElement = $sublistItem;
+									} else {
+										break;
+									}
+								}
+							} else {
+								break;
 							}
-
-							$form->options['render-only-placeholders'] = true;
-							$this->model->inject('form', $form);
-						} else {
-							$this->model->inject('form', $this->model->_Admin->getForm());
 						}
+
+						if ($formFound)
+							$this->model->inject('form', $formFound);
+						else
+							$this->model->inject('form', $this->model->_Admin->getForm());
 					} else {
 						$this->model->inject('form', $this->model->_Admin->getForm());
 					}
