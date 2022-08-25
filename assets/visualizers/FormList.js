@@ -60,7 +60,7 @@ class FormList {
 			addButtonRow.style.cursor = 'pointer';
 			addButtonRow.innerHTML = `<div class="rob-field" style="width: 30px"></div><div class="rob-field" style="width: calc(100% - 30px)">` + (this.options['visualizer-options']['add-button'] === true ? '<i class="fas fa-plus" aria-hidden="true"></i> Aggiungi' : this.options['visualizer-options']['add-button']) + `</div>`;
 			addButtonRow.addEventListener('click', () => {
-				this.addLocalRow(null, this.options.sublists || []);
+				this.addLocalRow();
 			})
 		}
 
@@ -120,17 +120,10 @@ class FormList {
 				for (let k of Object.keys(item.data))
 					data[k] = (item.data[k] && typeof item.data[k] === 'object' && item.data[k].hasOwnProperty('value')) ? item.data[k].value : item.data[k];
 
-				let itemSublists = [];
-				if (this.options.sublists) {
-					itemSublists = JSON.parse(JSON.stringify(this.options.sublists));
-					for (let [itemSublistName, itemSublist] of Object.entries(item.sublists))
-						itemSublists.find(s => s.name === itemSublistName).list = itemSublist;
-				}
-
-				await this.addLocalRow(item.id, itemSublists, {
+				await this.addLocalRow(item.id, {
 					data,
 					fields: (await this.basicData).fields
-				}, item.privileges ? item.privileges['D'] : true, false);
+				}, item.sublists, item.privileges ? item.privileges['D'] : true, false);
 			}
 		}
 	}
@@ -164,7 +157,7 @@ class FormList {
 		return [];
 	}
 
-	async addLocalRow(id = null, sublists = [], providedData = null, canDelete = true, historyPush = true) {
+	async addLocalRow(id = null, providedData = null, itemSublists = [], canDelete = true, historyPush = true) {
 		let template = (await this.template).cloneNode(true);
 		providedData = JSON.parse(JSON.stringify(providedData)); // clono per evitare problemi di referenze
 
@@ -194,6 +187,13 @@ class FormList {
 
 		if (historyPush)
 			historyMgr.sublistAppend(this.id, 'new', id);
+
+		let sublists = [];
+		if (this.options.sublists) {
+			sublists = JSON.parse(JSON.stringify(this.options.sublists));
+			for (let [itemSublistName, itemSublist] of Object.entries(itemSublists))
+				sublists.find(s => s.name === itemSublistName).list = itemSublist;
+		}
 
 		let renderedSublists = await renderSublists(sublists, template, this.id + '/' + id);
 
