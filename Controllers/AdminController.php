@@ -97,14 +97,14 @@ class AdminController extends Controller
 							if (isset($sublists[$reqSegment])) {
 								$sublist = $sublists[$reqSegment];
 
-								$sublistItem = $currentElement->create($sublist['relationship']);
-								if (!$sublistItem)
-									die();
-
 								if ($reqIdx === count($request) - 1) { // Last segment
 									if ($sublist['custom']) {
 										$formFound = is_callable($sublist['custom']['form']) ? $sublist['custom']['form']() : $sublist['custom']['form'];
 									} else {
+										$sublistItem = $currentElement->create($sublist['relationship']);
+										if (!$sublistItem)
+											die();
+
 										$relationshipOptions = $currentElement->getChildrenOptions($sublist['relationship']);
 
 										if (!empty($sublist['template']))
@@ -125,7 +125,9 @@ class AdminController extends Controller
 										$currentAdminPage = new $sublistAdminPageClassName($this->model);
 										$currentPageOptions = $this->model->_Admin->getPageOptions($currentAdminPage);
 
-										$currentElement = $sublistItem;
+										$currentElement = $currentElement->create($sublist['relationship']);
+										if (!$currentElement)
+											die();
 									} else {
 										break;
 									}
