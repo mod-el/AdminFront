@@ -1877,6 +1877,7 @@ async function renderSublists(sublists, container, prefix = '') {
 					"fields": sublist.fields,
 					"privileges": sublist.privileges,
 					"visualizer-options": sublist['visualizer-options'],
+					"custom": sublist.custom,
 					"sublists": sublist.sublists,
 				});
 

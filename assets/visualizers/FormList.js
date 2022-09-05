@@ -374,6 +374,9 @@ class FormList {
 	}
 
 	getSave() {
+		if (this.options.custom)
+			return null;
+
 		let list = [], atLeastOneChange = false;
 		for (let [id, row] of this.rows.entries()) {
 			if (row.deleted) {
