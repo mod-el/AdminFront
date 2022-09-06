@@ -172,7 +172,7 @@ class AdminFront extends Module
 			return \Model\Multilang\Dictionary::get('admin.' . $w);
 		} else {
 			$dictionary = require INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'dictionary.php';
-			return $dictionary[$w] ?? '';
+			return $dictionary[$w]['it'] ?? '';
 		}
 	}
 
