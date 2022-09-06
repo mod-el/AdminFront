@@ -1,14 +1,11 @@
 <?php namespace Model\AdminFront;
 
-use Model\Core\Autoloader;
 use Model\Core\Module;
-use Model\Form\Form;
 
 class AdminFront extends Module
 {
 	public string $url = '';
 	public array $request;
-	private array $dictionary;
 
 	/**
 	 *
@@ -63,12 +60,11 @@ class AdminFront extends Module
 					return [
 						'controller' => 'AdminLogin',
 					];
-					break;
+
 				default:
 					return [
 						'controller' => 'Admin',
 					];
-					break;
 			}
 		} else {
 			return [
@@ -155,7 +151,7 @@ class AdminFront extends Module
 	 * Returns the name of the chosen template module
 	 *
 	 * @return string
-	 * @throws \Model\Core\Exception
+	 * @throws \Exception
 	 */
 	public function getTemplateModule(): string
 	{
@@ -167,36 +163,15 @@ class AdminFront extends Module
 	}
 
 	/**
-	 * @return array
-	 */
-	private function getDictionary(): array
-	{
-		if (!isset($this->dictionary)) {
-			$adminDictionaryFile = INCLUDE_PATH . 'app' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'dictionary.php';
-
-			$dictionary = [];
-			if (file_exists($adminDictionaryFile))
-				require($adminDictionaryFile);
-
-			$this->dictionary = [];
-			foreach ($dictionary as $w => $langs) {
-				$this->dictionary[$w] = count($langs) > 0 ? ($langs['it'] ?? reset($langs)) : '';
-			}
-		}
-
-		return $this->dictionary;
-	}
-
-	/**
 	 * @param string $w
 	 * @return string
 	 */
 	public function word(string $w): string
 	{
-		if ($this->model->isLoaded('Multilang')) {
-			return $this->model->_Multilang->word('admin.' . $w);
+		if (class_exists('\\Model\\Multilang\\Dictionary')) {
+			return \Model\Multilang\Dictionary::get('admin.' . $w);
 		} else {
-			$dictionary = $this->getDictionary();
+			$dictionary = require INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'dictionary.php';
 			return $dictionary[$w] ?? '';
 		}
 	}
@@ -208,7 +183,7 @@ class AdminFront extends Module
 	 * @param string $name
 	 * @param array Deprecated $options
 	 */
-	public function renderSublist(string $name, array $options = [])
+	public function renderSublist(string $name, array $options = []): void
 	{
 		echo '<div data-sublistplaceholder="' . entities($name) . '"></div>';
 	}
