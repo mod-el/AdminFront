@@ -373,6 +373,16 @@ class FormList {
 		return arr;
 	}
 
+	getDeletedRows() {
+		let deleted = [];
+		for (let [id, row] of this.rows.entries()) {
+			if (row.deleted && !row.isNew)
+				deleted.push(id);
+		}
+
+		return deleted;
+	}
+
 	getSave() {
 		if (this.options.custom)
 			return null;
@@ -417,9 +427,10 @@ class FormList {
 
 		toolbarButtonLoading('save');
 		let list = this.getSave();
+		let deleted = this.getDeletedRows();
 		this.saving = true;
 
-		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', {list}).then(() => {
+		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', {list, deleted}).then(() => {
 			return this.reload();
 		}).catch(error => {
 			reportAdminError(error);
