@@ -28,6 +28,8 @@ var saving = false;
 var pageForms = new Map();
 var pageSublists = new Map();
 
+const PAYLOAD_MAX_SIZE = 524288;
+
 class HistoryManager {
 	constructor() {
 		this.changeHistory = [];
@@ -1960,9 +1962,9 @@ async function save(options = {}) {
 			load_element: true,
 			sublists: true,
 			page: null,
-			id: null
+			id: null,
 		},
-		...options
+		...options,
 	};
 
 	if (options.form === 'main') {
@@ -1992,60 +1994,60 @@ async function save(options = {}) {
 
 	setLoadingBar(0);
 
-	return new Promise(function (resolve) {
-		setTimeout(function () { // Gives a little bit of time for the fields to activate their "onchange" events
+	await new Promise(resolve => { // Gives a little bit of time for the fields to activate their "onchange" events
+		setTimeout(() => {
 			resolve();
 		}, 200);
-	}).then(async function () {
-		let request = currentAdminPage.split('/');
-		if (options.page === null)
-			options.page = request[0];
-		if (options.id === null)
-			options.id = getIdFromRequest(request);
+	});
 
-		let payload = {
-			data: {},
-			version: pageForms.get(options.form).version,
-			cp_token: pageForms.get(options.form).cp_token
-		};
+	let request = currentAdminPage.split('/');
+	if (options.page === null)
+		options.page = request[0];
+	if (options.id === null)
+		options.id = getIdFromRequest(request);
 
-		if (options.id === 0) // Al nuovo salvataggio invio tutto
-			payload.data = await pageForms.get(options.form).getValues();
-		else // Altrimenti solo i dati modificati
-			payload.data = pageForms.get(options.form).getChangedValues();
+	let payload = {
+		data: {},
+		version: pageForms.get(options.form).version,
+		cp_token: pageForms.get(options.form).cp_token,
+	};
 
-		if (options.sublists) {
-			for (let [k, sublist] of pageSublists.entries()) {
-				if (k.includes('/')) // Non è una delle sublist principali
-					continue;
+	if (options.id === 0) // Al nuovo salvataggio invio tutto
+		payload.data = await pageForms.get(options.form).getValues();
+	else // Altrimenti solo i dati modificati
+		payload.data = pageForms.get(options.form).getChangedValues();
 
-				let sublistChanges = sublist.getSave();
-				if (sublistChanges !== null)
-					payload.data[k] = sublistChanges;
-			}
+	if (options.sublists) {
+		for (let [k, sublist] of pageSublists.entries()) {
+			if (k.includes('/')) // Non è una delle sublist principali
+				continue;
+
+			let sublistChanges = sublist.getSave();
+			if (sublistChanges !== null)
+				payload.data[k] = sublistChanges;
+		}
+	}
+
+	if (Object.keys(payload.data).length === 0 && options.no_data_alert)
+		throw 'Nessun dato modificato';
+
+	return savePayload(payload, options).then(response => {
+		if (!response.id)
+			throw 'Risposta server errata';
+
+		if (options.form === 'main') {
+			wipeForms();
+			saving = false;
 		}
 
-		if (Object.keys(payload.data).length === 0 && options.no_data_alert)
-			throw 'Nessun dato modificato';
-
-		return adminApiRequest('page/' + options.page + '/save/' + options.id, payload).then(response => {
-			if (!response.id)
-				throw 'Risposta server errata';
-
-			if (options.form === 'main') {
-				wipeForms();
-				saving = false;
-			}
-
-			if (options.load_element) {
-				return loadAdminElement(response.id, {}, null, options.id === 0).then(() => {
-					inPageMessage('Salvataggio correttamente effettuato.', 'success');
-					return response.id;
-				});
-			} else {
+		if (options.load_element) {
+			return loadAdminElement(response.id, {}, null, options.id === 0).then(() => {
+				inPageMessage('Salvataggio correttamente effettuato.', 'success');
 				return response.id;
-			}
-		});
+			});
+		} else {
+			return response.id;
+		}
 	}).catch(error => {
 		reportAdminError(error);
 		throw error;
@@ -2057,6 +2059,25 @@ async function save(options = {}) {
 			toolbarButtonRestore('save');
 		}
 	});
+}
+
+async function savePayload(payload, options) {
+	let json_payload = JSON.stringify(payload);
+	let length = json_payload.length;
+
+	if (length > PAYLOAD_MAX_SIZE) {
+		let {id} = await adminApiRequest('page/' + options.page + '/chunk-save-begin/' + options.id, {}, {method: 'POST'});
+		let chunks = Math.ceil(length / PAYLOAD_MAX_SIZE);
+		for (let c = 0; c < chunks; c++) {
+			let chunk = json_payload.slice(c * PAYLOAD_MAX_SIZE, (c + 1) * PAYLOAD_MAX_SIZE);
+			await adminApiRequest('page/' + options.page + '/chunk-save-process/' + options.id, {id, chunk});
+			setLoadingBar(Math.round(100 / chunks * (c + 1)));
+		}
+
+		return adminApiRequest('page/' + options.page + '/save/' + options.id, {chunking_id: id});
+	} else {
+		return adminApiRequest('page/' + options.page + '/save/' + options.id, payload);
+	}
 }
 
 function inPageMessage(text, className, container = null) {
