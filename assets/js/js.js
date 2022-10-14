@@ -2028,8 +2028,10 @@ async function save(options = {}) {
 		}
 	}
 
-	if (Object.keys(payload.data).length === 0 && options.no_data_alert)
-		throw 'Nessun dato modificato';
+	if (Object.keys(payload.data).length === 0 && options.no_data_alert) {
+		alert('Nessun dato modificato');
+		return;
+	}
 
 	return savePayload(payload, options).then(response => {
 		if (!response.id)
