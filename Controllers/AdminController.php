@@ -276,7 +276,8 @@ class AdminController extends Controller
 
 					$provider = new ExportProvider($this->model->_Admin, $exportPayload, $searchPayload);
 
-					$dir = INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv';
+					$config = $this->model->_AdminFront->retrieveConfig();
+					$dir = INCLUDE_PATH . ($config['export-path'] ?? 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv');
 					if (!is_dir($dir))
 						mkdir($dir, 0777, true);
 

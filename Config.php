@@ -217,8 +217,10 @@ $config = ' . var_export($config, true) . ';
 	 */
 	public function cleanUp()
 	{
-		if (is_dir(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv')) {
-			$files = glob(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv' . DIRECTORY_SEPARATOR . '*');
+		$config = $this->retrieveConfig();
+		$dir = INCLUDE_PATH . ($config['export-path'] ?? 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv');
+		if (is_dir($dir)) {
+			$files = glob($dir . DIRECTORY_SEPARATOR . '*');
 			foreach ($files as $f) {
 				if (!is_dir($f) and time() - filemtime($f) > 3600 * 12)
 					unlink($f);
