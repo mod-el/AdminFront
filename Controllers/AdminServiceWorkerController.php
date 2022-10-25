@@ -14,8 +14,8 @@ class AdminServiceWorkerController extends Controller
 		$template = $this->model->_AdminFront->getTemplateModule();
 		$assets = $this->model->getModule($template)->getAssetsForServiceWorker();
 		require(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'cache-key.php');
-		if ($this->model->isLoaded('Multilang'))
-			$cacheKey .= $this->model->_Multilang->lang;
+		if (class_exists('\\Model\\Multilang\\Ml'))
+			$cacheKey .= \Model\Multilang\Ml::getLang();
 		require(INCLUDE_PATH . 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'sw.js');
 		die();
 	}

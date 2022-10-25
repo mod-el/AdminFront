@@ -31,8 +31,8 @@ class AdminController extends Controller
 		if ($this->model->moduleExists('InstantSearch'))
 			$this->model->load('InstantSearch');
 
-		if ($this->model->isLoaded('Multilang') and isset($_COOKIE['admin-lang']))
-			$this->model->_Multilang->setLang($_COOKIE['admin-lang']);
+		if (class_exists('\\Model\\Multilang\\Ml') and isset($_COOKIE['admin-lang']))
+			\Model\Multilang\Ml::setLang($_COOKIE['admin-lang']);
 
 		$this->templateModuleName = $this->model->_AdminFront->getTemplateModule();
 		$this->model->viewOptions['template-module'] = $this->templateModuleName;
