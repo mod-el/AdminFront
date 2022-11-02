@@ -28,7 +28,7 @@ var saving = false;
 var pageForms = new Map();
 var pageSublists = new Map();
 
-const PAYLOAD_MAX_SIZE = 524288;
+const PAYLOAD_MAX_SIZE = 524288; // Must be a multiple of 4
 
 class HistoryManager {
 	constructor() {
@@ -2033,7 +2033,9 @@ async function save(options = {}) {
 		return;
 	}
 
-	return savePayload(payload, options).then(response => {
+	payload.data = await uploadPayloadFiles(options.page, payload.data);
+
+	return adminApiRequest('page/' + options.page + '/save/' + options.id, payload).then(response => {
 		if (!response.id)
 			throw 'Risposta server errata';
 
@@ -2063,23 +2065,40 @@ async function save(options = {}) {
 	});
 }
 
-async function savePayload(payload, options) {
-	let json_payload = JSON.stringify(payload);
-	let length = json_payload.length;
+async function uploadPayloadFiles(page, payload) {
+	payload = JSON.parse(JSON.stringify(payload));
 
-	if (length > PAYLOAD_MAX_SIZE) {
-		let {id} = await adminApiRequest('page/' + options.page + '/chunk-save-begin/' + options.id, {}, {method: 'POST'});
-		let chunks = Math.ceil(length / PAYLOAD_MAX_SIZE);
-		for (let c = 0; c < chunks; c++) {
-			let chunk = json_payload.slice(c * PAYLOAD_MAX_SIZE, (c + 1) * PAYLOAD_MAX_SIZE);
-			await adminApiRequest('page/' + options.page + '/chunk-save-process/' + options.id, {id, chunk});
-			setLoadingBar(Math.round(100 / chunks * (c + 1)));
+	for (let k of Object.keys(payload)) {
+		if (Array.isArray(payload[k]) && Array.from(pageSublists.keys()).includes(k)) { // Sublist
+			for (let idx of payload[k].keys())
+				payload[k][idx] = await uploadPayloadFiles(page, payload[k][idx]);
+		} else if (typeof payload[k] === 'object' && payload[k] !== null && payload[k].hasOwnProperty('0') && typeof payload[k][0] === 'object' && payload[k][0].file) { // File
+			payload[k][0].admin_upload = await uploadPayloadFile(page, payload[k][0]);
+			delete payload[k][0].file;
 		}
-
-		return adminApiRequest('page/' + options.page + '/save/' + options.id, {chunking_id: id});
-	} else {
-		return adminApiRequest('page/' + options.page + '/save/' + options.id, payload);
 	}
+
+	return payload;
+}
+
+async function uploadPayloadFile(page, file) {
+	setLoadingBar(0);
+
+	let ext, splitted_name = file.name.split('.');
+	if (splitted_name)
+		ext = splitted_name.pop();
+
+	let length = file.file.length;
+	let chunks = Math.ceil(length / PAYLOAD_MAX_SIZE);
+
+	let {id} = await adminApiRequest('page/' + page + '/file-save-begin', {ext}, {method: 'POST'});
+	for (let c = 0; c < chunks; c++) {
+		let chunk = file.file.slice(c * PAYLOAD_MAX_SIZE, (c + 1) * PAYLOAD_MAX_SIZE);
+		await adminApiRequest('page/' + page + '/file-save-process', {id, chunk});
+		setLoadingBar(Math.round(100 / chunks * (c + 1)));
+	}
+
+	return id;
 }
 
 function inPageMessage(text, className, container = null) {
