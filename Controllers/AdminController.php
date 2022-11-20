@@ -24,7 +24,7 @@ class AdminController extends Controller
 		$this->model->_Admin->setPath($this->model->_AdminFront->url);
 		$this->model->_Admin->loadUserModule();
 
-		if ($this->model->moduleExists('Dashboard'))
+		if ($this->model->moduleExists('Dashboard') and $this->model->_User_Admin->logged())
 			$this->model->load('Dashboard');
 		if ($this->model->moduleExists('CkEditor'))
 			$this->model->load('CkEditor');
@@ -200,11 +200,15 @@ class AdminController extends Controller
 				$this->model->viewOptions['template'] = 'export-popup';
 				break;
 
+			case 'csrf-token':
+				return [
+					'token' => CSRF::getToken('admin.api'),
+				];
+
 			default:
 				$this->model->viewOptions['showLayout'] = false;
 				$this->model->viewOptions['cacheTemplate'] = true;
 				$this->model->viewOptions['template'] = 'shell';
-				$this->model->inject('cp_token', CSRF::getToken('admin.api'));
 				break;
 		}
 	}

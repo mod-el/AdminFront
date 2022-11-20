@@ -1,3 +1,4 @@
+var cp_token = null;
 var mainMenu = null;
 var firstLoad = true;
 var currentAdminPage = false;
@@ -317,6 +318,8 @@ function logout() {
 }
 
 window.addEventListener('load', function () {
+	ajax(PATH + 'csrf-token').then(response => cp_token = response.token);
+
 	resize();
 	window.addEventListener('resize', function () {
 		resize();
