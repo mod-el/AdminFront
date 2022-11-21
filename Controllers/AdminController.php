@@ -24,8 +24,8 @@ class AdminController extends Controller
 		$this->model->_Admin->setPath($this->model->_AdminFront->url);
 		$this->model->_Admin->loadUserModule();
 
-		if ($this->model->moduleExists('Dashboard') and $this->model->_User_Admin->logged())
-			$this->model->load('Dashboard');
+		if ($this->model->moduleExists('Dashboard'))
+			$this->model->load('Dashboard', ['load' => $this->model->_User_Admin->logged()]);
 		if ($this->model->moduleExists('CkEditor'))
 			$this->model->load('CkEditor');
 		if ($this->model->moduleExists('InstantSearch'))
