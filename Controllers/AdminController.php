@@ -4,7 +4,6 @@ use Model\Admin\AdminPage;
 use Model\Admin\Auth;
 use Model\Core\Autoloader;
 use Model\Core\Controller;
-use Model\CSRF\CSRF;
 use Model\Admin\ExportProvider;
 
 class AdminController extends Controller
@@ -199,11 +198,6 @@ class AdminController extends Controller
 				$this->model->viewOptions['template-module'] = 'AdminFront';
 				$this->model->viewOptions['template'] = 'export-popup';
 				break;
-
-			case 'csrf-token':
-				return [
-					'token' => CSRF::getToken('admin.api'),
-				];
 
 			default:
 				$this->model->viewOptions['showLayout'] = false;

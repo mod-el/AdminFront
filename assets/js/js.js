@@ -1,4 +1,3 @@
-var cp_token = null;
 var mainMenu = null;
 var firstLoad = true;
 var currentAdminPage = false;
@@ -287,15 +286,13 @@ async function login() {
 	let form = _('login');
 	let username = await form['username'].getValue();
 	let password = await form['password'].getValue();
-	let cp_token = await form['cp_token'].getValue();
 
 	form.style.display = 'none';
 
 	return adminApiRequest('user/login', {
 		path: adminPath,
 		username,
-		password,
-		cp_token
+		password
 	}).then(r => {
 		setCookie('admin-user', r.token, 365 * 10, getAdminCookiePath());
 		adminApiToken = r.token;
@@ -318,8 +315,6 @@ function logout() {
 }
 
 window.addEventListener('load', function () {
-	ajax(PATH + 'csrf-token').then(response => cp_token = response.token);
-
 	resize();
 	window.addEventListener('resize', function () {
 		resize();
@@ -439,9 +434,6 @@ function adminApiRequest(request, payload = {}, options = {}) {
 		get = options.get;
 		delete options.get;
 	}
-
-	if ((Object.values(payload).length > 0 || options.method === 'POST') && !payload.cp_token)
-		payload.cp_token = cp_token;
 
 	return ajax(adminApiPath + request, get, payload, {
 		fullResponse: true,
@@ -2012,7 +2004,6 @@ async function save(options = {}) {
 	let payload = {
 		data: {},
 		version: pageForms.get(options.form).version,
-		cp_token: pageForms.get(options.form).cp_token,
 	};
 
 	if (options.id === 0) // Al nuovo salvataggio invio tutto
