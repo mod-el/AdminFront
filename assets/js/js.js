@@ -1962,74 +1962,75 @@ async function save(options = {}) {
 		...options,
 	};
 
-	if (options.form === 'main') {
-		for (let formName of pageForms.keys()) {
-			let form = pageForms.get(formName);
+	try {
+		if (options.form === 'main') {
+			for (let formName of pageForms.keys()) {
+				let form = pageForms.get(formName);
+				if (!form.ignore && !(await form.checkRequired()))
+					return false;
+			}
+
+			if (saving) {
+				alert('Already saving');
+				return false;
+			}
+
+			saving = true;
+			toolbarButtonLoading('save');
+		} else {
+			let form = pageForms.get(options.form);
 			if (!form.ignore && !(await form.checkRequired()))
 				return false;
 		}
 
-		if (saving) {
-			alert('Already saving');
-			return false;
+		if (_('form-' + options.form))
+			_('form-' + options.form).querySelector('input[type="submit"]').value = 'Attendere...';
+
+		resize();
+
+		setLoadingBar(0);
+
+		await new Promise(resolve => { // Gives a little bit of time for the fields to activate their "onchange" events
+			setTimeout(() => {
+				resolve();
+			}, 200);
+		});
+
+		let request = currentAdminPage.split('/');
+		if (options.page === null)
+			options.page = request[0];
+		if (options.id === null)
+			options.id = getIdFromRequest(request);
+
+		let payload = {
+			data: {},
+			version: pageForms.get(options.form).version,
+		};
+
+		if (options.id === 0) // Al nuovo salvataggio invio tutto
+			payload.data = await pageForms.get(options.form).getValues();
+		else // Altrimenti solo i dati modificati
+			payload.data = pageForms.get(options.form).getChangedValues();
+
+		if (options.sublists) {
+			for (let [k, sublist] of pageSublists.entries()) {
+				if (k.includes('/')) // Non è una delle sublist principali
+					continue;
+
+				let sublistChanges = sublist.getSave();
+				if (sublistChanges !== null)
+					payload.data[k] = sublistChanges;
+			}
 		}
 
-		saving = true;
-		toolbarButtonLoading('save');
-	} else {
-		let form = pageForms.get(options.form);
-		if (!form.ignore && !(await form.checkRequired()))
-			return false;
-	}
-
-	if (_('form-' + options.form))
-		_('form-' + options.form).querySelector('input[type="submit"]').value = 'Attendere...';
-
-	resize();
-
-	setLoadingBar(0);
-
-	await new Promise(resolve => { // Gives a little bit of time for the fields to activate their "onchange" events
-		setTimeout(() => {
-			resolve();
-		}, 200);
-	});
-
-	let request = currentAdminPage.split('/');
-	if (options.page === null)
-		options.page = request[0];
-	if (options.id === null)
-		options.id = getIdFromRequest(request);
-
-	let payload = {
-		data: {},
-		version: pageForms.get(options.form).version,
-	};
-
-	if (options.id === 0) // Al nuovo salvataggio invio tutto
-		payload.data = await pageForms.get(options.form).getValues();
-	else // Altrimenti solo i dati modificati
-		payload.data = pageForms.get(options.form).getChangedValues();
-
-	if (options.sublists) {
-		for (let [k, sublist] of pageSublists.entries()) {
-			if (k.includes('/')) // Non è una delle sublist principali
-				continue;
-
-			let sublistChanges = sublist.getSave();
-			if (sublistChanges !== null)
-				payload.data[k] = sublistChanges;
+		if (Object.keys(payload.data).length === 0 && options.no_data_alert) {
+			alert('Nessun dato modificato');
+			return;
 		}
-	}
 
-	if (Object.keys(payload.data).length === 0 && options.no_data_alert) {
-		alert('Nessun dato modificato');
-		return;
-	}
+		payload.data = await uploadPayloadFiles(options.page, payload.data);
 
-	payload.data = await uploadPayloadFiles(options.page, payload.data);
-
-	return adminApiRequest('page/' + options.page + '/save/' + options.id, payload).then(response => {
+		let response = await adminApiRequest('page/' + options.page + '/save/' + options.id, payload);
 		if (!response.id)
 			throw 'Risposta server errata';
 
@@ -2046,17 +2047,17 @@ async function save(options = {}) {
 		} else {
 			return response.id;
 		}
-	}).catch(error => {
+	} catch (error) {
 		reportAdminError(error);
 		throw error;
-	}).finally(() => {
+	} finally {
 		setLoadingBar(0);
 
 		if (options.form === 'main') {
 			saving = false;
 			toolbarButtonRestore('save');
 		}
-	});
+	}
 }
 
 async function uploadPayloadFiles(page, payload) {
