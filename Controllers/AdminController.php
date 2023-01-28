@@ -294,8 +294,8 @@ class AdminController extends Controller
 							$this->model->viewOptions['template'] = 'export-popup';
 							break;
 						case 3:
-							if ($this->model->moduleExists('Log'))
-								$this->model->_Log->disableAutoLog();
+							if (class_exists('\\Model\\Logger\\Logger'))
+								\Model\Logger\Logger::disable();
 
 							$response = \Model\Exporter\Exporter::next($provider, $_POST['id']);
 
