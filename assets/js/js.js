@@ -2004,7 +2004,6 @@ async function save(options = {}) {
 
 		let payload = {
 			data: {},
-			version: pageForms.get(options.form).version,
 		};
 
 		if (options.id === 0) // Al nuovo salvataggio invio tutto
