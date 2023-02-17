@@ -870,10 +870,7 @@ async function getFiltersFromPageDetails() {
 
 	let filtersForm = new FormManager('filters');
 
-	let filters = {
-		'primary': [],
-		'secondary': []
-	};
+	let filters = [];
 
 	let idx = 0;
 	Object.keys(filtersArrangement).forEach(form => {
@@ -911,15 +908,43 @@ async function getFiltersFromPageDetails() {
 				];
 			}
 
-			let filter = buildFormField('filter-' + idx, fieldOptions);
-
-			filtersForm.add(filter);
-			filters[form].push(filter);
+			filters.push({
+				form: form,
+				name: filterOptions.filter,
+				key: 'filter-' + idx,
+				options: fieldOptions
+			});
 			idx++;
 		});
 	});
 
-	return filters;
+	let filtersArranged = {
+		'primary': [],
+		'secondary': []
+	};
+
+	for (let f of filters) {
+		if (f.options.attributes && f.options.attributes['data-depending-parent']) {
+			let dependingOptions = JSON.parse(f.options.attributes['data-depending-parent']);
+			let newDependingOptions = [];
+			for (let d of dependingOptions) {
+				for (let _f of filters) {
+					if (_f.name === d.name) {
+						d = {...d, name: _f.key};
+						newDependingOptions.push(d);
+					}
+				}
+			}
+
+			f.options.attributes['data-depending-parent'] = JSON.stringify(newDependingOptions);
+		}
+
+		let filter = buildFormField(f.key, f.options);
+		filtersForm.add(filter);
+		filtersArranged[f.form].push(filter);
+	}
+
+	return filtersArranged;
 }
 
 async function getFiltersListFromStorage() {
