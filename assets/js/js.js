@@ -2595,8 +2595,12 @@ async function openElementInContainer(id, container, options = {}) {
 				});
 			}
 
-			if (options.afterSave)
-				await options.afterSave(newId);
+			try {
+				if (options.afterSave)
+					await options.afterSave(newId);
+			} catch (e) {
+				reportAdminError(e);
+			}
 		});
 
 		Array.from(document.querySelectorAll('#popup-real input')).some(field => {
