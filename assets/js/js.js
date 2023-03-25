@@ -2540,10 +2540,11 @@ async function openElementInContainer(id, container, options = {}) {
 		...{
 			formName: null,
 			page: currentAdminPage.split('/')[0],
+			beforeSave: null,
 			save: null,
-			afterSave: null
+			afterSave: null,
 		},
-		...options
+		...options,
 	};
 
 	if (!options.formName) {
@@ -2576,6 +2577,12 @@ async function openElementInContainer(id, container, options = {}) {
 		containerForm.addEventListener('submit', async event => {
 			event.preventDefault();
 
+			if (options.beforeSave) {
+				let proceed = await options.beforeSave();
+				if (!proceed)
+					return;
+			}
+
 			let newId;
 			if (options.save) {
 				newId = await options.save();
@@ -2584,7 +2591,7 @@ async function openElementInContainer(id, container, options = {}) {
 					form: options.formName,
 					load_element: false,
 					page: options.page,
-					id: id
+					id,
 				});
 			}
 
@@ -2621,10 +2628,11 @@ async function openElementInPopup(id, options = {}) {
 		...{
 			formName: 'popup',
 			page: currentAdminPage.split('/')[0],
+			beforeSave: null,
 			save: null,
-			afterSave: null
+			afterSave: null,
 		},
-		...options
+		...options,
 	};
 
 	return zkPopup('', {
