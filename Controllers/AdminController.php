@@ -4,7 +4,6 @@ use Model\Admin\AdminPage;
 use Model\Admin\Auth;
 use Model\Core\Autoloader;
 use Model\Core\Controller;
-use Model\Admin\ExportProvider;
 
 class AdminController extends Controller
 {
@@ -272,7 +271,11 @@ class AdminController extends Controller
 					$exportPayload = json_decode($_POST['exportPayload'], true, 512, JSON_THROW_ON_ERROR);
 					$searchPayload = json_decode($_POST['searchPayload'], true, 512, JSON_THROW_ON_ERROR);
 
-					$provider = new ExportProvider($this->model->_Admin, $exportPayload, $searchPayload);
+					$mainExporterClass = '\\Model\\Admin\\ExportProvider';
+					if (empty($exportPayload['data_provider']) or ($exportPayload['data_provider'] !== $mainExporterClass and !is_subclass_of($exportPayload['data_provider'], $mainExporterClass)))
+						die('Bad data provider');
+
+					$provider = new $exportPayload['data_provider']($this->model->_Admin, $exportPayload, $searchPayload);
 
 					$config = $this->model->_AdminFront->retrieveConfig();
 					$dir = INCLUDE_PATH . ($config['export-path'] ?? 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv');
