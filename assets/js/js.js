@@ -755,7 +755,6 @@ function loadRuntimeJs(file) {
 	if (!runtimeLoadedJs.get(file)) {
 		runtimeLoadedJs.set(file, new Promise(resolve => {
 			let fileref = document.createElement('script');
-			fileref.setAttribute('type', 'text/javascript');
 			document.getElementsByTagName('head')[0].appendChild(fileref);
 			fileref.onload = () => {
 				resolve();
