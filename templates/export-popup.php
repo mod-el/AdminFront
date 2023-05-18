@@ -27,7 +27,7 @@
 						<?php
 					} else {
 						?>
-						<input type="hidden" name="data_provider" value="<?= $provider ?>"/>
+						<input type="hidden" name="data_provider" value="<?= $exportProviders[0] ?>"/>
 						<?php
 					}
 					?>
