@@ -833,6 +833,7 @@ async function rebuildFilters() {
 				case 'radio':
 				case 'hidden':
 				case 'date':
+				case 'datetime':
 				case 'select':
 				case 'instant-search':
 					filter.addEventListener('change', function () {
