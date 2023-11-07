@@ -833,7 +833,6 @@ async function rebuildFilters() {
 				case 'radio':
 				case 'hidden':
 				case 'date':
-				case 'datetime':
 				case 'select':
 				case 'instant-search':
 					filter.addEventListener('change', function () {
@@ -2543,6 +2542,7 @@ async function openElementInContainer(id, container, options = {}) {
 			beforeSave: null,
 			save: null,
 			afterSave: null,
+			init_data: null,
 		},
 		...options,
 	};
@@ -2555,7 +2555,7 @@ async function openElementInContainer(id, container, options = {}) {
 	container.innerHTML = '<form id="form-' + options.formName + '" action="" method="post"><img src="' + PATH + 'model/Output/files/loading.gif" alt="Attendere"/></form>';
 
 	let templatePromise = loadPage(adminPrefix + 'template/' + options.page, {ajax: ''}, {}, {fill_main: false});
-	let dataPromise = loadElementData(options.page, id);
+	let dataPromise = loadElementData(options.page, id, options.init_data ? {init_data: JSON.stringify(options.init_data)} : {});
 
 	return Promise.all([templatePromise, dataPromise]).then(async responses => {
 		let containerForm = _('form-' + options.formName);
@@ -2635,6 +2635,7 @@ async function openElementInPopup(id, options = {}) {
 			beforeSave: null,
 			save: null,
 			afterSave: null,
+			init_data: null,
 		},
 		...options,
 	};
@@ -2659,7 +2660,7 @@ async function openElementInPopup(id, options = {}) {
 	});
 }
 
-async function makeDynamicOption(fieldName, page, formName = 'main') {
+async function makeDynamicOption(fieldName, page, formName = 'main', init_data = null) {
 	let form = pageForms.get(formName);
 	if (!form.fields.get(fieldName))
 		return;
@@ -2667,6 +2668,7 @@ async function makeDynamicOption(fieldName, page, formName = 'main') {
 	return openElementInPopup(0, {
 		formName: 'popup',
 		page: page,
+		init_data,
 		afterSave: async id => {
 			let form = pageForms.get(formName);
 			let field = form.fields.get(fieldName);
