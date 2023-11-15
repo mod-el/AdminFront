@@ -1855,7 +1855,7 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 		pageForms.set('main', form);
 		await form.build(mainContent, responses[1]);
 
-		await renderSublists(responses[1].sublists, mainContent);
+		await renderSublists(responses[1].sublists, mainContent, {page});
 
 		for (let warning of responses[1].warnings)
 			inPageMessage(warning, 'warning');
@@ -1878,9 +1878,14 @@ function loadAdminElement(id, get = {}, page = null, history_push = true) {
 	}).catch(reportAdminError);
 }
 
-async function renderSublists(sublists, container, prefix = '') {
-	if (prefix)
-		prefix += '/';
+async function renderSublists(sublists, container, options = {}) {
+	options = {
+		prefix: '',
+		page: currentAdminPage,
+		...options,
+	};
+	if (options.prefix)
+		options.prefix += '/';
 
 	let sublistsPromises = [];
 
@@ -1894,15 +1899,16 @@ async function renderSublists(sublists, container, prefix = '') {
 				if (sublist.name === currentAdminPage.split('/')[0])
 					throw 'You cannot name a sublist like the main page';
 
-				let visualizer = await loadVisualizer(sublist.visualizer, prefix + sublist.name, sublistCont, false, {
-					"fields": sublist.fields,
-					"privileges": sublist.privileges,
+				let visualizer = await loadVisualizer(sublist.visualizer, options.prefix + sublist.name, sublistCont, false, {
+					fields: sublist.fields,
+					privileges: sublist.privileges,
 					"visualizer-options": sublist['visualizer-options'],
-					"custom": sublist.custom,
-					"sublists": sublist.sublists,
+					custom: sublist.custom,
+					sublists: sublist.sublists,
+					page: options.page,
 				});
 
-				pageSublists.set(prefix + sublist.name, visualizer);
+				pageSublists.set(options.prefix + sublist.name, visualizer);
 
 				await visualizer.render(sublist.list);
 
@@ -2572,7 +2578,7 @@ async function openElementInContainer(id, container, options = {}) {
 		pageForms.set(options.formName, form);
 		await form.build(containerForm, responses[1]);
 
-		await renderSublists(responses[1].sublists, containerForm);
+		await renderSublists(responses[1].sublists, containerForm, {page: options.page});
 
 		containerForm.addEventListener('submit', async event => {
 			event.preventDefault();

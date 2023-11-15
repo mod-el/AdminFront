@@ -84,7 +84,7 @@ class FormList {
 				if (this.main)
 					templateUrl += this.id;
 				else
-					templateUrl += currentAdminPage.split('/')[0] + '/' + this.id.replace(/\/(new)?[0-9]+\//g, '/'); // Le sublist annidate hanno il formato nome1/12/nome2/23/nome3 quindi rimuovo gli id per ottenere il percorso da chiedere
+					templateUrl += this.options.page.split('/')[0] + '/' + this.id.replace(/\/(new)?[0-9]+\//g, '/'); // Le sublist annidate hanno il formato nome1/12/nome2/23/nome3 quindi rimuovo gli id per ottenere il percorso da chiedere
 
 				templateDiv.innerHTML = await loadPage(templateUrl, get, {}, {fill_main: false});
 
@@ -195,7 +195,7 @@ class FormList {
 				sublists.find(s => s.name === itemSublistName).list = itemSublist;
 		}
 
-		let renderedSublists = await renderSublists(sublists, template, this.id + '/' + id);
+		let renderedSublists = await renderSublists(sublists, template, {prefix: this.id + '/' + id});
 
 		let row;
 
@@ -430,7 +430,7 @@ class FormList {
 		let deleted = this.getDeletedRows();
 		this.saving = true;
 
-		return adminApiRequest('page/' + currentAdminPage.split('/')[0] + '/save-many', {list, deleted}).then(() => {
+		return adminApiRequest('page/' + this.options.page.split('/')[0] + '/save-many', {list, deleted}).then(() => {
 			return this.reload();
 		}).catch(error => {
 			reportAdminError(error);
