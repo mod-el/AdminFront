@@ -430,7 +430,7 @@ class FormList {
 		let deleted = this.getDeletedRows();
 		this.saving = true;
 
-		return adminApiRequest('page/' + this.options.page.split('/')[0] + '/save-many', {list, deleted}).then(() => {
+		return adminApiRequest('page/' + (this.main ? currentAdminPage : this.options.page).split('/')[0] + '/save-many', {list, deleted}).then(() => {
 			return this.reload();
 		}).catch(error => {
 			reportAdminError(error);
