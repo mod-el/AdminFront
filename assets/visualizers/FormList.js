@@ -11,6 +11,7 @@ class FormList {
 			"class": 'flex-fields formlist-row',
 			"add-button": true,
 			"add-button-position": 'after',
+			"onshow": null,
 			"onadd": null,
 			"ondelete": null,
 			"onrestore": null,
@@ -268,6 +269,8 @@ class FormList {
 		eval(checkScripts.js)
 
 		return changedHtml().then(async () => {
+			await this.callHook('show', id);
+
 			if (isNew) {
 				if (providedData !== null)
 					await form.setValues(providedData.data);
@@ -328,6 +331,7 @@ class FormList {
 
 		this.refreshLabelsVisibility();
 
+		await this.callHook('show', id);
 		await this.callHook('restore', id);
 		await this.callHook('change', id);
 	}
