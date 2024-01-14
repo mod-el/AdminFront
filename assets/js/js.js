@@ -2456,7 +2456,9 @@ async function replaceTemplateValues(cont, id, data, fields = {}) {
 		let matches = html.matchAll(regex);
 		for (let match of matches) {
 			if (match[2]) { // Custom function?
-				if (typeof window[match[2]] === 'function') {
+				if (match[2] === 'raw') {
+					// Lascio "v" così com'è
+				} else if (typeof window[match[2]] === 'function') {
 					v = await window[match[2]].call(null, v);
 				} else {
 					alert('Function ' + match[2] + ' does not exist');
