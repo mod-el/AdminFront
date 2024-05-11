@@ -18,8 +18,8 @@
 }
 
 .tree-breadcrumbs > div {
-	background: var(--color-light);
-	color: #fff;
+	background: var(--background-menu-primary-on);
+	color: var(--text-menu-primary-on);
 }
 
 .tree-pinneds > div {
@@ -54,12 +54,12 @@
 }
 
 .tree-node:not(.selected):hover {
-	text-shadow: 0 0 15px var(--color-light);
+	text-shadow: 0 0 15px var(--background-menu-primary-on);
 }
 
 .tree-node.selected {
-	background: var(--color-light);
-	color: #fff;
+	background: var(--background-menu-primary-on);
+	color: var(--text-menu-primary-on);
 }
 
 .tree-node.on-top {
