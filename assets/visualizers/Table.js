@@ -26,7 +26,7 @@ class Table {
 		let renderDeleteCell = list.some(item => item.privileges['D']);
 
 		let head = document.createElement('div');
-		head.className = 'table-head';
+		head.className = this.getHeadCssClass();
 		head.setAttribute('data-table', this.id);
 
 		let subHead = head.appendChild(document.createElement('div'));
@@ -45,6 +45,7 @@ class Table {
 
 		let columns = await this.getColumns();
 		let widths = await this.getWidths();
+		let extraFieldOptions = this.getExtraFieldsOptions();
 
 		for (let fieldName of columns) {
 			let field = this.options['fields'][fieldName];
@@ -150,7 +151,7 @@ class Table {
 			draggable = false;
 
 		let body = document.createElement('div');
-		body.className = 'results-table';
+		body.className = this.getBodyCssClass();
 		body.setAttribute('data-table', this.id);
 		body.addEventListener('scroll', () => {
 			if (body.scrollLeft > (head.scrollWidth - head.clientWidth))
@@ -188,7 +189,7 @@ class Table {
 			}
 
 			let innerRow = row.appendChild(document.createElement('div'));
-			innerRow.className = 'results-table-row';
+			innerRow.className = this.getRowCssClass(item);
 			innerRow.setAttribute('data-n', rowCount.toString());
 			innerRow.setAttribute('data-id', item.id);
 			if (typeof item.onclick !== 'undefined')
@@ -321,10 +322,12 @@ class Table {
 					innerDiv.innerHTML = '';
 					let fieldObj = buildFormField(fieldName, {...field.editable, value: item.data[fieldName].value, label: null});
 
+					let reload = (extraFieldOptions[fieldName] || {})['reload-on-save'] ?? true;
+
 					let fieldNode = await fieldObj.render();
 					fieldNode.setAttribute('data-editable', rowCount.toString());
 					fieldObj.addEventListener('change', () => {
-						saveEditableField(item.id, fieldObj, fieldNode);
+						saveEditableField(item.id, fieldObj, fieldNode, reload);
 					});
 					innerDiv.appendChild(fieldNode);
 				} else {
@@ -429,6 +432,10 @@ class Table {
 			return widths;
 		else
 			return {};
+	}
+
+	getExtraFieldsOptions() {
+		return this.options['visualizer-options']['extra-fields-options'] || {};
 	}
 
 	async saveColumnWidth(column, w) {
@@ -552,6 +559,23 @@ class Table {
 		await deleteUserCustomization('columns-' + this.id);
 		return search();
 	}
+
+	getHeadCssClass() {
+		const extraClass = this.options['visualizer-options']['head-class'] || '';
+		return 'table-head' + (extraClass ? ' '+ extraClass : '');
+	}
+
+	getBodyCssClass() {
+		const extraClass = this.options['visualizer-options']['body-class'] || '';
+		return 'results-table' + (extraClass ? ' '+ extraClass : '');
+	}
+
+	getRowCssClass(item) {
+		let extraClass = this.options['visualizer-options']['row-class'] || '';
+		if(item['css-class']) extraClass += ( extraClass ? ' ' : '') + item['css-class'];
+		return 'results-table-row' + (extraClass ? ' '+ extraClass : '');
+	}
+
 }
 
 visualizerClasses.set('Table', Table);
@@ -673,7 +697,8 @@ async function selectAllRows(id, enable) {
 		await checkbox.setValue(enable);
 }
 
-async function saveEditableField(id, field, node) {
+async function saveEditableField(id, field, node, reload = true) {
+
 	let row = _('.results-table-row[data-id="' + id + '"]');
 	if (!row)
 		return false;
@@ -689,7 +714,7 @@ async function saveEditableField(id, field, node) {
 		if (!response.id)
 			throw 'Risposta server errata';
 
-		return reloadMainList(true).then(() => {
+		return (!reload ? Promise.resolve() : reloadMainList(true)).then(() => {
 			let nextField = _('[data-editable="' + nextRow + '"][name="' + field.name + '"]');
 			if (nextField) {
 				if (nextField.nodeName.toLowerCase() !== 'input' && nextField.nodeName.toLowerCase() !== 'select')
