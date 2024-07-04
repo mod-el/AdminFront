@@ -1559,6 +1559,7 @@ function manageFilters() {
 				appendRadioToFiltersSelection(selection, 'type', name, '>=', '&gt;=');
 				break;
 			case 'text':
+			case 'email':
 				if (name !== 'zk-all') {
 					appendRadioToFiltersSelection(selection, 'type', name, 'begins', 'Inizia con...');
 					appendRadioToFiltersSelection(selection, 'type', name, 'contains', 'Contiene...');
