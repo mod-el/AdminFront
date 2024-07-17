@@ -2445,10 +2445,6 @@ async function replaceTemplateValues(cont, id, data, fields = {}) {
 			// Instant search?
 			if (v !== null && typeof v === 'object' && typeof v['id'] !== 'undefined')
 				v = v['id'];
-
-			// Still object?
-			if (typeof v === 'object')
-				v = '';
 		}
 
 		let html = cont.innerHTML;
@@ -2473,7 +2469,11 @@ async function replaceTemplateValues(cont, id, data, fields = {}) {
 				v = formatValueForTemplate(v, field);
 			}
 
-			let singleRegex = new RegExp(escapeRegExp(match[0]), 'g');
+			// v is still an object?
+			if (typeof v === 'object')
+				v = '[object]';
+
+			const singleRegex = new RegExp(escapeRegExp(match[0]), 'g');
 			cont.innerHTML = cont.innerHTML.replace(singleRegex, v);
 		}
 
