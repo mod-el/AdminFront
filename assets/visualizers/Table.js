@@ -14,7 +14,7 @@ class Table {
 		this.hasPagination = true;
 
 		this.selectedRows = [];
-		this.sortedBy = [];
+		this.sortedBy = this.getSortsFromStorage();
 	}
 
 	// Standard visualizers method
@@ -408,12 +408,14 @@ class Table {
 
 	// Standard visualizers method
 	getSorting(options = {}) {
+		if(!this.sortedBy) this.sortedBy = this.getSortsFromStorage();
+
 		return this.sortedBy;
 	}
 
 	// Standard visualizers method
 	setSorting(sorting) {
-		this.sortedBy = sorting;
+		this.sortedBy = this.setSortsInStorage(sorting);
 	}
 
 	// Standard visualizers method
@@ -574,6 +576,24 @@ class Table {
 		let extraClass = this.options['visualizer-options']['row-class'] || '';
 		if(item['css-class']) extraClass += ( extraClass ? ' ' : '') + item['css-class'];
 		return 'results-table-row' + (extraClass ? ' '+ extraClass : '');
+	}
+
+	getSortsFromStorage() {
+		let sortValues = sessionStorage.getItem('sorts-table-' + this.id);
+		try {
+			if (sortValues)
+				return JSON.parse(sortValues);
+			else
+				return [];
+		} catch (e) {
+			return [];
+		}
+	}
+
+	setSortsInStorage(sorts) {
+		sessionStorage.setItem('sorts-table-' + this.id, JSON.stringify(sorts));
+
+		return this.getSortsFromStorage();
 	}
 
 }

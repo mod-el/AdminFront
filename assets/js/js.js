@@ -1242,7 +1242,7 @@ async function search(page = 1, options = {}) {
 	}
 
 	if (options.sort_by === null)
-		options.sort_by = visualizer ? visualizer.getSorting(options.visualizer_meta) : [];
+		options.sort_by = visualizer ? visualizer.getSorting(options.visualizer_meta) : null;
 
 	if (options.empty_main || !visualizer) {
 		let currentSelectedRows = (visualizer && visualizer.hasOwnProperty('selectedRows')) ? getMainVisualizer().selectedRows : [];
@@ -1253,6 +1253,9 @@ async function search(page = 1, options = {}) {
 
 		if (visualizer.hasOwnProperty('selectedRows'))
 			visualizer.selectedRows = currentSelectedRows;
+
+		if(options.sort_by === null)
+			options.sort_by = visualizer.getSorting();
 
 		visualizers.set(endpoint, visualizer);
 	}
