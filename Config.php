@@ -4,13 +4,13 @@ use Model\Core\Module_Config;
 
 class Config extends Module_Config
 {
-	public $configurable = true;
-	public $hasCleanUp = true;
+	public bool $configurable = true;
+	public bool $hasCleanUp = true;
 
 	/**
 	 * @throws \Model\Core\Exception
 	 */
-	protected function assetsList()
+	protected function assetsList(): void
 	{
 		$this->addAsset('config');
 	}
@@ -215,7 +215,7 @@ $config = ' . var_export($config, true) . ';
 	/**
 	 * Clean up of all temporary exported files older than 12 hours
 	 */
-	public function cleanUp()
+	public function cleanUp(): void
 	{
 		$config = $this->retrieveConfig();
 		$dir = INCLUDE_PATH . ($config['export-path'] ?? 'model' . DIRECTORY_SEPARATOR . 'AdminFront' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'temp-csv');
