@@ -122,39 +122,46 @@ class Files {
 		fileBox.appendChild(name);
 
 		// Add click handler for selection
-		fileBox.addEventListener('click', (e) => {
-			this.openFile(item.id);
+		fileBox.addEventListener('click', () => {
+			window.open(PATH + item.data[fileField]?.value);
 		});
 
 		// Add action buttons if privileges allow
-		if (item.privileges && (item.privileges['U'] || item.privileges['D'])) {
-			const actions = document.createElement('div');
-			actions.className = 'file-actions';
+		const actions = document.createElement('div');
+		actions.className = 'file-actions';
 
-			if (item.privileges['U']) {
-				const selectBtn = document.createElement('button');
-				selectBtn.innerHTML = '<i class="fas fa-check-square"></i>';
-				selectBtn.setAttribute('title', 'Select');
-				selectBtn.addEventListener('click', (e) => {
-					e.stopPropagation();
-					this.selectFile(item.id, fileBox);
-				});
-				actions.appendChild(selectBtn);
-			}
+		const selectBtn = document.createElement('button');
+		selectBtn.innerHTML = '<i class="fas fa-check-square"></i>';
+		selectBtn.setAttribute('title', 'Seleziona');
+		selectBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.selectFile(item.id, fileBox);
+		});
+		actions.appendChild(selectBtn);
 
-			if (item.privileges['D']) {
-				const deleteBtn = document.createElement('button');
-				deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-				deleteBtn.setAttribute('title', 'Delete');
-				deleteBtn.addEventListener('click', (e) => {
-					e.stopPropagation();
-					this.deleteFile(item.id);
-				});
-				actions.appendChild(deleteBtn);
-			}
-
-			fileBox.appendChild(actions);
+		if (item.privileges && (item.privileges['R'] || item.privileges['U'])) {
+			const editBtn = document.createElement('button');
+			editBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+			editBtn.setAttribute('title', 'Modifica');
+			editBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.editFile(item.id);
+			});
+			actions.appendChild(editBtn);
 		}
+
+		if (item.privileges && item.privileges['D']) {
+			const deleteBtn = document.createElement('button');
+			deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+			deleteBtn.setAttribute('title', 'Elimina');
+			deleteBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.deleteFile(item.id);
+			});
+			actions.appendChild(deleteBtn);
+		}
+
+		fileBox.appendChild(actions);
 
 		container.appendChild(fileBox);
 	}
@@ -173,7 +180,7 @@ class Files {
 		}
 	}
 
-	async openFile(id) {
+	async editFile(id) {
 		return openElementInPopup(id);
 	}
 
