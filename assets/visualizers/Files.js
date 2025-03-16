@@ -11,6 +11,7 @@ class Files {
 			name: 'name', // Optional field that determines the name to show
 			ext: null, // Optional field that determines the file extension
 			icon: null, // Optional field that determines the icon to show
+			extra_fields: [], // Optional array of field names to show as additional info below the file name
 			iconMapping: {
 				// Default icon mapping based on file types
 				'pdf': 'fas fa-file-pdf',
@@ -93,7 +94,11 @@ class Files {
 		if (fileName.includes('.'))
 			fileExtension = fileName.split('.').pop().toLowerCase();
 
-		// Determine icon class
+		// Determine if this is an image file
+		const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+		const isImage = imageExtensions.includes(fileExtension);
+
+		// Determine icon class (for non-image files)
 		let iconClass = this.options['visualizer-options'].defaultIcon;
 		if (iconField && item.data[iconField]?.value)
 			iconClass = item.data[iconField].value.toLowerCase();
@@ -109,10 +114,18 @@ class Files {
 		if (this.selectedRows.includes(item.id))
 			fileBox.classList.add('selected');
 
-		// Create file icon
+		// Create file icon or thumbnail
 		const icon = document.createElement('div');
 		icon.className = 'file-icon';
-		icon.innerHTML = `<i class="${iconClass}"></i>`;
+
+		if (isImage && item.data[fileField]?.value) {
+			// Display actual image thumbnail
+			icon.innerHTML = `<img src="${PATH + item.data[fileField].value}" alt="${fileName}" class="file-thumbnail">`;
+		} else {
+			// Display icon for non-image files
+			icon.innerHTML = `<i class="${iconClass}"></i>`;
+		}
+
 		fileBox.appendChild(icon);
 
 		// Create file name
@@ -121,9 +134,38 @@ class Files {
 		name.textContent = fileName;
 		fileBox.appendChild(name);
 
-		// Add click handler for selection
+		// Add extra fields if configured
+		const extraFields = this.options['visualizer-options'].extra_fields;
+		if (extraFields && extraFields.length > 0) {
+			const extraInfo = document.createElement('div');
+			extraInfo.className = 'file-extra-info';
+
+			for (const fieldName of extraFields) {
+				if (item.data[fieldName]?.value) {
+					let fieldValue = item.data[fieldName].text || item.data[fieldName].value;
+					if (typeof fieldValue === 'object')
+						fieldValue = fieldValue.text || fieldValue.id || JSON.stringify(fieldValue);
+
+					const fieldElement = document.createElement('div');
+					fieldElement.className = 'file-extra-field';
+					fieldElement.textContent = fieldValue;
+					extraInfo.appendChild(fieldElement);
+				}
+			}
+
+			if (extraInfo.children.length > 0)
+				fileBox.appendChild(extraInfo);
+		}
+
+		// Add click handler for selection or opening
 		fileBox.addEventListener('click', () => {
-			window.open(PATH + item.data[fileField]?.value);
+			// If there are already selected files, clicking will select/deselect this file
+			if (this.selectedRows.length > 0) {
+				this.selectFile(item.id, fileBox);
+			} else {
+				// If no files are selected, open the file (original behavior)
+				window.open(PATH + item.data[fileField]?.value);
+			}
 		});
 
 		// Add action buttons if privileges allow
@@ -195,6 +237,12 @@ class Files {
 			fields.push(this.options['visualizer-options'].ext);
 		if (this.options['visualizer-options'].icon)
 			fields.push(this.options['visualizer-options'].icon);
+
+		// Add extra fields to the request
+		const extraFields = this.options['visualizer-options'].extra_fields;
+		if (extraFields && extraFields.length > 0)
+			fields.push(...extraFields);
+
 		return fields;
 	}
 
