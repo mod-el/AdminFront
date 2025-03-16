@@ -238,9 +238,8 @@ class Files {
 			e.stopPropagation();
 			container.classList.remove('drag-over');
 
-			if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+			if (e.dataTransfer.files && e.dataTransfer.files.length > 0)
 				this.handleDroppedFiles(e.dataTransfer.files);
-			}
 		});
 	}
 
@@ -295,9 +294,8 @@ class Files {
 
 				// Reload the list
 				await this.reload();
-
-				return true; // Return true to close the popup
-			}
+			},
+			close_after_save: false,
 		});
 	}
 
@@ -308,6 +306,40 @@ class Files {
 		// Show progress indicator
 		showLoadingMask();
 
+		// Create custom progress bar in the popup
+		const popupElement = document.querySelector('#popup-real');
+		const progressContainer = document.createElement('div');
+		progressContainer.className = 'upload-progress-container';
+
+		const progressLabel = document.createElement('div');
+		progressLabel.className = 'upload-progress-label';
+		progressLabel.textContent = 'Uploading files...';
+
+		const progressBarOuter = document.createElement('div');
+		progressBarOuter.className = 'upload-progress-bar-outer';
+
+		const progressBarInner = document.createElement('div');
+		progressBarInner.className = 'upload-progress-bar-inner';
+
+		const progressText = document.createElement('div');
+		progressText.className = 'upload-progress-text';
+		progressText.textContent = '0%';
+
+		// Create error container
+		const errorsContainer = document.createElement('div');
+		errorsContainer.className = 'upload-errors';
+		errorsContainer.style.display = 'none'; // Hide initially
+
+		progressBarOuter.appendChild(progressBarInner);
+		progressContainer.appendChild(progressLabel);
+		progressContainer.appendChild(progressBarOuter);
+		progressContainer.appendChild(progressText);
+		progressContainer.appendChild(errorsContainer);
+
+		// Add the progress bar to the popup
+		popupElement.appendChild(progressContainer);
+		await fillPopup();
+
 		try {
 			// Get page from options
 			const page = currentAdminPage.split('/')[0];
@@ -315,6 +347,27 @@ class Files {
 
 			// Process each file
 			let successCount = 0;
+			let errorCount = 0;
+
+			// Function to update progress
+			const updateProgress = (percent) => {
+				progressBarInner.style.width = `${percent}%`;
+				progressText.textContent = `${percent}% (${successCount} of ${this.filesToUpload.length})`;
+			};
+
+			// Function to add error message
+			const addErrorMessage = (fileName, errorMsg) => {
+				// Show the errors container if it was hidden
+				if (errorsContainer.style.display === 'none')
+					errorsContainer.style.display = 'block';
+
+				const errorItem = document.createElement('div');
+				errorItem.className = 'upload-error-item';
+				errorItem.textContent = `${fileName}: ${errorMsg}`;
+				errorsContainer.appendChild(errorItem);
+				errorCount++;
+			};
+
 			for (let i = 0; i < this.filesToUpload.length; i++) {
 				const file = this.filesToUpload[i];
 
@@ -332,10 +385,14 @@ class Files {
 				});
 
 				// Update progress
-				setLoadingBar(Math.round((i / this.filesToUpload.length) * 100));
+				const percent = Math.round(((i + 1) / this.filesToUpload.length) * 100);
+				updateProgress(percent);
 
 				// Create payload for this file
 				let payload = {...formData};
+
+				// Update progress label with current file
+				progressLabel.textContent = `Uploading: ${file.name}`;
 
 				// Upload the file and save the record
 				try {
@@ -346,14 +403,20 @@ class Files {
 					await adminApiRequest(`page/${page}/save/0`, {data: payload});
 
 					successCount++;
+					updateProgress(percent); // Update with success count
 				} catch (error) {
 					console.error('Error uploading file:', file.name, error);
+					// Add error to UI
+					const errorMessage = typeof error === 'string' ? error : (error.message || 'Unknown error occurred');
+					addErrorMessage(file.name, errorMessage);
 				}
 			}
 
+			// Update final message to include errors if any
+			progressLabel.textContent = errorCount > 0 ? `Upload completed with ${errorCount} errors` : 'Upload completed successfully';
+
 			// Show success message
 			inPageMessage(`Successfully uploaded ${successCount} of ${this.filesToUpload.length} file(s)`, 'success');
-
 		} catch (error) {
 			reportAdminError(error);
 		} finally {

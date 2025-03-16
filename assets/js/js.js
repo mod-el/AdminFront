@@ -1254,7 +1254,7 @@ async function search(page = 1, options = {}) {
 		if (visualizer.hasOwnProperty('selectedRows'))
 			visualizer.selectedRows = currentSelectedRows;
 
-		if(options.sort_by === null)
+		if (options.sort_by === null)
 			options.sort_by = visualizer.getSorting();
 
 		visualizers.set(endpoint, visualizer);
@@ -2648,6 +2648,7 @@ async function openElementInPopup(id, options = {}) {
 			save: null,
 			afterSave: null,
 			init_data: null,
+			close_after_save: true,
 		},
 		...options,
 	};
@@ -2661,7 +2662,8 @@ async function openElementInPopup(id, options = {}) {
 		options.afterSave = async id => {
 			if (oldAfterSave)
 				await oldAfterSave(id);
-			zkPopupClose();
+			if (options.close_after_save)
+				zkPopupClose();
 		};
 
 		await openElementInContainer(id, _('popup-real'), options);

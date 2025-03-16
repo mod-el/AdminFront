@@ -94,6 +94,60 @@
     font-size: 0.9em;
 }
 
+/* Upload Progress Bar Styles */
+.upload-progress-container {
+    margin: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.upload-progress-label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.upload-progress-bar-outer {
+    height: 20px;
+    width: 100%;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.upload-progress-bar-inner {
+    height: 100%;
+    width: 0%;
+    background-color: #44c48d;
+    transition: width 0.3s;
+}
+
+.upload-progress-text {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.upload-errors {
+    margin-top: 10px;
+    max-height: 100px;
+    overflow-y: auto;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+}
+
+.upload-error-item {
+    color: #d9534f;
+    font-size: 0.85em;
+    margin-bottom: 5px;
+    padding: 5px;
+    background-color: rgba(217, 83, 79, 0.1);
+    border-radius: 3px;
+}
+
 .multi-upload-progress {
     position: fixed;
     top: 0;
