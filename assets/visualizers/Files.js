@@ -74,25 +74,30 @@ class Files {
 			return;
 		}
 
+		const draggable = this.options['custom-order'];
+		if (draggable) {
+			filesContainer.setAttribute('data-draggable-cont', '');
+			filesContainer.setAttribute('data-draggable-callback', 'adminRowDragged(element.id, element.idx, target.idx)');
+		}
+
 		// Render each file in the list
 		for (const item of list)
-			this.renderFileBox(filesContainer, item);
+			this.renderFileBox(filesContainer, item, draggable);
 	}
 
-	renderFileBox(container, item) {
+	renderFileBox(container, item, draggable) {
 		const fileField = this.options['visualizer-options'].field;
 		const nameField = this.options['visualizer-options'].name;
-		const extField = this.options['visualizer-options'].ext;
 		const iconField = this.options['visualizer-options'].icon;
 
-		const fileName = item.data[nameField]?.value || 'No name';
+		const fileName = String((nameField && item.data[nameField]?.value) || '');
+
+		const fileUrl = item.data[fileField]?.value;
 
 		// Get file extension for icon
 		let fileExtension = 'default';
-		if (extField)
-			fileExtension = item.data[extField]?.value;
-		if (fileName.includes('.'))
-			fileExtension = fileName.split('.').pop().toLowerCase();
+		if (fileUrl && fileUrl.includes('.'))
+			fileExtension = fileUrl.split('.').pop().toLowerCase();
 
 		// Determine if this is an image file
 		const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
@@ -110,23 +115,32 @@ class Files {
 		fileBox.className = 'file-box';
 		fileBox.setAttribute('title', fileName);
 
+		if (draggable) {
+			if (item.id) {
+				fileBox.setAttribute('data-draggable-id', item.id);
+				fileBox.setAttribute('data-draggable-index', item['order-idx']);
+			} else {
+				fileBox.setAttribute('data-draggable-set', '1');
+			}
+		}
+
 		// Add the selected class if this file is selected
 		if (this.selectedRows.includes(item.id))
 			fileBox.classList.add('selected');
 
-		// Create file icon or thumbnail
-		const icon = document.createElement('div');
-		icon.className = 'file-icon';
-
-		if (isImage && item.data[fileField]?.value) {
+		if (isImage && fileUrl) {
 			// Display actual image thumbnail
-			icon.innerHTML = `<img src="${PATH + item.data[fileField].value}" alt="${fileName}" class="file-thumbnail">`;
+			fileBox.style.backgroundImage = 'url(\'' + PATH + fileUrl + '\')';
 		} else {
+			// Create file icon or thumbnail
+			const icon = document.createElement('div');
+			icon.className = 'file-icon';
+
 			// Display icon for non-image files
 			icon.innerHTML = `<i class="${iconClass}"></i>`;
-		}
 
-		fileBox.appendChild(icon);
+			fileBox.appendChild(icon);
+		}
 
 		// Create file name
 		const name = document.createElement('div');
@@ -233,8 +247,6 @@ class Files {
 	// Standard visualizers methods
 	async getFieldsToRetrieve() {
 		const fields = [this.options['visualizer-options'].field, this.options['visualizer-options'].name, 'id'];
-		if (this.options['visualizer-options'].ext)
-			fields.push(this.options['visualizer-options'].ext);
 		if (this.options['visualizer-options'].icon)
 			fields.push(this.options['visualizer-options'].icon);
 
@@ -330,21 +342,39 @@ class Files {
 
 		// Open the form in popup
 		openElementInPopup(0, {
+			afterLoad: async () => {
+				let fields = Array.from(_('form-popup').querySelectorAll('[data-fieldplaceholder]'));
+				if (fields.length === 1 && fields[0].dataset.fieldplaceholder === this.options['visualizer-options'].field)
+					fields[0].remove();
+
+				fields = Array.from(_('form-popup').querySelectorAll('[data-fieldplaceholder]'));
+				if (fields.length === 0) {
+					_('form-popup').addClass('d-none');
+					await this.processUploadForm(false);
+				}
+			},
 			save: async () => {
-				const formData = await pageForms.get('popup').getValues();
-				_('#form-popup .btn-primary').value = 'Attendere...';
-
-				// Process all files with the same form data
-				await this.processMultipleFiles(formData);
-
-				// Clear file list after upload
-				this.filesToUpload = [];
-
-				// Reload the list
-				await this.reload();
+				await this.processUploadForm();
 			},
 			close_after_save: false,
 		});
+	}
+
+	async processUploadForm(get_form_data = true) {
+		const formData = get_form_data ? (await pageForms.get('popup').getValues()) : {};
+		_('#form-popup .btn-primary').value = 'Attendere...';
+
+		// Process all files with the same form data
+		await this.processMultipleFiles(formData);
+
+		// Clear file list after upload
+		this.filesToUpload = [];
+
+		// Reload the list
+		await this.reload();
+
+		if (!document.querySelector('.upload-error-item'))
+			zkPopupClose();
 	}
 
 	// Process multiple files with the same form data

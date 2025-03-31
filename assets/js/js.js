@@ -2550,6 +2550,7 @@ async function openElementInContainer(id, container, options = {}) {
 	options = {
 		...{
 			formName: null,
+			afterLoad: null,
 			page: currentAdminPage.split('/')[0],
 			beforeSave: null,
 			save: null,
@@ -2614,6 +2615,9 @@ async function openElementInContainer(id, container, options = {}) {
 				reportAdminError(e);
 			}
 		});
+
+		if (options.afterLoad)
+			await options.afterLoad();
 
 		Array.from(document.querySelectorAll('#popup-real input')).some(field => {
 			if (field.offsetParent !== null && field.type.toLowerCase() !== 'hidden' && field.name !== 'fakeusernameremembered' && field.name !== 'fakepasswordremembered') {
