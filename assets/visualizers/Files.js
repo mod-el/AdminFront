@@ -42,10 +42,9 @@ class Files {
 		this.filesToUpload = [];
 
 		if (this.main) {
-			// Add "upload" page action
-			addPageAction('upload', {
-				'fa-icon': 'fas fa-upload',
-				text: 'Upload files',
+			addPageAction('new', {
+				'fa-icon': 'far fa-plus-square',
+				text: 'Nuovo',
 				action: 'getMainVisualizer().handleMultiUpload()',
 			});
 		}
