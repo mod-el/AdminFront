@@ -950,9 +950,17 @@ async function getFiltersListFromStorage() {
 	let request = currentAdminPage.split('/');
 	let filters = await getUserCustomization('filters-' + request[0]);
 	if (filters !== null) {
+		for (let position of ['primary', 'secondary']) {
+			filters[position] = (filters[position] || []).map(f => {
+				const default_filter = Object.values(currentPageDetails['default-filters']).flat().find(df => (df.filter === f.filter && df.type === f.type));
+				if (default_filter && default_filter.hasOwnProperty('default'))
+					f.default = default_filter.default;
+				return f;
+			});
+		}
 		return filters;
 	} else {
-		return currentPageDetails['default-filters']
+		return currentPageDetails['default-filters'];
 	}
 }
 
@@ -2209,12 +2217,10 @@ async function getUserCustomization(k) {
 	if (typeof userCustomizationsCache[k] !== 'undefined')
 		return userCustomizationsCache[k];
 
-	return ajax(adminPrefix + 'get-user-customization', {
-		'k': k
-	}, {}, {
-		'headers': {
+	return ajax(adminPrefix + 'get-user-customization', {k}, {}, {
+		headers: {
 			'X-Access-Token': adminApiToken
-		}
+		},
 	}).then(r => {
 		if (typeof r !== 'object')
 			throw r;
