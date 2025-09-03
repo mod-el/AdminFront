@@ -2499,6 +2499,9 @@ async function replaceTemplateValues(cont, id, data, fields = {}) {
 }
 
 function formatValueForTemplate(v, field = null) {
+	if (v === null)
+		return '';
+
 	let type = 'text';
 	if (field && field.type)
 		type = field.type;
