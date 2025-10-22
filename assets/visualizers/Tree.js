@@ -122,6 +122,15 @@ class Tree {
 			levelContainer.appendChild(pickNode);
 		}
 
+		let draggable = this.options['custom-order'];
+		if (this.options.toPick)
+			draggable = false;
+
+		if (draggable) {
+			levelContainer.setAttribute('data-draggable-cont', levelContainer.dataset.parent);
+			levelContainer.setAttribute('data-draggable-callback', 'adminRowDragged(element.id, element.idx, target.idx)');
+		}
+
 		for (let item of list) {
 			let node = document.createElement('div');
 			node.className = 'tree-node';
@@ -132,6 +141,15 @@ class Tree {
 
 			if (item.color)
 				node.style.color = item.color;
+
+			if (draggable) {
+				if (item.id) {
+					node.setAttribute('data-draggable-id', item.id);
+					node.setAttribute('data-draggable-index', item['order-idx']);
+				} else {
+					node.setAttribute('data-draggable-set', '1');
+				}
+			}
 
 			if (this.options.toPick) {
 				let pickNode = document.createElement('i');
