@@ -400,7 +400,7 @@ class Tree {
 			visualizer_meta: {
 				level: level + 1,
 				parent: id,
-				breadcrumbs: breadcrumbs
+				breadcrumbs,
 			}
 		}));
 

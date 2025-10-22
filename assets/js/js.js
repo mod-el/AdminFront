@@ -392,9 +392,9 @@ window.onpopstate = function (event) {
 						await _('changePerPage').setValue(s['per_page'], false);
 					goToPage(s['p'], s['sort_by'], false);
 				} else {
-					let search_options = {
+					const search_options = {
 						sort_by: s['sort_by'],
-						history: false
+						history: false,
 					};
 					if (typeof s['per_page'] !== 'undefined')
 						search_options.perPage = s['per_page'];
@@ -1083,9 +1083,9 @@ async function goToPage(p, sort_by = null, history_push = true) {
 	if (p > currentPage)
 		moveBy *= -1;
 
-	let perPage = null;
+	let per_page = null;
 	if (_('changePerPage'))
-		perPage = parseInt(await _('changePerPage').getValue());
+		per_page = parseInt(await _('changePerPage').getValue());
 
 	new Promise(resolve => {
 		if (p !== currentPage) {
@@ -1099,7 +1099,7 @@ async function goToPage(p, sort_by = null, history_push = true) {
 		_('main-content').style.display = 'none';
 		_('main-loading').removeClass('d-none');
 
-		return search(p, {sort_by: sort_by, per_page: perPage, history: history_push});
+		return search(p, {sort_by, per_page, history: history_push});
 	}).then(() => {
 		_('main-content').style.display = 'block';
 		_('main-loading').addClass('d-none');
@@ -1283,8 +1283,8 @@ async function search(page = 1, options = {}) {
 	filters = [...filters, ...await visualizer.getSpecialFilters(options.visualizer_meta)];
 
 	let payload = {
-		'search': searchValue,
-		'filters': filters
+		search: searchValue,
+		filters,
 	};
 
 	if (!visualizer.hasPagination)
