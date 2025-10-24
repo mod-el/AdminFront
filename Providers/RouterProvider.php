@@ -12,29 +12,29 @@ class RouterProvider extends AbstractRouterProvider
 		$routes = [];
 		foreach (($adminCache['macro'] ?? []) as $path) {
 			$routes[] = [
-				'pattern' => PATH . ltrim($path ?? '', '/') . '/login',
+				'pattern' => ltrim($path ?? '', '/') . '/login',
 				'controller' => 'AdminLogin',
 			];
 
 			$routes[] = [
-				'pattern' => PATH . ltrim($path ?? '', '/') . '/logout',
+				'pattern' => ltrim($path ?? '', '/') . '/logout',
 				'controller' => 'AdminLogin',
 			];
 
 			$routes[] = [
-				'pattern' => PATH . ltrim($path ?? '', '/') . '/sw.js',
+				'pattern' => ltrim($path ?? '', '/') . '/sw.js',
 				'controller' => 'AdminServiceWorker',
 			];
 
 			$routes[] = [
-				'pattern' => PATH . ltrim($path ?? '', '/'),
+				'pattern' => ltrim($path ?? '', '/'),
 				'controller' => 'Admin',
 			];
 		}
 
 		foreach (($adminCache['rules'] ?? []) as $path) {
 			$routes[] = [
-				'pattern' => PATH . ltrim($path ?? '', '/'),
+				'pattern' => ltrim($path ?? '', '/'),
 				'controller' => 'Admin',
 			];
 		}
