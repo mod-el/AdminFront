@@ -163,34 +163,6 @@ $config = ' . var_export($config, true) . ';
 	}
 
 	/**
-	 * Admin pages rules
-	 *
-	 * @return array
-	 * @throws \Exception
-	 */
-	public function getRules(): array
-	{
-		$adminConfigClass = new \Model\Admin\Config($this->model);
-		$adminCache = $adminConfigClass->buildCache();
-
-		$ret = [
-			'rules' => [],
-			'controllers' => [
-				'AdminFront',
-				'AdminLogin',
-				'AdminServiceWorker',
-			],
-		];
-
-		foreach (($adminCache['macro'] ?? []) as $idx => $path) {
-			$ret['rules'][$idx] = $path ?: null;
-			$ret['rules']['sw' . $idx] = ($path ? $path . '/' : '') . 'sw.js';
-		}
-
-		return $ret;
-	}
-
-	/**
 	 * @return array
 	 */
 	public function searchTemplates(): array

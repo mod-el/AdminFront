@@ -7,6 +7,36 @@ class AdminFront extends Module
 	public string $url = '';
 	public array $request;
 
+	public function init(array $options)
+	{
+		$paths = $this->model->_Admin->getAdminPaths();
+		$url = implode('/', $this->model->getRequest());
+
+		$pathFound = null;
+		foreach ($paths as $path) {
+			if (!$path['path']) { // All paths are admin
+				$pathFound = $path;
+				break;
+			}
+
+			if ($url === $path['path'] or str_starts_with($url, $path['path'] . '/')) {
+				$pathFound = $path;
+				break;
+			}
+		}
+
+		if (!$pathFound)
+			return;
+
+		$this->url = $pathFound['path'];
+
+		$realRequest = $this->getAdminRequest($this->model->getRequest(), $this->url);
+		if ($realRequest === null)
+			return null;
+
+		$this->request = $realRequest;
+	}
+
 	/**
 	 *
 	 */
@@ -21,56 +51,6 @@ class AdminFront extends Module
 			var adminTemplate = <?=json_encode($this->getTemplateModule())?>;
 		</script>
 		<?php
-	}
-
-	/**
-	 * Returns the appropriate controller name, given the request
-	 *
-	 * @param array $request
-	 * @param mixed $rule
-	 * @return array|null
-	 */
-	public function getController(array $request, string $rule): ?array
-	{
-		$paths = $this->model->_Admin->getAdminPaths();
-
-		if (substr($rule, 0, 2) === 'sw') {
-			$this->url = $paths[substr($rule, 2)]['path'];
-
-			return [
-				'controller' => 'AdminServiceWorker',
-			];
-		}
-
-		if (!isset($paths[$rule]) or (!empty($paths[$rule]['path']) and strpos(implode('/', $request), $paths[$rule]['path']) !== 0))
-			return null;
-
-		$this->url = $paths[$rule]['path'];
-
-		$realRequest = $this->getAdminRequest($request, $this->url);
-		if ($realRequest === null)
-			return null;
-
-		$this->request = $realRequest;
-
-		if (isset($realRequest[0])) {
-			switch ($realRequest[0]) {
-				case 'login':
-				case 'logout':
-					return [
-						'controller' => 'AdminLogin',
-					];
-
-				default:
-					return [
-						'controller' => 'Admin',
-					];
-			}
-		} else {
-			return [
-				'controller' => 'Admin',
-			];
-		}
 	}
 
 	/**
