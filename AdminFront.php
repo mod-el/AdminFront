@@ -97,7 +97,7 @@ class AdminFront extends Module
 	 */
 	public function getUrlPrefix(): string
 	{
-		return $this->model->prefix() . ($this->url ? $this->url . '/' : '');
+		return PATH . ($this->url ? $this->url . '/' : '');
 	}
 
 	/**
