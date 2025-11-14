@@ -27,6 +27,36 @@ class RouterProvider extends AbstractRouterProvider
 			];
 
 			$routes[] = [
+				'pattern' => ltrim($path ?? '', '/') . '/get-user-customizations',
+				'controller' => 'Admin',
+			];
+
+			$routes[] = [
+				'pattern' => ltrim($path ?? '', '/') . '/template',
+				'controller' => 'Admin',
+			];
+
+			$routes[] = [
+				'pattern' => ltrim($path ?? '', '/') . '/export',
+				'controller' => 'Admin',
+			];
+
+			$routes[] = [
+				'pattern' => ltrim($path ?? '', '/') . '/save-dashboard-layout',
+				'controller' => 'Admin',
+			];
+
+			$routes[] = [
+				'pattern' => ltrim($path ?? '', '/') . '/save-user-customization',
+				'controller' => 'Admin',
+			];
+
+			$routes[] = [
+				'pattern' => ltrim($path ?? '', '/') . '/delete-user-customization',
+				'controller' => 'Admin',
+			];
+
+			$routes[] = [
 				'pattern' => ltrim($path ?? '', '/'),
 				'controller' => 'Admin',
 			];
