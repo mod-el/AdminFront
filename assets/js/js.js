@@ -281,13 +281,12 @@ function checkUserToken() {
 }
 
 async function login() {
-	_('login-button').innerHTML = 'Attendere...';
-
 	let form = _('login');
 	let username = await form['username'].getValue();
 	let password = await form['password'].getValue();
 
 	form.style.display = 'none';
+	_('login-loading').style.display = 'block';
 
 	return adminApiRequest('user/login', {
 		path: adminPath,
@@ -298,8 +297,8 @@ async function login() {
 		adminApiToken = r.token;
 		return adminInit();
 	}).catch(err => {
+		_('login-loading').style.display = 'none';
 		form.style.display = 'block';
-		_('login-button').innerHTML = 'Login';
 
 		let errorMessageDiv = _('login-error-message');
 		errorMessageDiv.innerHTML = err;
