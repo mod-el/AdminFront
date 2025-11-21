@@ -27,7 +27,7 @@ class RouterProvider extends AbstractRouterProvider
 			];
 
 			$routes[] = [
-				'pattern' => ltrim($path ?? '', '/') . '/get-user-customizations',
+				'pattern' => ltrim($path ?? '', '/') . '/get-user-customization',
 				'controller' => 'Admin',
 			];
 
