@@ -29,17 +29,28 @@ class Files {
 				'rar': 'fas fa-file-archive',
 			},
 			defaultIcon: 'fas fa-file',
+			"add-button": true,
+			onshow: null,
+			onadd: null,
+			ondelete: null,
+			onrestore: null,
+			onchange: null,
 			...(options['visualizer-options'] || {})
 		};
 
 		this.useFilters = true;
 		this.forceTableOnSearch = false;
-		this.hasPagination = true;
+		this.hasPagination = this.main; // No pagination for sublists
 
 		this.selectedRows = [];
 
-		// Store files for multi-upload
+		// Store files for multi-upload (main visualizer only)
 		this.filesToUpload = [];
+
+		// Sublist-specific properties (like FormList)
+		this.rows = new Map();
+		this.newRows = [];
+		this.saving = false;
 
 		if (this.main) {
 			addPageAction('new', {
@@ -61,15 +72,23 @@ class Files {
 		const filesContainer = document.createElement('div');
 		filesContainer.className = 'files-container';
 		this.container.appendChild(filesContainer);
+		this.filesContainer = filesContainer;
 
 		// Add drag and drop functionality
 		this.setupDragAndDrop(filesContainer);
 
-		if (list.length === 0) {
-			const emptyMessage = document.createElement('div');
-			emptyMessage.className = 'files-empty';
-			emptyMessage.innerHTML = '<i class="fas fa-folder-open"></i><p>No files found</p><p class="drag-info">Drag and drop files here to upload</p>';
-			filesContainer.appendChild(emptyMessage);
+		// For sublists, load template and basic data like FormList
+		if (!this.main) {
+			this.template = this.loadTemplate();
+			this.basicData = this.loadBasicData();
+
+			// Force background loading
+			this.template.then();
+			this.basicData.then();
+		}
+
+		if (list.length === 0 && this.main) {
+			this.renderEmptyState(filesContainer);
 			return;
 		}
 
@@ -80,10 +99,598 @@ class Files {
 		}
 
 		// Render each file in the list
-		for (const item of list)
-			this.renderFileBox(filesContainer, item, draggable);
+		if (this.main) {
+			for (const item of list)
+				this.renderFileBox(filesContainer, item, draggable);
+		} else {
+			// For sublists, use local row management like FormList
+			for (const item of list) {
+				const data = {};
+				for (let k of Object.keys(item.data))
+					data[k] = (item.data[k] && typeof item.data[k] === 'object' && item.data[k].hasOwnProperty('value')) ? item.data[k].value : item.data[k];
+
+				await this.addLocalRow(item.id, {
+					data,
+					fields: (await this.basicData).fields
+				}, item.privileges ? item.privileges['D'] : true, false);
+			}
+
+			// Show empty state if no files after loading
+			if (this.getRows().length === 0)
+				this.renderEmptyState(filesContainer);
+
+			// Add "Add files" button for sublists
+			if (this.options.privileges['C'] && this.options['visualizer-options']['add-button']) {
+				const addButton = document.createElement('div');
+				addButton.className = 'files-add-button';
+				addButton.innerHTML = '<i class="fas fa-plus"></i> Aggiungi file';
+				addButton.addEventListener('click', () => this.handleAddFiles());
+				this.container.insertBefore(addButton, filesContainer);
+			}
+		}
 	}
 
+	renderEmptyState(container) {
+		const emptyMessage = document.createElement('div');
+		emptyMessage.className = 'files-empty';
+		emptyMessage.innerHTML = '<i class="fas fa-folder-open"></i><p>No files found</p><p class="drag-info">Drag and drop files here to upload</p>';
+		container.appendChild(emptyMessage);
+	}
+
+	async loadTemplate() {
+		let templateDiv = document.createElement('div');
+		templateDiv.id = 'files-template-' + this.id;
+		templateDiv.className = 'files-template';
+
+		let templateUrl = adminPrefix + 'template/';
+		let get = {ajax: ''};
+		templateUrl += this.options.page.split('/')[0] + '/' + this.id.replace(/\/(new)?[0-9]+\//g, '/');
+
+		templateDiv.innerHTML = await loadPage(templateUrl, get, {}, {fill_main: false});
+
+		return templateDiv;
+	}
+
+	loadBasicData() {
+		return new Promise(resolve => {
+			let defaultData = {};
+			for (let k of Object.keys(this.options.fields))
+				defaultData[k] = this.options.fields[k].hasOwnProperty('default') ? this.options.fields[k].default : null;
+
+			resolve({
+				fields: this.options.fields,
+				data: defaultData,
+				sublists: []
+			});
+		});
+	}
+
+	// Add a local row (for sublist mode)
+	async addLocalRow(id = null, providedData = null, canDelete = true, historyPush = true) {
+		providedData = JSON.parse(JSON.stringify(providedData)); // Clone to avoid reference issues
+
+		const fileField = this.options['visualizer-options'].field;
+		let isNew = false, data = providedData;
+		let pendingFileData = null;
+
+		if (id === null) {
+			id = 'new' + this.newRows.length;
+			data = JSON.parse(JSON.stringify(await this.basicData));
+			isNew = true;
+			if (providedData !== null)
+				data.data = {...data.data, ...providedData.data};
+		}
+
+		// Extract file data before form.build (it can't handle parsed file arrays)
+		if (data.data[fileField] && Array.isArray(data.data[fileField])) {
+			pendingFileData = data.data[fileField];
+			data.data[fileField] = null; // Clear for form.build
+		}
+
+		// Prepare field attributes
+		for (let fieldName of Object.keys(data.fields)) {
+			if (data.fields[fieldName].hasOwnProperty('attributes')) {
+				for (let attrName of Object.keys(data.fields[fieldName].attributes)) {
+					if (typeof data.fields[fieldName].attributes[attrName] === 'string')
+						data.fields[fieldName].attributes[attrName] = data.fields[fieldName].attributes[attrName].replace('[id]', id);
+				}
+			}
+		}
+
+		let form = new FormManager(this.id + '-' + id, {updateAdminHistory: true});
+		pageForms.set(this.id + '-' + id, form);
+
+		if (historyPush && typeof historyMgr !== 'undefined')
+			historyMgr.sublistAppend(this.id, 'new', id);
+
+		let rowObj = {
+			id,
+			data: data.data,
+			fields: data.fields,
+			form,
+			isNew,
+			deleted: false,
+			canDelete,
+			fileElement: null,
+		};
+
+		this.rows.set(id, rowObj);
+		if (isNew)
+			this.newRows.push(id);
+
+		// Build the form (without rendering to DOM - we'll use it for the popup edit)
+		let template = (await this.template).cloneNode(true);
+		await replaceTemplateValues(template, id, data.data, data.fields);
+		await form.build(template, data);
+
+		// Restore file data after form.build and mark as changed
+		if (pendingFileData) {
+			rowObj.data[fileField] = pendingFileData;
+			form.changedValues[fileField] = pendingFileData;
+		}
+
+		// Render the file box
+		this.renderSublistFileBox(rowObj);
+
+		// Remove empty state if present
+		const emptyState = this.filesContainer.querySelector('.files-empty');
+		if (emptyState)
+			emptyState.remove();
+
+		await this.callHook('show', id);
+		if (isNew) {
+			await this.callHook('add', id);
+			await this.callHook('change', id);
+		}
+
+		return rowObj;
+	}
+
+	// Render a file box for sublist mode
+	renderSublistFileBox(rowObj) {
+		const fileField = this.options['visualizer-options'].field;
+		const nameField = this.options['visualizer-options'].name;
+		const iconField = this.options['visualizer-options'].icon;
+
+		const fileBox = document.createElement('div');
+		fileBox.className = 'file-box';
+		fileBox.dataset.rowId = rowObj.id;
+
+		rowObj.fileElement = fileBox;
+
+		this.updateFileBoxContent(rowObj);
+
+		// Click handler
+		fileBox.addEventListener('click', (e) => {
+			// Don't trigger if clicking on action buttons
+			if (e.target.closest('.file-actions'))
+				return;
+
+			const fileValue = rowObj.data[fileField];
+			if (fileValue && typeof fileValue === 'string' && !rowObj.isNew) {
+				// Existing file - open it
+				window.open(PATH + fileValue);
+			} else if (rowObj.isNew || !fileValue) {
+				// New row or no file - trigger file input
+				this.triggerFileInput(rowObj);
+			}
+		});
+
+		// Add action buttons
+		const actions = document.createElement('div');
+		actions.className = 'file-actions';
+
+		// Edit button (for extra fields)
+		const hasExtraFields = this.hasEditableExtraFields(rowObj);
+		if (hasExtraFields) {
+			const editBtn = document.createElement('button');
+			editBtn.type = 'button';
+			editBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+			editBtn.setAttribute('title', 'Modifica');
+			editBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.editLocalRow(rowObj.id);
+			});
+			actions.appendChild(editBtn);
+		}
+
+		// Delete button
+		if (this.options.privileges['D'] && rowObj.canDelete) {
+			const deleteBtn = document.createElement('button');
+			deleteBtn.type = 'button';
+			deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+			deleteBtn.setAttribute('title', 'Elimina');
+			deleteBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (confirm('Sicuro di voler eliminare questo file?'))
+					this.deleteLocalRow(rowObj.id);
+			});
+			actions.appendChild(deleteBtn);
+		}
+
+		fileBox.appendChild(actions);
+		this.filesContainer.appendChild(fileBox);
+	}
+
+	// Check if there are extra fields to edit (other than the file field)
+	hasEditableExtraFields(rowObj) {
+		const fileField = this.options['visualizer-options'].field;
+		for (let fieldName of Object.keys(rowObj.fields)) {
+			if (fieldName !== fileField && fieldName !== 'id')
+				return true;
+		}
+		return false;
+	}
+
+	// Update file box content based on current data
+	updateFileBoxContent(rowObj) {
+		const fileBox = rowObj.fileElement;
+		if (!fileBox) return;
+
+		const fileField = this.options['visualizer-options'].field;
+		const nameField = this.options['visualizer-options'].name;
+		const iconField = this.options['visualizer-options'].icon;
+
+		// Clear existing content (except actions)
+		const actions = fileBox.querySelector('.file-actions');
+		fileBox.innerHTML = '';
+		fileBox.style.backgroundImage = '';
+
+		const fileValue = rowObj.data[fileField];
+		let fileName = '';
+		let fileUrl = null;
+		let isImage = false;
+		let fileExtension = 'default';
+
+		if (fileValue) {
+			if (typeof fileValue === 'string') {
+				// Existing file path
+				fileUrl = fileValue;
+				fileName = nameField && rowObj.data[nameField] ? rowObj.data[nameField] : fileValue.split('/').pop();
+			} else if (Array.isArray(fileValue) && fileValue.length > 0) {
+				// File object from form (new upload)
+				const fileData = fileValue[0];
+				fileName = fileData.name || 'File';
+
+				// Check if it's an image
+				if (fileData.type && fileData.type.startsWith('image/')) {
+					isImage = true;
+					// Create data URL for preview
+					fileUrl = 'data:' + fileData.type + ';base64,' + fileData.file;
+				}
+
+				// Get extension from filename
+				if (fileData.name && fileData.name.includes('.'))
+					fileExtension = fileData.name.split('.').pop().toLowerCase();
+			}
+		} else {
+			fileName = nameField && rowObj.data[nameField] ? rowObj.data[nameField] : 'Nuovo file';
+		}
+
+		// Get extension for icon
+		if (fileUrl && typeof fileUrl === 'string' && fileUrl.includes('.') && !fileUrl.startsWith('data:'))
+			fileExtension = fileUrl.split('.').pop().toLowerCase();
+
+		// Check if existing file is an image
+		const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+		if (!isImage && imageExtensions.includes(fileExtension))
+			isImage = true;
+
+		// Determine icon class
+		let iconClass = this.options['visualizer-options'].defaultIcon;
+		if (iconField && rowObj.data[iconField])
+			iconClass = rowObj.data[iconField];
+		else if (this.options['visualizer-options'].iconMapping[fileExtension])
+			iconClass = this.options['visualizer-options'].iconMapping[fileExtension];
+
+		// Set title
+		fileBox.setAttribute('title', fileName);
+
+		if (isImage && fileUrl) {
+			// Display image thumbnail
+			if (fileUrl.startsWith('data:')) {
+				fileBox.style.backgroundImage = 'url(\'' + fileUrl + '\')';
+			} else {
+				fileBox.style.backgroundImage = 'url(\'' + PATH + fileUrl + '\')';
+			}
+		} else if (!fileValue) {
+			// No file - show upload icon
+			const icon = document.createElement('div');
+			icon.className = 'file-icon file-icon-upload';
+			icon.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
+			fileBox.appendChild(icon);
+		} else {
+			// Non-image file - show icon
+			const icon = document.createElement('div');
+			icon.className = 'file-icon';
+			icon.innerHTML = `<i class="${iconClass}"></i>`;
+			fileBox.appendChild(icon);
+		}
+
+		// File name
+		const name = document.createElement('div');
+		name.className = 'file-name';
+		name.textContent = fileName;
+		fileBox.appendChild(name);
+
+		// Extra fields info
+		const extraFields = this.options['visualizer-options'].extra_fields;
+		if (extraFields && extraFields.length > 0) {
+			const extraInfo = document.createElement('div');
+			extraInfo.className = 'file-extra-info';
+
+			for (const fieldName of extraFields) {
+				if (rowObj.data[fieldName]) {
+					let fieldValue = (rowObj.form?.fields.get(fieldName) && rowObj.form?.fields.get(fieldName) instanceof FieldSelect) ? rowObj.form?.fields.get(fieldName).options['options'].find(o => o.id.toString() === rowObj.data[fieldName].toString())?.text : rowObj.data[fieldName];
+					if (typeof fieldValue === 'object')
+						fieldValue = fieldValue.text || fieldValue.id || JSON.stringify(fieldValue);
+
+					const fieldElement = document.createElement('div');
+					fieldElement.className = 'file-extra-field';
+					fieldElement.textContent = fieldValue;
+					extraInfo.appendChild(fieldElement);
+				}
+			}
+
+			if (extraInfo.children.length > 0)
+				fileBox.appendChild(extraInfo);
+		}
+
+		// Re-append actions
+		if (actions)
+			fileBox.appendChild(actions);
+	}
+
+	// Trigger file input for selecting a file
+	triggerFileInput(rowObj) {
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.style.display = 'none';
+		document.body.appendChild(fileInput);
+
+		fileInput.addEventListener('change', async () => {
+			if (fileInput.files && fileInput.files.length > 0) {
+				const file = fileInput.files[0];
+				const parsedFile = await this.parseFile(file);
+
+				const fileField = this.options['visualizer-options'].field;
+				rowObj.data[fileField] = [parsedFile];
+
+				// Mark field as changed in the form (don't call setValue - it expects a File object)
+				rowObj.form.changedValues[fileField] = [parsedFile];
+
+				// Update display
+				this.updateFileBoxContent(rowObj);
+
+				await this.callHook('change', rowObj.id);
+			}
+			document.body.removeChild(fileInput);
+		});
+
+		fileInput.click();
+	}
+
+	// Parse file to base64
+	parseFile(file) {
+		return new Promise(resolve => {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				const mime = e.target.result.match(/^data:(.*);/)[1];
+				resolve({
+					name: file.name,
+					file: e.target.result.substring(('data:' + mime + ';base64,').length),
+					type: mime,
+				});
+			};
+			reader.readAsDataURL(file);
+		});
+	}
+
+	// Edit a local row (open popup with extra fields)
+	async editLocalRow(id) {
+		const rowObj = this.rows.get(id);
+		if (!rowObj) return;
+
+		const fileField = this.options['visualizer-options'].field;
+
+		return zkPopup('', {
+			onClose: () => {}
+		}).then(async () => {
+			const popupReal = _('popup-real');
+			popupReal.innerHTML = '';
+
+			const form = document.createElement('form');
+			form.id = 'form-files-edit-' + id;
+			form.addEventListener('submit', e => e.preventDefault());
+
+			const template = (await this.template).cloneNode(true);
+
+			// Remove the file field placeholder from the popup (we don't want to edit file here)
+			const fileFieldPlaceholder = template.querySelector('[data-fieldplaceholder="' + fileField + '"]');
+			if (fileFieldPlaceholder)
+				fileFieldPlaceholder.remove();
+
+			form.appendChild(template);
+
+			// Add save button
+			const saveButtonCont = document.createElement('div');
+			saveButtonCont.className = 'text-center pt-2';
+			saveButtonCont.innerHTML = '<input type="submit" value="Salva" class="btn btn-primary"/>';
+			form.appendChild(saveButtonCont);
+
+			popupReal.appendChild(form);
+
+			await replaceTemplateValues(template, id, rowObj.data, rowObj.fields);
+
+			const editForm = new FormManager('files-edit-' + id);
+			pageForms.set('files-edit-' + id, editForm);
+			await editForm.build(template, {fields: rowObj.fields, data: rowObj.data});
+
+			form.addEventListener('submit', async (e) => {
+				e.preventDefault();
+
+				const newValues = await editForm.getValues();
+
+				// Update the row data
+				for (let k of Object.keys(newValues)) {
+					if (k !== fileField) {
+						rowObj.data[k] = newValues[k];
+						if (rowObj.form.fields.get(k))
+							await rowObj.form.fields.get(k).setValue(newValues[k], false);
+					}
+				}
+
+				// Mark as changed
+				for (let k of Object.keys(editForm.getChangedValues())) {
+					rowObj.form.changedValues[k] = newValues[k];
+				}
+
+				this.updateFileBoxContent(rowObj);
+				await this.callHook('change', id);
+
+				zkPopupClose();
+				pageForms.delete('files-edit-' + id);
+			});
+
+			await fillPopup();
+		});
+	}
+
+	// Delete a local row
+	async deleteLocalRow(id, historyPush = true) {
+		const rowObj = this.rows.get(id);
+		if (!rowObj || rowObj.deleted) return;
+
+		if (pageForms.get(this.id + '-' + id))
+			pageForms.get(this.id + '-' + id).ignore = true;
+
+		if (rowObj.fileElement)
+			rowObj.fileElement.classList.add('d-none');
+
+		rowObj.deleted = true;
+
+		if (historyPush && typeof historyMgr !== 'undefined')
+			historyMgr.sublistAppend(this.id, 'delete', id);
+
+		// Show empty state if no more visible rows
+		if (this.getRows().length === 0)
+			this.renderEmptyState(this.filesContainer);
+
+		await this.callHook('delete', id);
+		await this.callHook('change', id);
+	}
+
+	// Restore a deleted local row
+	async restoreLocalRow(id) {
+		const rowObj = this.rows.get(id);
+		if (!rowObj) return;
+
+		if (pageForms.get(this.id + '-' + id))
+			pageForms.get(this.id + '-' + id).ignore = false;
+
+		if (rowObj.fileElement)
+			rowObj.fileElement.classList.remove('d-none');
+
+		rowObj.deleted = false;
+
+		// Remove empty state if present
+		const emptyState = this.filesContainer.querySelector('.files-empty');
+		if (emptyState)
+			emptyState.remove();
+
+		await this.callHook('show', id);
+		await this.callHook('restore', id);
+		await this.callHook('change', id);
+	}
+
+	// Call hook functions
+	async callHook(hook, id) {
+		const hookName = 'on' + hook;
+		if (this.options['visualizer-options'][hookName]) {
+			switch (typeof this.options['visualizer-options'][hookName]) {
+				case 'function':
+					await this.options['visualizer-options'][hookName].call(this, id);
+					break;
+				case 'string':
+					await eval(this.options['visualizer-options'][hookName]);
+					break;
+			}
+		}
+	}
+
+	// Get visible rows
+	getRows() {
+		let arr = [];
+		for (let id of this.rows.keys()) {
+			let row = this.rows.get(id);
+			if (!row.deleted)
+				arr.push(row);
+		}
+		return arr;
+	}
+
+	// Get deleted rows (for saving)
+	getDeletedRows() {
+		let deleted = [];
+		for (let [id, row] of this.rows.entries()) {
+			if (row.deleted && !row.isNew)
+				deleted.push(id);
+		}
+		return deleted;
+	}
+
+	// Get save data (like FormList)
+	getSave() {
+		if (this.options.custom)
+			return null;
+
+		let list = [], atLeastOneChange = false;
+		for (let [id, row] of this.rows.entries()) {
+			if (row.deleted) {
+				if (!row.isNew)
+					atLeastOneChange = true;
+				continue;
+			}
+
+			let changed = row.form.getChangedValues();
+			if (Object.keys(changed).length || row.isNew)
+				atLeastOneChange = true;
+
+			if (!row.isNew)
+				changed.id = id;
+
+			list.push(changed);
+		}
+
+		return atLeastOneChange ? list : null;
+	}
+
+	// Handle adding files (sublist mode)
+	handleAddFiles() {
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.multiple = true;
+		fileInput.style.display = 'none';
+		document.body.appendChild(fileInput);
+
+		fileInput.addEventListener('change', async () => {
+			if (fileInput.files && fileInput.files.length > 0) {
+				for (const file of fileInput.files) {
+					const parsedFile = await this.parseFile(file);
+					const fileField = this.options['visualizer-options'].field;
+
+					await this.addLocalRow(null, {
+						data: {[fileField]: [parsedFile]}
+					}, true, true);
+				}
+			}
+			document.body.removeChild(fileInput);
+		});
+
+		fileInput.click();
+	}
+
+	// Render file box for main visualizer (original behavior)
 	renderFileBox(container, item, draggable) {
 		const fileField = this.options['visualizer-options'].field;
 		const nameField = this.options['visualizer-options'].name;
@@ -186,6 +793,7 @@ class Files {
 		actions.className = 'file-actions';
 
 		const selectBtn = document.createElement('button');
+		selectBtn.type = 'button';
 		selectBtn.innerHTML = '<i class="fas fa-check-square"></i>';
 		selectBtn.setAttribute('title', 'Seleziona');
 		selectBtn.addEventListener('click', (e) => {
@@ -196,6 +804,7 @@ class Files {
 
 		if (item.privileges && (item.privileges['R'] || item.privileges['U'])) {
 			const editBtn = document.createElement('button');
+			editBtn.type = 'button';
 			editBtn.innerHTML = '<i class="fas fa-pencil-alt"></i>';
 			editBtn.setAttribute('title', 'Modifica');
 			editBtn.addEventListener('click', (e) => {
@@ -207,6 +816,7 @@ class Files {
 
 		if (item.privileges && item.privileges['D']) {
 			const deleteBtn = document.createElement('button');
+			deleteBtn.type = 'button';
 			deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
 			deleteBtn.setAttribute('title', 'Elimina');
 			deleteBtn.addEventListener('click', (e) => {
@@ -245,6 +855,9 @@ class Files {
 
 	// Standard visualizers methods
 	async getFieldsToRetrieve() {
+		if (!this.main)
+			return null; // Sublists retrieve all fields
+
 		const fields = [this.options['visualizer-options'].field, this.options['visualizer-options'].name, 'id'];
 		if (this.options['visualizer-options'].icon)
 			fields.push(this.options['visualizer-options'].icon);
@@ -261,8 +874,8 @@ class Files {
 		if (this.main) {
 			return reloadMainList();
 		} else {
-			alert('TODO: sublist reloading');
-			// TODO: sublist reloading
+			// For sublists, we don't reload from server
+			console.log('Sublist reload not implemented - data is managed locally');
 		}
 	}
 
@@ -303,17 +916,27 @@ class Files {
 	}
 
 	// Handle dropped files
-	handleDroppedFiles(files) {
+	async handleDroppedFiles(files) {
 		if (files.length === 0) return;
 
-		// Store the files
-		this.filesToUpload = Array.from(files);
+		if (this.main) {
+			// Main visualizer - use existing upload logic
+			this.filesToUpload = Array.from(files);
+			this.openUploadForm();
+		} else {
+			// Sublist - add as local rows
+			for (const file of files) {
+				const parsedFile = await this.parseFile(file);
+				const fileField = this.options['visualizer-options'].field;
 
-		// Open form to enter metadata
-		this.openUploadForm();
+				await this.addLocalRow(null, {
+					data: {[fileField]: [parsedFile]}
+				}, true, true);
+			}
+		}
 	}
 
-	// Handle multi upload action (triggered from toolbar)
+	// Handle multi upload action (triggered from toolbar) - main visualizer only
 	handleMultiUpload() {
 		// Reset files array
 		this.filesToUpload = [];
@@ -335,7 +958,7 @@ class Files {
 		fileInput.click();
 	}
 
-	// Open form for upload metadata
+	// Open form for upload metadata - main visualizer only
 	openUploadForm() {
 		if (this.filesToUpload.length === 0) return;
 
@@ -376,7 +999,7 @@ class Files {
 			zkPopupClose();
 	}
 
-	// Process multiple files with the same form data
+	// Process multiple files with the same form data - main visualizer only
 	async processMultipleFiles(formData) {
 		if (this.filesToUpload.length === 0) return;
 
