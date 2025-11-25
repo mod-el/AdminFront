@@ -125,7 +125,7 @@ class Files {
 				addButton.className = 'files-add-button';
 				addButton.innerHTML = '<i class="fas fa-plus"></i> Aggiungi file';
 				addButton.addEventListener('click', () => this.handleAddFiles());
-				this.container.insertBefore(addButton, filesContainer);
+				this.container.appendChild(addButton);
 			}
 		}
 	}
