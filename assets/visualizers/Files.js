@@ -494,7 +494,8 @@ class Files {
 		const fileField = this.options['visualizer-options'].field;
 
 		return zkPopup('', {
-			onClose: () => {}
+			onClose: () => {
+			}
 		}).then(async () => {
 			const popupReal = _('popup-real');
 			popupReal.innerHTML = '';
@@ -506,9 +507,12 @@ class Files {
 			const template = (await this.template).cloneNode(true);
 
 			// Remove the file field placeholder from the popup (we don't want to edit file here)
-			const fileFieldPlaceholder = template.querySelector('[data-fieldplaceholder="' + fileField + '"]');
-			if (fileFieldPlaceholder)
+			let fileFieldPlaceholder = template.querySelector('[data-fieldplaceholder="' + fileField + '"]');
+			if (fileFieldPlaceholder) {
+				if (fileFieldPlaceholder.parentNode.querySelector('label')) // Let's go one level up to remove also the label, if present
+					fileFieldPlaceholder = fileFieldPlaceholder.parentNode;
 				fileFieldPlaceholder.remove();
+			}
 
 			form.appendChild(template);
 
