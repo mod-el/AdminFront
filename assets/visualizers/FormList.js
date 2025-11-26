@@ -220,8 +220,7 @@ class FormList {
 
 				if (this.options.privileges['D']) {
 					let deleteDiv = document.createElement('div');
-					deleteDiv.className = 'rob-field text-center';
-					deleteDiv.style.width = '30px';
+					deleteDiv.className = 'rob-field trashbin-cont text-center';
 
 					if (canDelete) {
 						let deleteLink = document.createElement('a');
