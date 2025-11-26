@@ -59,7 +59,7 @@ class FormList {
 			addButtonRow = document.createElement('div');
 			addButtonRow.className = 'rob-field-cont formlist-row';
 			addButtonRow.style.cursor = 'pointer';
-			addButtonRow.innerHTML = `<div class="rob-field" style="width: 30px"></div><div class="rob-field" style="width: calc(100% - 30px)">` + (this.options['visualizer-options']['add-button'] === true ? '<i class="fas fa-plus" aria-hidden="true"></i> Aggiungi' : this.options['visualizer-options']['add-button']) + `</div>`;
+			addButtonRow.innerHTML = `<div class="rob-field trashbin-cont"></div><div class="rob-field" style="width: calc(100% - 30px)">` + (this.options['visualizer-options']['add-button'] === true ? '<i class="fas fa-plus" aria-hidden="true"></i> Aggiungi' : this.options['visualizer-options']['add-button']) + `</div>`;
 			addButtonRow.addEventListener('click', () => {
 				this.addLocalRow();
 			})
