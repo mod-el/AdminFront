@@ -40,7 +40,7 @@ class AdminFront extends Module
 	/**
 	 *
 	 */
-	public function headings()
+	public function headings(): void
 	{
 		?>
 		<link rel="manifest" href="<?= $this->getUrlPrefix() ?>manifest.json">
