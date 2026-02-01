@@ -182,7 +182,10 @@ class FormList {
 
 		await replaceTemplateValues(template, id, data.data, data.fields);
 
-		let form = new FormManager(this.id + '-' + id, {updateAdminHistory: true});
+		let form = new FormManager(this.id + '/' + id, {
+			updateAdminHistory: true,
+			placeholders_prefix: this.id !== 'main' ? this.id.split('/').pop() + '-' : '',
+		});
 
 		pageForms.set(this.id + '-' + id, form);
 

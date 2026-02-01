@@ -113,6 +113,7 @@ class AdminController extends Controller
 									}
 
 									$formFound->options['render-only-placeholders'] = true;
+									$formFound->options['placeholders-prefix'] = $reqSegment . '-';
 								} else {
 									if ($sublist['admin-page']) {
 										$sublistAdminPageClassName = Autoloader::searchFile('AdminPage', $sublist['admin-page']);
