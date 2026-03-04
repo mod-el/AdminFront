@@ -184,7 +184,7 @@ class FormList {
 
 		let form = new FormManager(this.id + '/' + id, {
 			updateAdminHistory: true,
-			placeholders_prefix: this.id !== 'main' ? this.id.split('/').pop() + '-' : '',
+			placeholders_prefix: !this.main ? this.id.split('/').pop() + '-' : '',
 		});
 
 		pageForms.set(this.id + '-' + id, form);
