@@ -54,7 +54,7 @@ class AdminController extends Controller
 					]);
 
 					$return_value = $check ? $check['value'] : null;
-					if (str_starts_with($_GET['k'], 'columns-')) {
+					if ($return_value and str_starts_with($_GET['k'], 'columns-')) {
 						// Se è una personalizzazione delle colonne, verifico che i campi esistano ancora (potrebbero essere stati rimossi o rinominati)
 						$decoded = json_decode($return_value, true);
 						if ($decoded !== null) {
