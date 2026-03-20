@@ -53,8 +53,23 @@ class AdminController extends Controller
 						'key' => $_GET['k'],
 					]);
 
+					$return_value = $check ? $check['value'] : null;
+					if (str_starts_with($_GET['k'], 'columns-')) {
+						// Se è una personalizzazione delle colonne, verifico che i campi esistano ancora (potrebbero essere stati rimossi o rinominati)
+						$decoded = json_decode($return_value, true);
+						if ($decoded !== null) {
+							$this->model->_Admin->setPage(str_replace('columns-', '', $_GET['k']));
+							$fields = $this->model->_Admin->getColumnsList();
+							foreach ($decoded as $idx => $k) {
+								if (!isset($fields['fields'][$k]))
+									unset($decoded[$idx]);
+							}
+							$return_value = json_encode(array_values($decoded));
+						}
+					}
+
 					return [
-						'data' => $check ? $check['value'] : null,
+						'data' => $return_value,
 					];
 				} catch (\Exception $e) {
 					return [
