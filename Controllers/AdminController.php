@@ -24,8 +24,10 @@ class AdminController extends Controller
 
 		if ($this->model->moduleExists('Dashboard'))
 			$this->model->load('Dashboard', ['load' => $this->model->_User_Admin->logged()]);
-		if ($this->model->moduleExists('PageBuilder'))
-			\Model\Travio\Assets::enable('page-builder');
+		if ($this->model->moduleExists('PageBuilder')) {
+			\Model\Assets\Assets::enable('page-builder');
+			$this->model->load('PageBuilder'); // Per registrare il tipo di Field
+		}
 		if ($this->model->moduleExists('CkEditor'))
 			$this->model->load('CkEditor');
 		if ($this->model->moduleExists('InstantSearch'))
