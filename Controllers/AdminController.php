@@ -14,10 +14,11 @@ class AdminController extends Controller
 		if ($this->model->isCLI())
 			die('Front Admin is not accessible via CLI');
 
-		$this->model->load('DraggableOrder');
-		$this->model->load('Popup');
 		$this->model->load('Form');
-		$this->model->load('ContextMenu');
+
+		\Model\Assets\Assets::enable('draggable');
+		\Model\Assets\Assets::enable('context-menu');
+		\Model\Assets\Assets::enable('popup');
 
 		$this->model->_Admin->setPath($this->model->_AdminFront->url);
 		$this->model->_Admin->loadUserModule();
