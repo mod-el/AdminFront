@@ -876,7 +876,11 @@ async function getFiltersFromPageDetails() {
 			if (typeof currentPageDetails['filters'][filterOptions.filter] === 'undefined')
 				return;
 
-			let fieldOptions = currentPageDetails['filters'][filterOptions.filter];
+			// Shallow copy: the same filter definition may be used by multiple filter instances (e.g. a >= and a <= on the same field),
+			// and both the options and the attributes get written to (adminFilter here, placeholder in rebuildFilters)
+			let fieldOptions = {...currentPageDetails['filters'][filterOptions.filter]};
+			if (fieldOptions.attributes)
+				fieldOptions.attributes = {...fieldOptions.attributes};
 			fieldOptions['adminFilter'] = filterOptions;
 
 			let defaultValue = '';
