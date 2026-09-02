@@ -560,7 +560,7 @@ class Files {
 				pageForms.delete('files-edit-' + id);
 			});
 
-			await fillPopup();
+			await zkPopupFill();
 		});
 	}
 
@@ -1046,7 +1046,7 @@ class Files {
 
 		// Add the progress bar to the popup
 		popupElement.appendChild(progressContainer);
-		await fillPopup();
+		await zkPopupFill();
 
 		try {
 			// Get page from options

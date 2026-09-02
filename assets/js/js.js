@@ -2684,7 +2684,7 @@ async function openElementInPopup(id, options = {}) {
 
 		await openElementInContainer(id, _('popup-real'), options);
 
-		return fillPopup();
+		return zkPopupFill();
 	}).catch(err => {
 		zkPopup(err.toString());
 	});
